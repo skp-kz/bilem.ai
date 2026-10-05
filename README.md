@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="https://bilem.ai/assets/logo/mark.svg" width="72" alt="Bilem">
+  <img src="assets/readme-banner.png" alt="Bilem.ai — персональный агент для вашей 1С" width="100%">
 </p>
-
-<h1 align="center">Bilem.ai — персональный агент для вашей 1С</h1>
 
 <p align="center">
   Спросите в WhatsApp — ответит за секунду: сколько денег, кто должен, что по налогам.<br>
