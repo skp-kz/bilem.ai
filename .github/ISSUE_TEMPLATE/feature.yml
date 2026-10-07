@@ -1,0 +1,26 @@
+name: Новая функция API
+description: Нужен новый запрос в /hs/bilem/v1 или инструмент MCP
+labels: ["enhancement", "api"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Какой вопрос должен уметь агент
+      placeholder: "«Кто нам должен больше 30 дней?»"
+    validations: { required: true }
+  - type: textarea
+    id: source
+    attributes:
+      label: Откуда данные в 1С
+      description: Документ, регистр, отчёт — если знаете. Если нет, так и напишите.
+      placeholder: "РегистрНакопления.РасчетыСПокупателями, остатки на дату"
+  - type: textarea
+    id: shape
+    attributes:
+      label: Какой ответ нужен
+      placeholder: "список: контрагент, сумма, дней просрочки"
+  - type: dropdown
+    id: conf
+    attributes:
+      label: Конфигурация
+      options: ["Бухгалтерия для Казахстана 3.0", "УТ для Казахстана", "Другая (укажу в описании)"]

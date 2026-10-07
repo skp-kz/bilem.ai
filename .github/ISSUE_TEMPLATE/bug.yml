@@ -1,0 +1,39 @@
+name: Ошибка
+description: Что-то работает не так, как описано
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: part
+    attributes:
+      label: Где
+      options: ["bilem.cfe (расширение 1С)", "bilem-mcp (MCP-сервер)", "bilem-agent (служба)", "Кабинет app.bilem.ai", "Документация"]
+    validations: { required: true }
+  - type: input
+    id: version
+    attributes:
+      label: Версия
+      placeholder: "cfe 0.1.0 / mcp 0.1.0"
+    validations: { required: true }
+  - type: input
+    id: platform
+    attributes:
+      label: Платформа и конфигурация 1С
+      placeholder: "8.3.25.1374, Бухгалтерия для Казахстана 3.0.52, файловая / сервер"
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: Как воспроизвести
+      placeholder: "1. … 2. … 3. …"
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes:
+      label: Что ожидали и что получили
+    validations: { required: true }
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи / ответ сервиса
+      description: Без ключей и данных клиентов. Ключ вида blm_k_… — замените на ***.
+      render: text

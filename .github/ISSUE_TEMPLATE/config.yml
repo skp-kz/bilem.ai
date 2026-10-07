@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Вопрос по установке и настройке
+    url: https://github.com/skp-kz/bilem.ai/discussions/categories/q-a
+    about: Задайте в Discussions — там отвечают быстрее и видят другие
+  - name: Идея для агента
+    url: https://github.com/skp-kz/bilem.ai/discussions/categories/ideas
+    about: Что ещё должен уметь агент — обсуждаем и голосуем
+  - name: Уязвимость
+    url: https://github.com/skp-kz/bilem.ai/security/advisories/new
+    about: Приватно, не в публичный issue

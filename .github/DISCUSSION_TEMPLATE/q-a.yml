@@ -1,0 +1,11 @@
+title: "[Вопрос] "
+labels: ["question"]
+body:
+  - type: input
+    attributes:
+      label: Платформа и конфигурация
+      placeholder: "8.3.25, БК 3.0.52"
+  - type: textarea
+    attributes:
+      label: Вопрос
+    validations: { required: true }
