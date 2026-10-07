@@ -4,7 +4,7 @@
 
 ## Как сообщить
 
-**Не создавайте публичный issue.** Напишите на **security@bilem.ai** или через [Report a vulnerability](https://github.com/skp-kz/bilem.ai/security/advisories/new) на GitHub.
+**Не создавайте публичный issue.** Напишите через [Report a vulnerability](https://github.com/skp-kz/bilem.ai/security/advisories/new) на GitHub.
 
 Укажите: версию расширения / MCP, платформу 1С, шаги воспроизведения. Ответим в течение 3 рабочих дней, исправление критичных проблем — приоритет над всем остальным. Укажем вас в релизе, если хотите.
 
