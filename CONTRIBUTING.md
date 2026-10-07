@@ -4,8 +4,8 @@
 
 ## С чего начать
 
-- Вопросы «как подключить», «не работает на моей конфигурации» — в [Discussions → Вопросы](../../discussions/categories/q-a). Issues — только для подтверждённых ошибок и запросов функций.
-- Идеи новых функций агента («хочу, чтобы отвечал про…») — [Discussions → Идеи](../../discussions/categories/ideas). Там голосуем, что делать первым.
+- Вопросы «как подключить», «не работает на моей конфигурации» — в [Discussions → Вопросы](https://github.com/skp-kz/bilem.ai/discussions/categories/q-a). Issues — только для подтверждённых ошибок и запросов функций.
+- Идеи новых функций агента («хочу, чтобы отвечал про…») — [Discussions → Идеи](https://github.com/skp-kz/bilem.ai/discussions/categories/ideas). Там голосуем, что делать первым.
 - Нашли уязвимость — **не** в публичный issue, см. [SECURITY.md](SECURITY.md).
 
 ## Структура
