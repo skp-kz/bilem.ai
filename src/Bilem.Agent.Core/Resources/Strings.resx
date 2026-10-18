@@ -235,6 +235,7 @@
   <data name="McpListChanged" xml:space="preserve"><value>Набор инструментов MCP изменился — уведомление клиентам (открытых потоков: {0})</value></data>
   <data name="McpPortBusy" xml:space="preserve"><value>Не удалось занять порт MCP {0}: {1}</value></data>
   <data name="McpStarted" xml:space="preserve"><value>MCP работает: http://127.0.0.1:{0}/mcp/&lt;токен&gt;</value></data>
+  <data name="McpStartedAfterRetry" xml:space="preserve"><value>MCP запущен: порт освободился</value></data>
   <data name="McpStopped" xml:space="preserve"><value>MCP остановлен</value></data>
   <data name="ModeApply" xml:space="preserve"><value>Режим: применить. Windows {0}, процесс {1}-бит.</value></data>
   <data name="ModeDiag" xml:space="preserve"><value>Режим: только диагностика и план, ничего не меняется. Windows {0}, процесс {1}-бит.</value></data>

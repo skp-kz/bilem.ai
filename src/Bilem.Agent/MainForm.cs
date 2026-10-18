@@ -155,6 +155,7 @@ namespace Bilem.Agent
                 // Было обновление — «Обновлено с X на Y» в журнал и аудит
                 Bilem.Agent.Core.Updates.Updater.CompleteIfPending();
                 StartMcp();
+                RetryMcpWhileBusy();
                 RefreshAll();
                 _healthTimer.Start();
                 _recheckTimer.Start();
@@ -579,6 +580,27 @@ namespace Bilem.Agent
             catch (AgentException ex) { _mcpError = ex.Short ?? ex.Message; Log.Fail(ex.Message); if (!string.IsNullOrEmpty(ex.Hint)) Log.Fail(Txt.S("WhatToDo") + " " + ex.Hint); }
             catch (Exception ex) { _mcpError = ex.Message; Log.Fail(ex.Message); }
             UpdateHealth();
+        }
+
+        /// <summary>
+        /// Порт ещё занят прежним процессом (после «Обновить» новый агент стартует, пока старый не отпустил 8796 — сервер 19.10):
+        /// повтор каждые 2 с до 30 с, потом остаётся ошибка в журнале и кнопка «Запустить».
+        /// </summary>
+        private void RetryMcpWhileBusy()
+        {
+            if (_host.Running || _mcpStoppedByUser) return;
+            var left = 15;
+            var t = new Timer { Interval = 2000 };
+            t.Tick += (s, e) =>
+            {
+                if (_host.Running || _mcpStoppedByUser || --left < 0) { t.Stop(); t.Dispose(); return; }
+                _mcpError = null;
+                try { _host.Start(); Log.Ok(Txt.S("McpStartedAfterRetry")); }
+                catch (Exception ex) { _mcpError = (ex as AgentException)?.Short ?? ex.Message; }
+                UpdateHealth();
+                RefreshAll();
+            };
+            t.Start();
         }
 
         private void ToggleMcp()
