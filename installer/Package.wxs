@@ -165,5 +165,8 @@
       </Dialog>
     </UI>
     <UIRef Id="WixUI_Common" />
+    <!-- Картинки мастера (вместо красных WiX): юрта мелкой мозаикой — утверждено Славой 18.10 -->
+    <WixVariable Id="WixUIDialogBmp" Value="$(sys.SOURCEFILEDIR)art/WixUIDialogBmp.bmp" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(sys.SOURCEFILEDIR)art/WixUIBannerBmp.bmp" />
   </Package>
 </Wix>
