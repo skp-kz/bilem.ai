@@ -57,14 +57,18 @@ namespace Bilem.Agent.Core
             var g1c = Txt.S("DiagGroup1C");
             var found = Platform.Find();
             if (found.Count == 0) Add(g1c, Txt.S("DiagPlatform"), CheckStatus.Fail, Txt.S("NoPlatform"), Txt.S("HintInstallPlatform"));
+            bool HasWeb(Platform1C x) => File.Exists(Path.Combine(x.Bin, "wsisapi.dll")) && File.Exists(x.Webinst);
+            var anyWeb = found.Any(HasWeb);
             foreach (var p in found.OrderByDescending(x => x.Version).ThenByDescending(x => x.Bits))
             {
                 Add(g1c, Txt.F("DiagPlatformItem", p), CheckStatus.Ok, p.Bin);
                 var com = Safe(() => Platform.ComProblem(p));
-                // Системная регистрация агенту не нужна (коннектор — напрямую из папки платформы): справочно
+                // Коннектор регистрируется при подключении базы (с согласия, если зарегистрирован другой): здесь справочно
                 Add(g1c, Txt.F("DiagCom", p), com.Length == 0 ? CheckStatus.Ok : CheckStatus.Info, com.Length == 0 ? Txt.S("ComOk") : com + ". " + Txt.S("HintComAuto"));
-                var web = File.Exists(Path.Combine(p.Bin, "wsisapi.dll")) && File.Exists(p.Webinst);
-                Add(g1c, Txt.F("DiagWebModules", p), web ? CheckStatus.Ok : CheckStatus.Fail, web ? "wsisapi.dll, webinst.exe" : Txt.S("DiagWebModulesMissing"), Txt.S("HintWebinst"));
+                // Веб-модули нужны одной платформе — той, что публикует базы; у остальных их отсутствие справочно (сервер 19.10: 4 ложных красных)
+                var web = HasWeb(p);
+                Add(g1c, Txt.F("DiagWebModules", p), web ? CheckStatus.Ok : (anyWeb ? CheckStatus.Info : CheckStatus.Fail),
+                    web ? "wsisapi.dll, webinst.exe" : Txt.S("DiagWebModulesMissing"), Txt.S("HintWebinst"));
                 var helper = Platform.ComHelper(p);
                 Add(g1c, Txt.F("DiagHelper", Path.GetFileName(helper)), File.Exists(helper) ? CheckStatus.Ok : CheckStatus.Fail, File.Exists(helper) ? helper : Txt.S("DiagNotFound"), Txt.S("HintReinstall"));
             }
@@ -124,6 +128,8 @@ namespace Bilem.Agent.Core
                 {
                     var noClr = Iis.PoolNoManagedCode(b.Pool);
                     Add(Txt.S("DiagPoolNoClr"), noClr ? CheckStatus.Ok : CheckStatus.Warn, noClr ? Txt.S("Yes") : Txt.S("No"), Txt.S("HintRerunSetup"));
+                    var profile = Iis.PoolLoadsProfile(b.Pool);
+                    Add(Txt.S("DiagPoolProfile"), profile ? CheckStatus.Ok : CheckStatus.Warn, profile ? Txt.S("Yes") : Txt.S("No"), Txt.S("HintRerunSetup"));
                 }
                 if (app)
                 {

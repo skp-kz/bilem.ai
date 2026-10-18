@@ -63,9 +63,16 @@ namespace Bilem.Agent.Core
             // «Без управляемого кода»: модулю 1С (ISAPI) .NET не нужен. На боевом сервере 19.10 в пул с CLR подмешивался чужой
             // управляемый код с уровня машины (ASP.NET, WPF, JScript, сборка из памяти) — и wsisapi падал на каждом запросе.
             Check(Cmd($"set apppool \"{pool}\" /managedRuntimeVersion:\"\""), "set apppool managedRuntimeVersion");
+            // Профиль учётки пула: без него wsisapi 8.3.24 на Server 2016 (контроллер домена) падал на первом запросе
+            // (0xc0000005, пустой указатель на старте) — с loadUserProfile=true заработал (боевой сервер 19.10)
+            Check(Cmd($"set apppool \"{pool}\" /processModel.loadUserProfile:true"), "set apppool loadUserProfile");
         }
 
         /// <summary>Пул без CLR (managedRuntimeVersion пустой).</summary>
+        /// <summary>Профиль учётки пула загружается (loadUserProfile=true).</summary>
+        public static bool PoolLoadsProfile(string pool) =>
+            string.Equals(Cmd($"list apppool \"{pool}\" /text:processModel.loadUserProfile").Out.Trim(), "true", StringComparison.OrdinalIgnoreCase);
+
         public static bool PoolNoManagedCode(string pool) => Cmd($"list apppool \"{pool}\" /text:managedRuntimeVersion").Out.Trim().Length == 0;
 
         public static void SetAppPool(string app, string pool) => Check(Cmd($"set app \"{Site}/{app}\" /applicationPool:\"{pool}\""), "set app");

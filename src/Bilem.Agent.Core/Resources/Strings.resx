@@ -143,6 +143,7 @@
   <data name="DiagPlatformItem" xml:space="preserve"><value>Платформа {0}</value></data>
   <data name="DiagPool" xml:space="preserve"><value>Пул IIS</value></data>
   <data name="DiagPoolNoClr" xml:space="preserve"><value>Пул без управляемого кода (.NET)</value></data>
+  <data name="DiagPoolProfile" xml:space="preserve"><value>Профиль учётки пула загружается</value></data>
   <data name="DiagPublication" xml:space="preserve"><value>Публикация IIS</value></data>
   <data name="DiagSecret" xml:space="preserve"><value>Пароль bilem (DPAPI)</value></data>
   <data name="DiagSecretOk" xml:space="preserve"><value>расшифровывается</value></data>
@@ -265,7 +266,7 @@
   <data name="PoaNone" xml:space="preserve"><value>Доверенностей в 1С нет.</value></data>
   <data name="PoaNoneFor" xml:space="preserve"><value>Доверенностей для «{0}» в 1С нет.</value></data>
   <data name="PoaNotFound" xml:space="preserve"><value>Доверенность № {0} в 1С не найдена.</value></data>
-  <data name="PoolReady" xml:space="preserve"><value>Пул IIS {0} ({1}-бит, без управляемого кода)</value></data>
+  <data name="PoolReady" xml:space="preserve"><value>Пул IIS {0} ({1}-бит, без управляемого кода, с профилем учётки)</value></data>
   <data name="PreviousFailedAt" xml:space="preserve"><value>Прошлый запуск ({1:dd.MM.yyyy HH:mm}) остановился на шаге «{0}» — продолжаю: сделанные шаги пройдут без изменений.</value></data>
   <data name="PrintBadPeriod" xml:space="preserve"><value>Не понял период «{0}». Примеры: 2022, 2022-04, 2022-04-13, 2022-01-01..2022-06-30.</value></data>
   <data name="PrintDetailsLoaded" xml:space="preserve"><value>Адреса организаций из 1С: {0}</value></data>
