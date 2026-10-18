@@ -803,17 +803,18 @@ namespace Bilem.Agent
             // Значок меняется только при смене состояния — без мигания
             if (_shownHealth != h.Color) { _tray.Icon = TrayIcons[h.Color]; _shownHealth = h.Color; }
             if (_shownTip != h.Tooltip) { _tray.Text = h.Tooltip; _shownTip = h.Tooltip; }
-            // Строка состояния: что происходит с MCP — работает / запускается (ждём порт) / ошибка запуска / остановлен / обновление
-            if (_updInstalling != null) { _stState.Text = Txt.F("UiStateUpdating", _updInstalling); _stState.ForeColor = Color.DarkOrange; }
-            else if (_host.Running) { _stState.Text = Txt.F("UiStateRunning", cfg.Port, cfg.Bases.Count); _stState.ForeColor = Color.DarkGreen; }
+            // Строка состояния: что происходит с MCP — работает / запускается (ждём порт) / ошибка запуска / остановлен / обновление.
+            // Только чёрный текст, без цветов — и для ошибок (решение Славы 19.10: инженерное приложение)
+            _stState.ForeColor = SystemColors.ControlText;
+            if (_updInstalling != null) { _stState.Text = Txt.F("UiStateUpdating", _updInstalling); }
+            else if (_host.Running) { _stState.Text = Txt.F("UiStateRunning", cfg.Port, cfg.Bases.Count); }
             else if (_mcpStartingSince.HasValue)
             {
                 var sec = (int)(DateTime.Now - _mcpStartingSince.Value).TotalSeconds;
                 _stState.Text = Txt.F("UiStateStarting", cfg.Port, sec, (int)McpPatience.TotalSeconds);
-                _stState.ForeColor = Color.DarkOrange;
             }
-            else if (!_mcpStoppedByUser && !string.IsNullOrEmpty(_mcpError)) { _stState.Text = Txt.F("UiStateStartFailed", _mcpError); _stState.ForeColor = Color.DarkRed; }
-            else { _stState.Text = Txt.F("UiStateStopped", cfg.Port, cfg.Bases.Count); _stState.ForeColor = Color.DarkRed; }
+            else if (!_mcpStoppedByUser && !string.IsNullOrEmpty(_mcpError)) { _stState.Text = Txt.F("UiStateStartFailed", _mcpError); }
+            else { _stState.Text = Txt.F("UiStateStopped", cfg.Port, cfg.Bases.Count); }
             _mcpToggle.Text = Txt.S(_host.Running ? "UiMcpStop" : "UiMcpStart");
         }
 
