@@ -120,6 +120,11 @@ namespace Bilem.Agent.Core
                 Add(Txt.S("DiagPublication"), app ? CheckStatus.Ok : CheckStatus.Fail, b.Publication, Txt.S("Hint404"));
                 var pool = Iis.PoolExists(b.Pool);
                 Add(Txt.S("DiagPool"), pool ? CheckStatus.Ok : CheckStatus.Fail, b.Pool, Txt.S("HintRerunSetup"));
+                if (pool)
+                {
+                    var noClr = Iis.PoolNoManagedCode(b.Pool);
+                    Add(Txt.S("DiagPoolNoClr"), noClr ? CheckStatus.Ok : CheckStatus.Warn, noClr ? Txt.S("Yes") : Txt.S("No"), Txt.S("HintRerunSetup"));
+                }
                 if (app)
                 {
                     Add(Txt.S("DiagAnonymousPool"), Iis.AnonymousIsPool(b.Publication) ? CheckStatus.Ok : CheckStatus.Fail, "", Txt.S("HintRerunSetup"));

@@ -60,7 +60,13 @@ namespace Bilem.Agent.Core
         {
             if (!PoolExists(pool)) Check(Cmd($"add apppool /name:\"{pool}\""), "add apppool");
             Check(Cmd($"set apppool \"{pool}\" /enable32BitAppOnWin64:{(bits == 32 ? "true" : "false")}"), "set apppool");
+            // «Без управляемого кода»: модулю 1С (ISAPI) .NET не нужен. На боевом сервере 19.10 в пул с CLR подмешивался чужой
+            // управляемый код с уровня машины (ASP.NET, WPF, JScript, сборка из памяти) — и wsisapi падал на каждом запросе.
+            Check(Cmd($"set apppool \"{pool}\" /managedRuntimeVersion:\"\""), "set apppool managedRuntimeVersion");
         }
+
+        /// <summary>Пул без CLR (managedRuntimeVersion пустой).</summary>
+        public static bool PoolNoManagedCode(string pool) => Cmd($"list apppool \"{pool}\" /text:managedRuntimeVersion").Out.Trim().Length == 0;
 
         public static void SetAppPool(string app, string pool) => Check(Cmd($"set app \"{Site}/{app}\" /applicationPool:\"{pool}\""), "set app");
 
