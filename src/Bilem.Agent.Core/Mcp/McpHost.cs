@@ -17,6 +17,8 @@ namespace Bilem.Agent.Core.Mcp
         public int BaseCount => _bases.Count;
 
         /// <summary>Версия агента SemVer («0.3.0-beta.1») — та же, что в теге релиза и в MSI.</summary>
+        private string _basesLogged;
+
         public static string Version => Updates.SemVer.Current.ToString();
 
         public void Start()
@@ -63,7 +65,9 @@ namespace Bilem.Agent.Core.Mcp
             _smtpOn = cfg.Smtp?.Enabled == true;
             _accessStamp = string.Join(";", cfg.Bases.Select(b => b.Slug + ":" + string.Join(",", b.ReadEffective.OrderBy(x => x)) + "/" + string.Join(",", (b.Write ?? new List<string>()).OrderBy(x => x))));
             if (!string.IsNullOrEmpty(cfg.TokenProtected)) _token = cfg.GetOrCreateToken();
-            Log.Info(Txt.F("McpBases", _bases.Count, string.Join(", ", _bases.Select(x => x.Config.Slug))));
+            // Тот же набор баз — без повтора строки (повторы запуска MCP при занятом порте писали её каждые 2 с)
+            var basesLine = Txt.F("McpBases", _bases.Count, string.Join(", ", _bases.Select(x => x.Config.Slug)));
+            if (basesLine != _basesLogged) { Log.Info(basesLine); _basesLogged = basesLine; }
         }
 
         private McpProtocol _proto;

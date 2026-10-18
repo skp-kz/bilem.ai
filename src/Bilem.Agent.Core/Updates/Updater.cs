@@ -207,7 +207,8 @@ namespace Bilem.Agent.Core.Updates
             sb.AppendLine($"start \"\" \"{agentExe}\"");
             File.WriteAllText(cmd, sb.ToString(), new UTF8Encoding(false));
             Log.Info(Txt.F(rollback ? "UpdRollbackStarting" : "UpdInstallStarting", from, to));
-            Process.Start(new ProcessStartInfo("cmd.exe", "/c \"" + cmd + "\"") { CreateNoWindow = true, UseShellExecute = false, WindowStyle = ProcessWindowStyle.Hidden });
+            // Через оболочку: дочерний процесс не наследует дескрипторы агента (сокет MCP, файлы журнала)
+            Process.Start(new ProcessStartInfo("cmd.exe", "/c \"" + cmd + "\"") { UseShellExecute = true, WindowStyle = ProcessWindowStyle.Hidden });
         }
 
         /// <summary>При запуске агента: была установка — записать итог в журнал и аудит («Обновлено с X на Y»).</summary>

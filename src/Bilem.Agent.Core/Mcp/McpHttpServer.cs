@@ -62,6 +62,9 @@ namespace Bilem.Agent.Core.Mcp
             var l = new TcpListener(IPAddress.Loopback, _port);
             try { l.Start(); }
             catch (SocketException e) { throw new AgentException(Txt.F("McpPortBusy", _port, e.Message), Txt.S("HintMcpPort")) { Short = Txt.F("TrayPortBusy", _port) }; }
+            // Сокет не наследуется дочерними процессами: иначе помощник установки обновления (cmd → msiexec) уносил копию
+            // и держал порт после выхода агента — новая версия не могла запустить MCP (боевой сервер 19.10, beta.5 → beta.6)
+            NoInherit(l.Server.Handle);
             _listener = l;
             Task.Run(() => AcceptLoop(l, _cts.Token));
             Log.Ok(Txt.F("McpStarted", _port));
@@ -78,6 +81,10 @@ namespace Bilem.Agent.Core.Mcp
 
         public void Dispose() => Stop();
 
+        [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool SetHandleInformation(IntPtr handle, uint mask, uint flags);
+        internal static void NoInherit(IntPtr handle) => SetHandleInformation(handle, 1 /* HANDLE_FLAG_INHERIT */, 0);
+
         private async Task AcceptLoop(TcpListener l, CancellationToken ct)
         {
             while (!ct.IsCancellationRequested)
@@ -85,6 +92,7 @@ namespace Bilem.Agent.Core.Mcp
                 TcpClient c;
                 try { c = await l.AcceptTcpClientAsync().ConfigureAwait(false); }
                 catch { if (ct.IsCancellationRequested) return; continue; }
+                NoInherit(c.Client.Handle);
                 _ = Task.Run(() => Handle(c));
             }
         }
