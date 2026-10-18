@@ -118,7 +118,43 @@ namespace Bilem.Agent.Core
                 try { return Secrets.Unprotect(TokenProtected); }
                 catch { /* ключ машины сменился — выпускаем новый */ }
             }
-            return RotateToken();
+            // Токена нет: выпускаем под общим замком машины и перечитываем конфиг — другой процесс (serve, окно, команда url)
+            // мог выпустить его только что. Иначе на новой установке два процесса выпускали разные токены → 401 (v0.3.0-beta.1).
+            using (var m = TokenMutex())
+            {
+                var locked = false;
+                try { locked = m.WaitOne(TimeSpan.FromSeconds(10)); }
+                catch (System.Threading.AbandonedMutexException) { locked = true; }
+                try
+                {
+                    var disk = Load();
+                    if (!string.IsNullOrEmpty(disk.TokenProtected))
+                    {
+                        try
+                        {
+                            var t = Secrets.Unprotect(disk.TokenProtected);
+                            TokenProtected = disk.TokenProtected;
+                            return t;
+                        }
+                        catch { /* в файле токен другой машины — выпускаем новый */ }
+                    }
+                    var fresh = Secrets.RandomToken();
+                    disk.TokenProtected = TokenProtected = Secrets.Protect(fresh);
+                    disk.Save();
+                    return fresh;
+                }
+                finally { if (locked) m.ReleaseMutex(); }
+            }
+        }
+
+        private static System.Threading.Mutex TokenMutex()
+        {
+            // Один замок на папку данных (у тестов — своя папка)
+            string name;
+            using (var h = System.Security.Cryptography.SHA256.Create())
+                name = "BilemAgentToken-" + BitConverter.ToString(h.ComputeHash(Encoding.UTF8.GetBytes(Paths.Home.ToLowerInvariant())), 0, 8).Replace("-", "");
+            try { return new System.Threading.Mutex(false, "Global\\" + name); }
+            catch (UnauthorizedAccessException) { return new System.Threading.Mutex(false, "Local\\" + name); }
         }
 
         public string RotateToken()

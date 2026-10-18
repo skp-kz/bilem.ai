@@ -56,6 +56,23 @@ namespace Bilem.Agent.Core.Tests
 
         private static string Hex(byte[] data) { using (var h = SHA256.Create()) return string.Concat(h.ComputeHash(data).Select(b => b.ToString("x2"))); }
 
+        /// <summary>
+        /// v0.3.0-beta.2: на новой установке serve и команда url одновременно выпускали разные токены → 401.
+        /// Теперь токен выпускается под замком с перечитыванием конфига — у всех один.
+        /// </summary>
+        [Fact]
+        public void Token_ConcurrentFirstUse_SameToken()
+        {
+            var c = AgentConfig.Load();
+            c.TokenProtected = null;
+            c.Save();
+            var copies = Enumerable.Range(0, 8).Select(_ => AgentConfig.Load()).ToList();
+            var tokens = new System.Collections.Concurrent.ConcurrentBag<string>();
+            System.Threading.Tasks.Parallel.ForEach(copies, cfg => tokens.Add(cfg.GetOrCreateToken()));
+            Assert.Single(tokens.Distinct());
+            Assert.Equal(tokens.First(), AgentConfig.Load().GetOrCreateToken());
+        }
+
         [Fact]
         public void EmbeddedKey_Is32Bytes() => Assert.Equal(32, Convert.FromBase64String(ReleaseVerifier.PublicKeyBase64).Length);
 
