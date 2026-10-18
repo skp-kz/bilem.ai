@@ -234,6 +234,7 @@
   <data name="McpInternalError" xml:space="preserve"><value>MCP: внутренняя ошибка {0}: {1}</value></data>
   <data name="McpListChanged" xml:space="preserve"><value>Набор инструментов MCP изменился — уведомление клиентам (открытых потоков: {0})</value></data>
   <data name="McpPortBusy" xml:space="preserve"><value>Не удалось занять порт MCP {0}: {1}</value></data>
+  <data name="McpRestarting" xml:space="preserve"><value>MCP: перезапуск</value></data>
   <data name="McpStarted" xml:space="preserve"><value>MCP работает: http://127.0.0.1:{0}/mcp/&lt;токен&gt;</value></data>
   <data name="McpStopped" xml:space="preserve"><value>MCP остановлен</value></data>
   <data name="ModeApply" xml:space="preserve"><value>Режим: применить. Windows {0}, процесс {1}-бит.</value></data>
@@ -653,7 +654,10 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiStaleDays" xml:space="preserve"><value>Выписка устарела через</value></data>
   <data name="UiStaleDaysNote" xml:space="preserve"><value>рабочих дня — ИИ предупредит, что остаток и должники могут быть неточны</value></data>
   <data name="UiStateRunning" xml:space="preserve"><value>MCP работает · порт {0} · баз: {1}</value></data>
+  <data name="UiStateStartFailed" xml:space="preserve"><value>Ошибка запуска MCP: {0} — нажмите «Запустить» на вкладке «MCP»</value></data>
+  <data name="UiStateStarting" xml:space="preserve"><value>MCP запускается… ждём, пока освободится порт {0} ({1} из {2} с)</value></data>
   <data name="UiStateStopped" xml:space="preserve"><value>MCP остановлен · порт {0} · баз: {1}</value></data>
+  <data name="UiStateUpdating" xml:space="preserve"><value>Устанавливаю обновление {0} — агент закроется и запустится снова</value></data>
   <data name="UiStatusBases" xml:space="preserve"><value>баз: {0}</value></data>
   <data name="UiStatusCheckFailed" xml:space="preserve"><value>✖ проверка {0:dd.MM.yyyy HH:mm} не прошла</value></data>
   <data name="UiStatusChecked" xml:space="preserve"><value>проверено {0:dd.MM.yyyy HH:mm}</value></data>
@@ -690,6 +694,9 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiTrayCopyUrl" xml:space="preserve"><value>Скопировать адрес MCP</value></data>
   <data name="UiTrayExit" xml:space="preserve"><value>Выход (остановить MCP)</value></data>
   <data name="UiTrayHint" xml:space="preserve"><value>Bilem Agent работает в трее — значок справа внизу (может быть под стрелкой ˄)</value></data>
+  <data name="UiTrayMcpRestart" xml:space="preserve"><value>Перезапустить MCP</value></data>
+  <data name="UiTrayMcpStart" xml:space="preserve"><value>Запустить MCP</value></data>
+  <data name="UiTrayMcpStop" xml:space="preserve"><value>Остановить MCP</value></data>
   <data name="UiTrayOpen" xml:space="preserve"><value>Открыть</value></data>
   <data name="UiTrayResetWindow" xml:space="preserve"><value>Сбросить размер окна</value></data>
   <data name="UiUpdAvailable" xml:space="preserve"><value>Доступна версия {0}</value></data>

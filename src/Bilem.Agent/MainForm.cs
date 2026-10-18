@@ -102,6 +102,20 @@ namespace Bilem.Agent
             menu.Items.Add(Txt.S("UiTrayOpen"), null, (s, e) => ShowFromTray());
             menu.Items.Add(Txt.S("UiTrayCopyUrl"), null, (s, e) => { try { Clipboard.SetText(FullUrl()); } catch { } });
             menu.Items.Add(Txt.S("UiTrayResetWindow"), null, (s, e) => { WindowPlacement.Reset(this); ShowFromTray(); });
+            // MCP из трея: «Остановить / Запустить» (как кнопка на вкладке «MCP») и «Перезапустить»
+            menu.Items.Add(new ToolStripSeparator());
+            var trayMcp = new ToolStripMenuItem();
+            trayMcp.Click += (s, e) => ToggleMcp();
+            var trayRestart = new ToolStripMenuItem(Txt.S("UiTrayMcpRestart"));
+            trayRestart.Click += (s, e) => RestartMcp();
+            menu.Opening += (s, e) =>
+            {
+                trayMcp.Text = Txt.S(_host.Running ? "UiTrayMcpStop" : "UiTrayMcpStart");
+                trayRestart.Enabled = _host.Running;
+            };
+            menu.Items.Add(trayMcp);
+            menu.Items.Add(trayRestart);
+            menu.Items.Add(new ToolStripSeparator());
             // Рубильник почты — и в трее (вкладка «SMTP» — тот же флаг)
             // Тумблер «SMTP-клиент включён» — тот же, что на вкладке «SMTP»
             _trayMailOff = new ToolStripMenuItem(Txt.S("UiSmtpOn")) { CheckOnClick = true };
@@ -533,11 +547,13 @@ namespace Bilem.Agent
                 _updProgress.Style = ProgressBarStyle.Continuous;
                 _updProgress.Value = 1000;
                 ShowUpdateState(Txt.F("UiUpdInstalling", r.Version));
+                _updInstalling = r.Version.ToString();
+                UpdateHealth();
                 Application.DoEvents();
                 Bilem.Agent.Core.Updates.Updater.Install(msi, cur, r.Version, Application.ExecutablePath);
                 ExitApp();
             }
-            catch (Exception ex) { _updProgress.Visible = false; Warn(ex.Message); ShowUpdateState(ex.Message); }
+            catch (Exception ex) { _updInstalling = null; _updProgress.Visible = false; Warn(ex.Message); ShowUpdateState(ex.Message); UpdateHealth(); }
             finally { _updBusy = false; _updButton.Enabled = true; }
         }
 
@@ -615,22 +631,24 @@ namespace Bilem.Agent
             _mcpStoppedByUser = false;
             _mcpError = null;
             if (TryStartMcp(out _)) { UpdateHealth(); return; }
+            _mcpStartingSince = DateTime.Now;
             _busySince = _busySince ?? DateTime.Now;
             _busy++;
             UpdateHealth();
-            var left = 15;
+            var left = (int)(McpPatience.TotalSeconds / 2);
             var t = new Timer { Interval = 2000 };
             t.Tick += (s, e) =>
             {
                 if (_mcpStoppedByUser || _host.Running) { Done(); return; }
                 if (TryStartMcp(out var err)) { Done(); return; }
-                if (--left > 0) return;
+                if (--left > 0) { UpdateHealth(); return; }
                 Done();
                 StartMcp();   // последняя попытка — уже с ошибкой в журнале и в трее
             };
             void Done()
             {
                 t.Stop(); t.Dispose();
+                _mcpStartingSince = null;
                 if (--_busy == 0) _busySince = null;
                 UpdateHealth();
                 RefreshAll();
@@ -638,11 +656,26 @@ namespace Bilem.Agent
             t.Start();
         }
 
+        /// <summary>Сколько ждать порт при запуске агента, прежде чем показать «Ошибка запуска MCP».</summary>
+        private static readonly TimeSpan McpPatience = TimeSpan.FromSeconds(30);
+        private DateTime? _mcpStartingSince;
+        /// <summary>Идёт установка обновления — версия (для строки состояния).</summary>
+        private string _updInstalling;
+
         private bool TryStartMcp(out Exception error)
         {
             error = null;
             try { _host.Start(); return true; }
             catch (Exception ex) { error = ex; return false; }
+        }
+
+        /// <summary>Перезапуск MCP (из трея): остановить и сразу запустить; клиенты переподключатся сами.</summary>
+        private void RestartMcp()
+        {
+            if (_host.Running) _host.Stop();
+            Log.Info(Txt.S("McpRestarting"));
+            StartMcp();
+            RefreshAll();
         }
 
         private void ToggleMcp()
@@ -770,8 +803,17 @@ namespace Bilem.Agent
             // Значок меняется только при смене состояния — без мигания
             if (_shownHealth != h.Color) { _tray.Icon = TrayIcons[h.Color]; _shownHealth = h.Color; }
             if (_shownTip != h.Tooltip) { _tray.Text = h.Tooltip; _shownTip = h.Tooltip; }
-            _stState.Text = Txt.F(_host.Running ? "UiStateRunning" : "UiStateStopped", cfg.Port, cfg.Bases.Count);
-            _stState.ForeColor = _host.Running ? Color.DarkGreen : Color.DarkRed;
+            // Строка состояния: что происходит с MCP — работает / запускается (ждём порт) / ошибка запуска / остановлен / обновление
+            if (_updInstalling != null) { _stState.Text = Txt.F("UiStateUpdating", _updInstalling); _stState.ForeColor = Color.DarkOrange; }
+            else if (_host.Running) { _stState.Text = Txt.F("UiStateRunning", cfg.Port, cfg.Bases.Count); _stState.ForeColor = Color.DarkGreen; }
+            else if (_mcpStartingSince.HasValue)
+            {
+                var sec = (int)(DateTime.Now - _mcpStartingSince.Value).TotalSeconds;
+                _stState.Text = Txt.F("UiStateStarting", cfg.Port, sec, (int)McpPatience.TotalSeconds);
+                _stState.ForeColor = Color.DarkOrange;
+            }
+            else if (!_mcpStoppedByUser && !string.IsNullOrEmpty(_mcpError)) { _stState.Text = Txt.F("UiStateStartFailed", _mcpError); _stState.ForeColor = Color.DarkRed; }
+            else { _stState.Text = Txt.F("UiStateStopped", cfg.Port, cfg.Bases.Count); _stState.ForeColor = Color.DarkRed; }
             _mcpToggle.Text = Txt.S(_host.Running ? "UiMcpStop" : "UiMcpStart");
         }
 
