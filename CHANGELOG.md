@@ -2,7 +2,7 @@
 
 Формат — [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/). Раздел версии — заметки к релизу на GitHub.
 
-## [0.3.0-beta.5] — не выпущена
+## [0.3.0-beta.5] — 2026-10-19
 
 **Требования: Windows 10 / Server 2012 R2+, .NET Framework 4.8 (установщик предложит поставить).** Бета без подписи Microsoft: SmartScreen — «Подробнее → Выполнить в любом случае»; на Windows Server файл, скачанный браузером, — «Свойства → Разблокировать».
 
