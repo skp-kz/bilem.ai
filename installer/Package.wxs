@@ -88,7 +88,7 @@
     <SetProperty Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Запустить Bilem Agent" After="CostFinalize" Sequence="ui"
                  Condition="WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED AND NOT REMOVE" />
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
-    <SetProperty Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="Требуется Microsoft .NET Framework 4.8. После нажатия «Готово» запустится веб-установщик Microsoft: следуйте его инструкциям, при запросе перезагрузите компьютер. Затем запустите Bilem Agent с ярлыка. Без интернета: dotnet.microsoft.com/download/dotnet-framework/net48"
+    <SetProperty Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="Требуется Microsoft .NET Framework 4.8. После нажатия «Готово» запустится веб-установщик Microsoft: следуйте его инструкциям, при запросе перезагрузите компьютер. Затем запустите Bilem Agent с ярлыка."
                  After="CostFinalize" Sequence="ui" Condition="NOT WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED AND NOT Installed" />
 
     <!-- Нет .NET — окно про него первым экраном, до копирования файлов (вместо «Добро пожаловать»); есть — обычное приветствие -->
