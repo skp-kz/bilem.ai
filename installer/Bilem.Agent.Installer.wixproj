@@ -1,0 +1,24 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <!--
+    MSI Bilem Agent (WiX 5): установка на машину в «Program Files\Bilem Agent», MajorUpgrade с откатом на прежнюю версию.
+    Сборка: dotnet build installer -c Release -p:SemVer=0.3.0-beta.1 -p:MsiVersion=0.3.0.1 (build/release.ps1).
+    Не входит в Bilem.Agent.sln — обычная сборка решения WiX не требует.
+  -->
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+    <Platform>x64</Platform>
+    <SemVer Condition="'$(SemVer)' == ''">0.0.0-dev</SemVer>
+    <MsiVersion Condition="'$(MsiVersion)' == ''">0.0.0</MsiVersion>
+    <BinDir Condition="'$(BinDir)' == ''">$(MSBuildThisFileDirectory)..\artifacts\bin\Release</BinDir>
+    <OutputName>BilemAgent-$(SemVer)</OutputName>
+    <OutputPath>$(MSBuildThisFileDirectory)..\artifacts\msi\</OutputPath>
+    <DefineConstants>MsiVersion=$(MsiVersion);SemVer=$(SemVer);BinDir=$(BinDir);Icon=$(MSBuildThisFileDirectory)..\assets\icons\bilem-agent.ico</DefineConstants>
+    <SuppressValidation>false</SuppressValidation>
+    <!-- Установка на машину (ALLUSERS=1): ярлыки «Пуска» и рабочего стола — общие, ICE43/57 считают их пользовательскими.
+         ICE61 — намеренно: MajorUpgrade разрешает откат на прежнюю версию. -->
+    <SuppressIces>ICE43;ICE57;ICE61</SuppressIces>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
+  </ItemGroup>
+</Project>

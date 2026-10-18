@@ -1,0 +1,20 @@
+{
+  "name": "bilem-agent-mcp-spike",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Спайк: минимальный MCP-сервер Bilem Agent поверх OData 1С (только чтение, только 127.0.0.1)",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "url": "node server.mjs --url"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.31.0",
+    "zod": "4.6.5"
+  },
+  "license": "UNLICENSED"
+}

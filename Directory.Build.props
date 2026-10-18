@@ -1,0 +1,25 @@
+<Project>
+  <!-- Общие настройки для всех проектов Bilem Agent: .NET Framework 4.8 (решение 0011), сборка через dotnet build -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <!-- Одна версия везде (SemVer): сборки, ProductVersion файлов, MSI. Релиз по тегу vX.Y.Z[-beta.N] передаёт
+         VersionPrefix / VersionSuffix / FileVersion из тега (build/version.ps1) -->
+    <VersionPrefix>0.3.0</VersionPrefix>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <Company>SKP.kz LLC</Company>
+    <Product>Bilem Agent</Product>
+    <Copyright>© 2026 SKP.kz LLC</Copyright>
+    <Deterministic>true</Deterministic>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
+    <NeutralLanguage>ru-RU</NeutralLanguage>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Ссылочные сборки .NET Framework 4.8 — чтобы собирать без Visual Studio и Developer Pack -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

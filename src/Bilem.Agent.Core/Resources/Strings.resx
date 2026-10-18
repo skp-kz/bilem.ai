@@ -1,0 +1,736 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Все тексты Bilem Agent для человека (русский). Казахский — потом, отдельным файлом Strings.kk.resx. -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AccessCatalogLoaded" xml:space="preserve"><value>Разделы из подсистем 1С: {0}, объектов: {1}</value></data>
+  <data name="AccessCatalogShort" xml:space="preserve"><value>разделов: {0}</value></data>
+  <data name="AccessChangedLog" xml:space="preserve"><value>Доступ {0} ({1}): чтение +{2} −{3}, запись +{4} −{5}: {6}</value></data>
+  <data name="AccessLockedSection" xml:space="preserve"><value>Зарплата и кадры</value></data>
+  <data name="AccessNoRole" xml:space="preserve"><value>В конфигурации нет роли, которая даёт нужное право (без полных прав): {0}</value></data>
+  <data name="AccessODataKept" xml:space="preserve"><value>Состав OData — как выбрано на вкладке «Доступ»: {0} объектов</value></data>
+  <data name="AccessODataSet" xml:space="preserve"><value>Состав OData: {0} объектов (добавлено {1}, убрано {2})</value></data>
+  <data name="AccessOtherSection" xml:space="preserve"><value>Прочее</value></data>
+  <data name="AccessRoleFor" xml:space="preserve"><value>Роль {0} — для «{1}» (самая узкая по ПравоДоступа)</value></data>
+  <data name="AccessRolesAdded" xml:space="preserve"><value>Роли bilem добавлены: {0}</value></data>
+  <data name="AccessRolesRemoved" xml:space="preserve"><value>Роли bilem убраны: {0}</value></data>
+  <data name="AccessRolesSame" xml:space="preserve"><value>Роли bilem не изменились</value></data>
+  <data name="AccessWriteNotAllowed" xml:space="preserve"><value>Запись для «{0}» включить нельзя.</value></data>
+  <data name="ActBadDate" xml:space="preserve"><value>«{0}» — дата периода в формате ГГГГ-ММ-ДД.</value></data>
+  <data name="ActBadPeriod" xml:space="preserve"><value>Начало периода позже конца — проверьте period_from и period_to.</value></data>
+  <data name="ActManyContracts" xml:space="preserve"><value>По «{0}» найдено несколько договоров — уточните: {1}</value></data>
+  <data name="ActManyCounterparties" xml:space="preserve"><value>По «{0}» найдено несколько контрагентов — уточните (лучше БИН): {1}</value></data>
+  <data name="ActManyOrganizations" xml:space="preserve"><value>С контрагентом работают несколько организаций — укажите organization (БИН или название): {0}</value></data>
+  <data name="ActNoContract" xml:space="preserve"><value>Договор «{0}» у этого контрагента не найден.</value></data>
+  <data name="ActNoCounterparty" xml:space="preserve"><value>Контрагент «{0}» не найден в 1С.</value></data>
+  <data name="ActNoOrganization" xml:space="preserve"><value>Организация «{0}» не найдена в 1С.</value></data>
+  <data name="AnonymousAsPool" xml:space="preserve"><value>Анонимный вход публикации — от имени пула {0}</value></data>
+  <data name="AsOfNoStatements" xml:space="preserve"><value>По счёту {0} проведённых выписок в 1С нет — остаток может быть неточен.</value></data>
+  <data name="AsOfSay" xml:space="preserve"><value>Данные 1С на {0:dd.MM.yyyy}</value></data>
+  <data name="AsOfSayBanks" xml:space="preserve"><value>(выписка {0})</value></data>
+  <data name="AsOfSayUnknown" xml:space="preserve"><value>Дата данных 1С не определена</value></data>
+  <data name="AsOfStale" xml:space="preserve"><value>Выписки по {0} не загружены с {1:dd.MM.yyyy} — остаток и должники могут быть неточны.</value></data>
+  <data name="AuditLinePrint" xml:space="preserve"><value>{0} — напечатано, запросил {1}</value></data>
+  <data name="AuditLineSend" xml:space="preserve"><value>{0} — отправлено на {1}, запросил {2}</value></data>
+  <data name="AuditLineSendFailed" xml:space="preserve"><value>{0} — не отправлено на {1} ({3}), запросил {2}</value></data>
+  <data name="AuditLineUpdate" xml:space="preserve"><value>{0}, запустил {1}</value></data>
+  <data name="AuditRestrictFailed" xml:space="preserve"><value>Журнал аудита: не удалось ограничить доступ к файлу ({0}).</value></data>
+  <data name="AuditWriteFailed" xml:space="preserve"><value>Журнал аудита: запись не удалась ({0}).</value></data>
+  <data name="BadSlug" xml:space="preserve"><value>Короткое имя базы «{0}» не подходит.</value></data>
+  <data name="BaseFound" xml:space="preserve"><value>Файловая база: {0}; короткое имя: {1}; публикация: {2}; пул IIS: {3}</value></data>
+  <data name="BspInfo" xml:space="preserve"><value>БСП (справочник «Пользователи»): {0}</value></data>
+  <data name="BspLinked" xml:space="preserve"><value>Элемент справочника «Пользователи» связан с пользователем ИБ</value></data>
+  <data name="ChecksFailed" xml:space="preserve"><value>Проверки не прошли: {0}.</value></data>
+  <data name="CliAccessNeedsAdmin" xml:space="preserve"><value>Разделы из 1С загружаются под администратором 1С: --admin «логин» [--password «пароль»].</value></data>
+  <data name="CliDropNeedsAdmin" xml:space="preserve"><value>Чтобы удалить пользователя bilem из базы, нужен логин администратора 1С: --admin «логин» [--password «пароль»].</value></data>
+  <data name="CliHelp" xml:space="preserve"><value>Bilem Agent — локальный режим: ИИ-ассистент отвечает на вопросы из 1С (только чтение).
+
+Без аргументов — окно. Команды:
+  diag  --base «папка» [--admin «логин» [--password «пароль»]] [--slug «имя»]
+        диагностика и план, ничего не меняет
+  setup --base «папка» --admin «логин» [--password «пароль»] [--slug «имя»] [--enable-iis] [--reset-password]
+        подключить базу: пользователь bilem (только чтение), состав OData, публикация только для этой машины, проверки
+  verify [--slug «имя»] [--admin «логин» [--password «пароль»]]
+        проверки: чтение, запрет записи, 401 без пароля, 403 по адресам машины (с --admin — и роли bilem)
+  list  подключённые базы
+  sysinfo системная информация для техподдержки (без паролей, токенов и данных 1С)
+  doctor диагностика компонентов: Windows, .NET, 1С, IIS, MCP, каждая база — что в порядке и что делать (ничего не меняет)
+  remove --slug «имя» [--drop-user --admin «логин» [--password «пароль»]]
+        убрать базу: публикация, пул, пароль bilem; с --drop-user — и пользователь bilem в базе
+  access --slug «имя» [--load] [--read-on|--read-off|--write-on|--write-off «Документ.X,Справочник.Y»] [--admin «логин» [--password «пароль»]]
+        доступ, как вкладка «Доступ»: дерево разделов; изменения — сразу для ИИ, с --admin — и в 1С (роли, состав OData, проверка)
+  serve MCP-сервер без окна (Ctrl+C — остановить)
+  connect claude-code|claude-desktop|cursor
+        прописать MCP Bilem в ИИ-клиента
+  url   адрес MCP с токеном (никому не пересылайте)
+  shortcut ярлык «Bilem Agent» на рабочем столе и в меню «Пуск» (создать или пересоздать)
+
+Пароль администратора 1С: --password, переменная окружения BILEM_1C_ADMIN_PWD или ввод с клавиатуры. Нигде не сохраняется.
+Код возврата: 0 — успех, 1 — любая проверка не прошла.</value></data>
+  <data name="CliListRow" xml:space="preserve"><value>{0}	{1} {2}
+	папка: {3}
+	OData: {4}
+	пул IIS: {5}; проверено: {6}; запись запрещена — проверено {7}</value></data>
+  <data name="CliMissingArg" xml:space="preserve"><value>Не указан параметр --{0}.</value></data>
+  <data name="CliPasswordPrompt" xml:space="preserve"><value>Пароль администратора 1С (не отображается): </value></data>
+  <data name="CliSeeHelp" xml:space="preserve"><value>Справка: bilem-agent help.</value></data>
+  <data name="CliServeStop" xml:space="preserve"><value>MCP-сервер работает без окна. Остановить — Ctrl+C.</value></data>
+  <data name="CliUnknownCommand" xml:space="preserve"><value>Неизвестная команда «{0}».</value></data>
+  <data name="ComCrashed" xml:space="preserve"><value>Помощник COM завершился с ошибкой (код {0}): {1}</value></data>
+  <data name="ComError" xml:space="preserve"><value>1С: {0}</value></data>
+  <data name="ComHelperMissing" xml:space="preserve"><value>Не найден помощник COM {0} рядом с агентом.</value></data>
+  <data name="ComNoProgId" xml:space="preserve"><value>COM-коннектор V83.COMConnector не зарегистрирован</value></data>
+  <data name="ComNoTypeLib" xml:space="preserve"><value>не зарегистрирована библиотека типов COM-коннектора</value></data>
+  <data name="ComOk" xml:space="preserve"><value>COM-коннектор V83.COMConnector доступен</value></data>
+  <data name="ComOtherDll" xml:space="preserve"><value>зарегистрирован COM-коннектор другой версии платформы ({0})</value></data>
+  <data name="ComRegisterFailed" xml:space="preserve"><value>Не удалось зарегистрировать COM-коннектор: {0}.</value></data>
+  <data name="ComTimeout" xml:space="preserve"><value>Помощник COM не ответил за 10 минут.</value></data>
+  <data name="ConfigInfo" xml:space="preserve"><value>Конфигурация: {0} ({1}), версия {2}</value></data>
+  <data name="ConnectClaudeFailed" xml:space="preserve"><value>claude mcp add завершился с кодом {0}: {1}</value></data>
+  <data name="ConnectClaudeManual" xml:space="preserve"><value>Установите Claude Code и повторите или выполните вручную: claude mcp add --transport http --scope user bilem «адрес MCP».</value></data>
+  <data name="ConnectClaudeNotFound" xml:space="preserve"><value>Claude Code (команда claude) не найден на этом компьютере.</value></data>
+  <data name="ConnectClaudeOk" xml:space="preserve"><value>MCP Bilem подключён к Claude Code для всех проектов этого пользователя Windows. Откройте новую сессию Claude Code.</value></data>
+  <data name="ConnectCursorOk" xml:space="preserve"><value>MCP Bilem прописан в Cursor: {0}. Перезапустите Cursor.</value></data>
+  <data name="ConnectDesktopOk" xml:space="preserve"><value>MCP Bilem прописан в Claude Desktop: {0}. Перезапустите Claude Desktop.</value></data>
+  <data name="ConnectNoNode" xml:space="preserve"><value>Для Claude Desktop нужен Node.js (команда npx): установите его с nodejs.org.</value></data>
+  <data name="ConnectUnknown" xml:space="preserve"><value>Неизвестный клиент «{0}». Можно: claude-code, claude-desktop, cursor.</value></data>
+  <data name="DataFlagError" xml:space="preserve"><value>  не удалось проверить наличие записей: {0} — {1}</value></data>
+  <data name="DataFlags" xml:space="preserve"><value>Объектов с записями в базе: {0} из {1}</value></data>
+  <data name="DiagAdmin" xml:space="preserve"><value>Права администратора Windows</value></data>
+  <data name="DiagAnonymousPool" xml:space="preserve"><value>Вход публикации от имени пула</value></data>
+  <data name="DiagBaseFolder" xml:space="preserve"><value>Папка базы (1Cv8.1CD)</value></data>
+  <data name="DiagBases" xml:space="preserve"><value>Подключённые базы</value></data>
+  <data name="DiagCom" xml:space="preserve"><value>COM-коннектор {0}</value></data>
+  <data name="DiagConfig" xml:space="preserve"><value>Настройки (config.json)</value></data>
+  <data name="DiagGroup1C" xml:space="preserve"><value>1С:Предприятие</value></data>
+  <data name="DiagGroupAgent" xml:space="preserve"><value>Bilem Agent</value></data>
+  <data name="DiagGroupBase" xml:space="preserve"><value>База «{0}»</value></data>
+  <data name="DiagGroupBases" xml:space="preserve"><value>Базы</value></data>
+  <data name="DiagGroupClients" xml:space="preserve"><value>ИИ-клиенты (справочно)</value></data>
+  <data name="DiagGroupIis" xml:space="preserve"><value>Веб-сервер IIS</value></data>
+  <data name="DiagGroupSystem" xml:space="preserve"><value>Система</value></data>
+  <data name="DiagHelper" xml:space="preserve"><value>Помощник COM {0}</value></data>
+  <data name="DiagIis" xml:space="preserve"><value>IIS</value></data>
+  <data name="DiagIpSecurity" xml:space="preserve"><value>«Ограничения по IP»</value></data>
+  <data name="DiagIsapi" xml:space="preserve"><value>Расширения ISAPI</value></data>
+  <data name="DiagLocalhostOnly" xml:space="preserve"><value>Доступ только с этой машины</value></data>
+  <data name="DiagMcpListening" xml:space="preserve"><value>отвечает</value></data>
+  <data name="DiagMcpNotListening" xml:space="preserve"><value>не запущен</value></data>
+  <data name="DiagMcpPort" xml:space="preserve"><value>MCP на 127.0.0.1:{0}</value></data>
+  <data name="DiagNet" xml:space="preserve"><value>.NET Framework 4.8</value></data>
+  <data name="DiagNetMissing" xml:space="preserve"><value>не найден</value></data>
+  <data name="DiagNetRelease" xml:space="preserve"><value>установлен {0} (Release {1})</value></data>
+  <data name="DiagNode" xml:space="preserve"><value>Node.js (для Claude Desktop)</value></data>
+  <data name="DiagNotFound" xml:space="preserve"><value>не найден</value></data>
+  <data name="DiagOData" xml:space="preserve"><value>OData под bilem</value></data>
+  <data name="DiagODataCode" xml:space="preserve"><value>HTTP {0}, {1} мс</value></data>
+  <data name="DiagPlatform" xml:space="preserve"><value>Платформа 1С 8.3</value></data>
+  <data name="DiagPlatformItem" xml:space="preserve"><value>Платформа {0}</value></data>
+  <data name="DiagPool" xml:space="preserve"><value>Пул IIS</value></data>
+  <data name="DiagPublication" xml:space="preserve"><value>Публикация IIS</value></data>
+  <data name="DiagSecret" xml:space="preserve"><value>Пароль bilem (DPAPI)</value></data>
+  <data name="DiagSecretOk" xml:space="preserve"><value>расшифровывается</value></data>
+  <data name="DiagSummary" xml:space="preserve"><value>Зелёных: {0}, жёлтых: {1}, красных: {2}</value></data>
+  <data name="DiagToken" xml:space="preserve"><value>Токен MCP</value></data>
+  <data name="DiagTokenNone" xml:space="preserve"><value>ещё не создан — создастся при первом запуске MCP</value></data>
+  <data name="DiagTokenOk" xml:space="preserve"><value>есть, расшифровывается</value></data>
+  <data name="DiagWebModules" xml:space="preserve"><value>Модули расширения веб-сервера {0}</value></data>
+  <data name="DiagWebModulesMissing" xml:space="preserve"><value>нет wsisapi.dll или webinst.exe</value></data>
+  <data name="DiagWindows" xml:space="preserve"><value>Windows</value></data>
+  <data name="DiagWriteDenied" xml:space="preserve"><value>Запись запрещена</value></data>
+  <data name="DiagWriteDeniedAt" xml:space="preserve"><value>проверено {0:dd.MM.yyyy HH:mm}</value></data>
+  <data name="DismFailed" xml:space="preserve"><value>Установка компонентов Windows (dism) завершилась с кодом {0}: {1}</value></data>
+  <data name="Done" xml:space="preserve"><value>ГОТОВО. База «{0}» подключена: OData {1} (только с этой машины), пользователь bilem — только чтение.</value></data>
+  <data name="DoneWithWrite" xml:space="preserve"><value>ГОТОВО. База «{0}» подключена: OData {1} (только с этой машины), пользователь bilem — чтение и черновики для {2} объектов (вкладка «Доступ»); проведения и удаления нет.</value></data>
+  <data name="FolderRights" xml:space="preserve"><value>Права на {0} — пулу {1}</value></data>
+  <data name="Hint401" xml:space="preserve"><value>Пользователь bilem не принят: запустите настройку базы ещё раз с флагом --reset-password.</value></data>
+  <data name="Hint403" xml:space="preserve"><value>IIS запретил доступ: проверьте ограничение по IP (запрос должен идти с 127.0.0.1).</value></data>
+  <data name="Hint404" xml:space="preserve"><value>Публикация не найдена: запустите настройку базы ещё раз.</value></data>
+  <data name="Hint500" xml:space="preserve"><value>Ошибка 1С: часто — права пула на папку базы, разрядность пула или базе нужно обновление.</value></data>
+  <data name="Hint503" xml:space="preserve"><value>Служба IIS для этой базы не отвечает (пул IIS остановлен): подключите базу ещё раз или запустите пул в «Диспетчере IIS» → «Пулы приложений».</value></data>
+  <data name="HintAccessNoRole" xml:space="preserve"><value>Снимите галочку для этого объекта или пришлите журнал в поддержку — подберём роль для вашей конфигурации.</value></data>
+  <data name="HintAccessOff" xml:space="preserve"><value>Включите чтение на вкладке «Доступ» Bilem Agent.</value></data>
+  <data name="HintAdminLogin" xml:space="preserve"><value>Проверьте логин и пароль администратора 1С.</value></data>
+  <data name="HintBaseBusy" xml:space="preserve"><value>База занята в монопольном режиме (открыт конфигуратор?). Закройте и повторите.</value></data>
+  <data name="HintBaseFolder" xml:space="preserve"><value>Укажите папку, где лежит файл 1Cv8.1CD (файловая база). Серверные базы — в следующей версии.</value></data>
+  <data name="HintBaseMoved" xml:space="preserve"><value>Базу перенесли или удалили: уберите её из Bilem Agent и подключите заново.</value></data>
+  <data name="HintBaseNeedsUpdate" xml:space="preserve"><value>Базе нужно обновление: откройте её один раз в 1С:Предприятие под администратором, дождитесь обновления и повторите.</value></data>
+  <data name="HintComAuto" xml:space="preserve"><value>Не страшно: при подключении базы агент зарегистрирует COM-коннектор сам (нужны права администратора).</value></data>
+  <data name="HintConfigBroken" xml:space="preserve"><value>Файл настроек повреждён: переименуйте C:\ProgramData\Bilem\config.json и подключите базы заново.</value></data>
+  <data name="HintEnableIis" xml:space="preserve"><value>Повторите с флагом --enable-iis (в окне — галочка «Включить IIS, если его нет»): агент включит компоненты Windows сам.</value></data>
+  <data name="HintIisManual" xml:space="preserve"><value>Проверьте IIS вручную («Компоненты Windows» / Server Manager) и пришлите отчёт для поддержки.</value></data>
+  <data name="HintInstallPlatform" xml:space="preserve"><value>Установите платформу 1С:Предприятие 8.3 с компонентой «Модули расширения веб-сервера».</value></data>
+  <data name="HintList" xml:space="preserve"><value>Список подключённых баз: bilem-agent list.</value></data>
+  <data name="HintMcpPort" xml:space="preserve"><value>Порт занят другой программой: закройте её или смените порт MCP (Port в config.json).</value></data>
+  <data name="HintMcpStart" xml:space="preserve"><value>MCP работает, пока открыто окно Bilem Agent (или bilem-agent serve). Если порт занят другой программой — смените Port в config.json.</value></data>
+  <data name="HintNet48" xml:space="preserve"><value>Установите .NET Framework 4.8 (на Windows Server 2008 R2 — сначала SP1): страница загрузки на сайте Microsoft, поиск «.NET Framework 4.8 offline installer». Может потребоваться перезагрузка.</value></data>
+  <data name="HintNoLicense" xml:space="preserve"><value>Нет свободной лицензии 1С на этой машине.</value></data>
+  <data name="HintRegsvr" xml:space="preserve"><value>Зарегистрируйте вручную от администратора: regsvr32 "{0}".</value></data>
+  <data name="HintReinstall" xml:space="preserve"><value>Распакуйте архив Bilem Agent заново — все файлы должны лежать в одной папке.</value></data>
+  <data name="HintRerunSetup" xml:space="preserve"><value>Подключите базу ещё раз (окно «Добавить…» с той же папкой или bilem-agent setup) — шаги идемпотентны, сделанное не сломается.</value></data>
+  <data name="HintResetPassword" xml:space="preserve"><value>Запустите настройку базы ещё раз с флагом --reset-password.</value></data>
+  <data name="HintRunAsAdmin" xml:space="preserve"><value>Запустите Bilem Agent от имени администратора.</value></data>
+  <data name="HintSeeFail" xml:space="preserve"><value>Смотрите строки FAIL выше.</value></data>
+  <data name="HintSendLog" xml:space="preserve"><value>Соберите отчёт для поддержки (вкладка «Журнал») и пришлите его нам.</value></data>
+  <data name="HintSetupFirst" xml:space="preserve"><value>Сначала подключите базу: bilem-agent setup --base «папка» --admin «логин».</value></data>
+  <data name="HintSlug" xml:space="preserve"><value>Короткое имя — латиница в нижнем регистре, цифры и «_», до 40 символов (параметр --slug).</value></data>
+  <data name="HintSlugOther" xml:space="preserve"><value>Укажите другое короткое имя (--slug) или сначала уберите ту базу (bilem-agent remove).</value></data>
+  <data name="HintVerify" xml:space="preserve"><value>Нажмите «Проверить» на вкладке «Базы 1С» (или bilem-agent verify).</value></data>
+  <data name="HintWebinst" xml:space="preserve"><value>Проверьте, что при установке платформы выбраны «Модули расширения веб-сервера».</value></data>
+  <data name="HintWindows32" xml:space="preserve"><value>32-битная Windows поддерживается, но не проверялась.</value></data>
+  <data name="IisCommandFailed" xml:space="preserve"><value>IIS: {0} — код {1}: {2}</value></data>
+  <data name="IisEnabled" xml:space="preserve"><value>IIS включён</value></data>
+  <data name="IisInstalled" xml:space="preserve"><value>IIS установлен</value></data>
+  <data name="IpSecurityEnabled" xml:space="preserve"><value>Компонент IIS «Ограничения по IP» включён</value></data>
+  <data name="LocalhostOnly" xml:space="preserve"><value>Доступ к публикации — только с 127.0.0.1 / ::1</value></data>
+  <data name="LocalhostOnlyFailed" xml:space="preserve"><value>Не удалось ограничить доступ к публикации адресом 127.0.0.1.</value></data>
+  <data name="MailBadAddress" xml:space="preserve"><value>«{0}» — не похоже на e-mail.</value></data>
+  <data name="MailChoiceNote" xml:space="preserve"><value>У контрагента в 1С {0} e-mail — письмо не отправлено. Спросите пользователя, на какой адрес отправить, и вызовите send_document снова с to.</value></data>
+  <data name="MailDocAct" xml:space="preserve"><value>Акт сверки — {0} — {1} ({2})</value></data>
+  <data name="MailDocInvoice" xml:space="preserve"><value>Счёт №{0} от {1} ({2})</value></data>
+  <data name="MailDocPoa" xml:space="preserve"><value>Доверенность №{0} от {1} ({2})</value></data>
+  <data name="MailFailedLog" xml:space="preserve"><value>{0} на {1} — не отправлено: {2}</value></data>
+  <data name="MailIsOff" xml:space="preserve"><value>SMTP-клиент Bilem Agent выключен (вкладка «SMTP» или меню трея) — письмо не отправлено.</value></data>
+  <data name="MailLimitDay" xml:space="preserve"><value>Лимит писем: не больше {0} в день (вкладка «SMTP»). Письмо не отправлено.</value></data>
+  <data name="MailLimitHour" xml:space="preserve"><value>Лимит писем: не больше {0} в час (вкладка «SMTP»). Письмо не отправлено.</value></data>
+  <data name="MailNoCounterpartyEmail" xml:space="preserve"><value>У контрагента счёта в 1С нет e-mail — укажите адрес получателя (to).</value></data>
+  <data name="MailNotConfigured" xml:space="preserve"><value>Почтовый ящик не настроен — заполните вкладку «SMTP» в Bilem Agent (сервер, логин, пароль приложения).</value></data>
+  <data name="MailNoteTooLong" xml:space="preserve"><value>Приписка длиннее 300 символов — сократите.</value></data>
+  <data name="MailOnlyInvoice" xml:space="preserve"><value>Вид документа — invoice (счёт на оплату), reconciliation (акт сверки) или power_of_attorney (доверенность).</value></data>
+  <data name="MailPoaNeedTo" xml:space="preserve"><value>Доверенность отправляется только на адреса из поля «Список адресов для отправки доверенностей» во вкладке SMTP — укажите адрес получателя (to).</value></data>
+  <data name="MailPoaOnlyOwn" xml:space="preserve"><value>Доверенность отправляется только на адреса из поля «Список адресов для отправки доверенностей» во вкладке SMTP.</value></data>
+  <data name="MailSentText" xml:space="preserve"><value>отправлено на {0}</value></data>
+  <data name="MailSentTextBcc" xml:space="preserve"><value>отправлено на {0}, копия на {1}</value></data>
+  <data name="MailSmtpFailed" xml:space="preserve"><value>Письмо не отправлено — ошибка SMTP: {0}</value></data>
+  <data name="MailTestBody" xml:space="preserve"><value>Это тестовое письмо Bilem Agent: SMTP-клиент настроен и отправляет почту.</value></data>
+  <data name="MailTestOk" xml:space="preserve"><value>Тестовое письмо отправлено на {0}</value></data>
+  <data name="MailTestSubject" xml:space="preserve"><value>Bilem Agent — проверка почты</value></data>
+  <data name="McpBaseSkipped" xml:space="preserve"><value>MCP: база «{0}» пропущена — {1}</value></data>
+  <data name="McpBases" xml:space="preserve"><value>MCP: баз подключено {0} ({1})</value></data>
+  <data name="McpInstructions" xml:space="preserve"><value>Bilem отвечает только по данным 1С, а учёт в 1С отстаёт от жизни: выписки разносят раз в несколько дней. Когда ответ инструмента содержит as_of, ОБЯЗАТЕЛЬНО назовите дату данных — например «Данные 1С на 15.10 (выписка Kaspi — 15.10, Halyk — 12.10)» (готовая фраза — в as_of.say) — и передайте предупреждения из as_of.warnings. Не пишите «по данным банка» и ничего не досчитывайте. Почта (send_document) уходит сразу: перед отправкой предложите пользователю показать документ — вызовите print_* и покажите PDF; отправляйте, когда пользователь согласен или явно просит отправить сразу.</value></data>
+  <data name="McpInternalError" xml:space="preserve"><value>MCP: внутренняя ошибка {0}: {1}</value></data>
+  <data name="McpListChanged" xml:space="preserve"><value>Набор инструментов MCP изменился — уведомление клиентам (открытых потоков: {0})</value></data>
+  <data name="McpPortBusy" xml:space="preserve"><value>Не удалось занять порт MCP {0}: {1}</value></data>
+  <data name="McpStarted" xml:space="preserve"><value>MCP работает: http://127.0.0.1:{0}/mcp/&lt;токен&gt;</value></data>
+  <data name="McpStopped" xml:space="preserve"><value>MCP остановлен</value></data>
+  <data name="ModeApply" xml:space="preserve"><value>Режим: применить. Windows {0}, процесс {1}-бит.</value></data>
+  <data name="ModeDiag" xml:space="preserve"><value>Режим: только диагностика и план, ничего не меняется. Windows {0}, процесс {1}-бит.</value></data>
+  <data name="NeedAdmin" xml:space="preserve"><value>Нужны права администратора Windows.</value></data>
+  <data name="No" xml:space="preserve"><value>нет</value></data>
+  <data name="NoBaseFile" xml:space="preserve"><value>В папке «{0}» нет файла 1Cv8.1CD.</value></data>
+  <data name="NoBases" xml:space="preserve"><value>Не подключено ни одной базы.</value></data>
+  <data name="NoIis" xml:space="preserve"><value>IIS не установлен.</value></data>
+  <data name="NoIpSecurity" xml:space="preserve"><value>Компонент IIS «Ограничения по IP» не установлен — без него публикация была бы доступна не только с этой машины.</value></data>
+  <data name="NoPlatform" xml:space="preserve"><value>Платформа 1С:Предприятие 8.3 не найдена.</value></data>
+  <data name="NoSecret" xml:space="preserve"><value>Нет пароля пользователя bilem ({0}).</value></data>
+  <data name="NoSuchBase" xml:space="preserve"><value>Нет подключённой базы «{0}».</value></data>
+  <data name="ODataComposition" xml:space="preserve"><value>Состав OData: добавлено {0}, уже было {1}, всего в составе {2}</value></data>
+  <data name="ODataHttpError" xml:space="preserve"><value>1С ответила HTTP {0}: {1}</value></data>
+  <data name="ODataNotInConfig" xml:space="preserve"><value>  нет в конфигурации: {0}</value></data>
+  <data name="PlanBspLink" xml:space="preserve"><value>Свяжу с элементом справочника «Пользователи» (БСП)</value></data>
+  <data name="PlanEnableIis" xml:space="preserve"><value>IIS нет — включу компоненты Windows (веб-сервер, ISAPI, «Ограничения по IP»); нужен флаг --enable-iis.</value></data>
+  <data name="PlanIpSecurity" xml:space="preserve"><value>Компонента IIS «Ограничения по IP» нет — включу её (нужен флаг --enable-iis).</value></data>
+  <data name="PlanOData" xml:space="preserve"><value>Добавлю в состав OData недостающие объекты из {0} (деньги, продажи, покупки, склад, расчёты).</value></data>
+  <data name="PlanPublish" xml:space="preserve"><value>Опубликую {0} в {1}: OData, пул {2} ({3}-бит), вход от имени пула, права на базу только пулу, доступ только с 127.0.0.1.</value></data>
+  <data name="PlanReady" xml:space="preserve"><value>План готов. Чтобы применить — команда setup (в окне — «Подключить»).</value></data>
+  <data name="PlanRegisterCom" xml:space="preserve"><value>COM-коннектор: {0} — зарегистрирую {1}</value></data>
+  <data name="PlanUserCreate" xml:space="preserve"><value>Создам пользователя {0} с ролями «только чтение»: {1}</value></data>
+  <data name="PlanUserPassword" xml:space="preserve"><value>Новый случайный пароль bilem → DPAPI {0}</value></data>
+  <data name="PlanUserUpdate" xml:space="preserve"><value>Обновлю пользователя {0}, роли: {1}</value></data>
+  <data name="PlatformChosen" xml:space="preserve"><value>Берём платформу {0}: {1}</value></data>
+  <data name="PlatformFound" xml:space="preserve"><value>Найдена платформа {0}</value></data>
+  <data name="PlatformNotFound" xml:space="preserve"><value>Платформа {0} не найдена.</value></data>
+  <data name="PoaNone" xml:space="preserve"><value>Доверенностей в 1С нет.</value></data>
+  <data name="PoaNoneFor" xml:space="preserve"><value>Доверенностей для «{0}» в 1С нет.</value></data>
+  <data name="PoaNotFound" xml:space="preserve"><value>Доверенность № {0} в 1С не найдена.</value></data>
+  <data name="PoolReady" xml:space="preserve"><value>Пул IIS {0} ({1}-бит)</value></data>
+  <data name="PreviousFailedAt" xml:space="preserve"><value>Прошлый запуск ({1:dd.MM.yyyy HH:mm}) остановился на шаге «{0}» — продолжаю: сделанные шаги пройдут без изменений.</value></data>
+  <data name="PrintBadPeriod" xml:space="preserve"><value>Не понял период «{0}». Примеры: 2022, 2022-04, 2022-04-13, 2022-01-01..2022-06-30.</value></data>
+  <data name="PrintDetailsLoaded" xml:space="preserve"><value>Адреса организаций из 1С: {0}</value></data>
+  <data name="PrintDone" xml:space="preserve"><value>PDF готов: {0}</value></data>
+  <data name="PrintImageSaved" xml:space="preserve"><value>Сохранено: {0}.</value></data>
+  <data name="PrintImageShrunk" xml:space="preserve"><value>Картинка больше лимита — уменьшена до {0}×{1} px, {2} КБ.</value></data>
+  <data name="PrintInvoiceNotFound" xml:space="preserve"><value>Счёт на оплату № {0} не найден (ищу по номеру на печати и по номеру в базе).</value></data>
+  <data name="PrintMissAddress" xml:space="preserve"><value>адреса поставщика</value></data>
+  <data name="PrintMissDirector" xml:space="preserve"><value>руководителя (ФИО)</value></data>
+  <data name="PrintMissIssuedBy" xml:space="preserve"><value>«Счёт от имени»</value></data>
+  <data name="PrintMissLogo" xml:space="preserve"><value>логотипа</value></data>
+  <data name="PrintMissSign" xml:space="preserve"><value>подписи</value></data>
+  <data name="PrintMissStamp" xml:space="preserve"><value>печати</value></data>
+  <data name="PrintNoBuyer" xml:space="preserve"><value>Покупатель «{0}» не найден.</value></data>
+  <data name="PrintNoContract" xml:space="preserve"><value>Без договора</value></data>
+  <data name="PrintNoInvoices" xml:space="preserve"><value>В базе нет счетов на оплату покупателю.</value></data>
+  <data name="PrintNoInvoicesFor" xml:space="preserve"><value>Счетов на «{0}» нет.</value></data>
+  <data name="PrintNotConfigured" xml:space="preserve"><value>Печатная форма {0} не настроена: нет {1}.</value></data>
+  <data name="PrintOldFolderFailed" xml:space="preserve"><value>Перенос старой папки счетов не удался: {0}</value></data>
+  <data name="PrintOldFolderKept" xml:space="preserve"><value>Старая папка счетов {0} (файлов: {1}) оставлена как есть: баз несколько, по имени файла базу не определить.</value></data>
+  <data name="PrintOldFolderMoved" xml:space="preserve"><value>Счета из старой папки перенесены ({0}) в {1}</value></data>
+  <data name="PrintPreviewFailed" xml:space="preserve"><value>Превью PDF не сделано (рендер Windows недоступен): {0} — PDF отдаётся без картинки.</value></data>
+  <data name="PrintReadyAll" xml:space="preserve"><value>Всё задано.</value></data>
+  <data name="PrintReadyMissing" xml:space="preserve"><value>Не хватает: {0}. Форма печатается и так — без этого.</value></data>
+  <data name="ProfileUntested" xml:space="preserve"><value>Конфигурация {0} ещё не проверялась с Bilem Agent — использую набор для БП КЗ; недостающие роли и объекты будут пропущены.</value></data>
+  <data name="PublicationExists" xml:space="preserve"><value>Публикация {0} уже есть</value></data>
+  <data name="RebootRequired" xml:space="preserve"><value>Windows просит перезагрузку после установки компонентов.</value></data>
+  <data name="RegisteringCom" xml:space="preserve"><value>COM-коннектор: {0} — регистрирую</value></data>
+  <data name="RemoveODataKept" xml:space="preserve"><value>Состав OData в базе не меняю (на учёт не влияет).</value></data>
+  <data name="RemoveUserKept" xml:space="preserve"><value>Пользователь bilem в базе оставлен (убрать — флаг --drop-user с логином администратора 1С).</value></data>
+  <data name="Removed" xml:space="preserve"><value>База «{0}» убрана: публикация {1}, пул {2}, пароль bilem.</value></data>
+  <data name="RoleNotInConfig" xml:space="preserve"><value>  роли {0} нет в конфигурации — пропускаю</value></data>
+  <data name="ServiceNoRole" xml:space="preserve"><value>Служебный объект {0}: нет в конфигурации или нет роли на чтение — агент обойдётся без него.</value></data>
+  <data name="ShortcutCreated" xml:space="preserve"><value>Ярлык создан: {0}</value></data>
+  <data name="ShortcutDescription" xml:space="preserve"><value>Bilem Agent — ИИ-ассистент отвечает на вопросы из 1С</value></data>
+  <data name="ShortcutFailed" xml:space="preserve"><value>Не удалось создать ярлык {0}: {1}</value></data>
+  <data name="SlugTaken" xml:space="preserve"><value>Короткое имя «{0}» уже занято базой {1}.</value></data>
+  <data name="SmtpClosed" xml:space="preserve"><value>Сервер закрыл соединение.</value></data>
+  <data name="SmtpConnectFailed" xml:space="preserve"><value>Не удалось подключиться к {0}:{1}: {2}</value></data>
+  <data name="SmtpConnectTimeout" xml:space="preserve"><value>Сервер {0}:{1} не отвечает.</value></data>
+  <data name="SmtpHintGmail" xml:space="preserve"><value>Gmail: smtp.gmail.com, 465 SSL. Пароль приложения — myaccount.google.com → Безопасность → Пароли приложений (нужна двухэтапная проверка).</value></data>
+  <data name="SmtpHintIcloud" xml:space="preserve"><value>iCloud: smtp.mail.me.com, 587 STARTTLS, логин — адрес @icloud.com. Пароль приложения — appleid.apple.com → Вход и безопасность → Пароли приложений.</value></data>
+  <data name="SmtpHintMailru" xml:space="preserve"><value>Mail.ru: smtp.mail.ru, 465 SSL. Пароль для внешних приложений — Настройки → Безопасность → Пароли для внешних приложений.</value></data>
+  <data name="SmtpHintOutlook" xml:space="preserve"><value>Outlook / Microsoft 365: smtp.office365.com, 587 STARTTLS. Пароль приложения — account.microsoft.com → Безопасность (или пароль ящика, если разрешён SMTP AUTH).</value></data>
+  <data name="SmtpHintYandex" xml:space="preserve"><value>Яндекс: smtp.yandex.ru, 465 SSL. Пароль приложения — id.yandex.ru → Безопасность → Пароли приложений (тип «Почта»).</value></data>
+  <data name="SmtpNoStartTls" xml:space="preserve"><value>Сервер не поддерживает STARTTLS — выберите SSL/TLS (порт 465).</value></data>
+  <data name="SmtpRejected" xml:space="preserve"><value>Сервер ответил {0}: {1}</value></data>
+  <data name="SmtpTlsFailed" xml:space="preserve"><value>Защищённое соединение не установлено: {0}</value></data>
+  <data name="StepHeader" xml:space="preserve"><value>=== Шаг {0}. {1} ===</value></data>
+  <data name="Step_access_connect" xml:space="preserve"><value>Вход в базу, разделы из подсистем 1С</value></data>
+  <data name="Step_access_odata" xml:space="preserve"><value>Состав OData</value></data>
+  <data name="Step_access_roles" xml:space="preserve"><value>Роли пользователя bilem</value></data>
+  <data name="Step_admin" xml:space="preserve"><value>Права администратора Windows</value></data>
+  <data name="Step_base" xml:space="preserve"><value>База</value></data>
+  <data name="Step_connect" xml:space="preserve"><value>Вход в базу и конфигурация</value></data>
+  <data name="Step_iis" xml:space="preserve"><value>Веб-сервер IIS</value></data>
+  <data name="Step_odata" xml:space="preserve"><value>Состав OData</value></data>
+  <data name="Step_platform" xml:space="preserve"><value>Платформа 1С и COM-коннектор</value></data>
+  <data name="Step_print_details" xml:space="preserve"><value>Реквизиты для печатных форм из 1С</value></data>
+  <data name="Step_publish" xml:space="preserve"><value>Публикация только для этой машины</value></data>
+  <data name="Step_remove" xml:space="preserve"><value>Удаление базы</value></data>
+  <data name="Step_roles" xml:space="preserve"><value>Роли пользователя bilem</value></data>
+  <data name="Step_user" xml:space="preserve"><value>Пользователь bilem (только чтение)</value></data>
+  <data name="Step_verify" xml:space="preserve"><value>Проверки: чтение, запрет записи, доступ</value></data>
+  <data name="SysInfoBase" xml:space="preserve"><value>- {0}: {1}; {2} ({3}) {4}; БСП: {5}; платформа {6} ({7}-бит)</value></data>
+  <data name="SysInfoBaseCheck" xml:space="preserve"><value>  последняя проверка: {0} — {1}; запись запрещена — проверено {2}</value></data>
+  <data name="SysInfoBaseOData" xml:space="preserve"><value>  объектов OData: {0}; роли bilem: {1}</value></data>
+  <data name="SysInfoBases" xml:space="preserve"><value>Подключённые базы: {0}</value></data>
+  <data name="SysInfoConfigBroken" xml:space="preserve"><value>Настройки не читаются: {0}</value></data>
+  <data name="SysInfoFailed" xml:space="preserve"><value>не прошла</value></data>
+  <data name="SysInfoHeader" xml:space="preserve"><value>Bilem Agent {0} — системная информация, {1:dd.MM.yyyy HH:mm}</value></data>
+  <data name="SysInfoIis" xml:space="preserve"><value>IIS: {0}; ISAPI: {1}; «Ограничения по IP»: {2}</value></data>
+  <data name="SysInfoKindFile" xml:space="preserve"><value>файловая</value></data>
+  <data name="SysInfoMcp" xml:space="preserve"><value>MCP: 127.0.0.1:{0} — {1}; максимум строк в ответе: {2}</value></data>
+  <data name="SysInfoNet" xml:space="preserve"><value>.NET Framework: {0} (Release {1})</value></data>
+  <data name="SysInfoOk" xml:space="preserve"><value>в порядке</value></data>
+  <data name="SysInfoPlatform" xml:space="preserve"><value>Платформа 1С: {0}</value></data>
+  <data name="SysInfoPlatformItem" xml:space="preserve"><value>Платформа 1С {0}: COM-коннектор — {1}; модули веб-сервера — {2}</value></data>
+  <data name="SysInfoWindows" xml:space="preserve"><value>Windows: {0}, {1}-бит</value></data>
+  <data name="ToolActDesc" xml:space="preserve"><value>Акт сверки взаимных расчётов с контрагентом по проведённым документам 1С (как отчёт «Акт сверки»): сальдо на начало, документы по дебету и кредиту, обороты, сальдо на конец, итог прописью «задолженность в пользу …». Левая половина — наши данные; правая — пустая (контрагент заполняет сам) или зеркальная (настройка «Печатных форм»). Без contract и с несколькими договорами — разбивка по договорам. Период по умолчанию — прошлый квартал (настройка). Ответ — PDF (и картинка первой страницы), сальдо и обороты, as_of — ОБЯЗАТЕЛЬНО назовите дату данных. Ничего в 1С не меняет. Отправить — send_document с document: reconciliation (на любой e-mail).</value></data>
+  <data name="ToolActNeedCounterparty" xml:space="preserve"><value>Укажите контрагента акта сверки (counterparty): БИН/ИИН или часть названия.</value></data>
+  <data name="ToolActNote" xml:space="preserve"><value>PDF акта сверки сохранён на компьютере с агентом и приложен к ответу. Суммы — наши данные из 1С; сальдо &gt; 0 — долг контрагента нам.</value></data>
+  <data name="ToolActParamContract" xml:space="preserve"><value>Договор: часть названия или номера. Пусто — все договоры контрагента.</value></data>
+  <data name="ToolActParamCounterparty" xml:space="preserve"><value>Контрагент: БИН/ИИН или часть названия.</value></data>
+  <data name="ToolActParamFrom" xml:space="preserve"><value>Начало периода акта, ГГГГ-ММ-ДД. Пусто — по настройке (прошлый квартал).</value></data>
+  <data name="ToolActParamOrganization" xml:space="preserve"><value>Организация (БИН или часть названия), если в базе их несколько.</value></data>
+  <data name="ToolActParamTo" xml:space="preserve"><value>Конец периода акта, ГГГГ-ММ-ДД. Пусто — по настройке (прошлый квартал).</value></data>
+  <data name="ToolActTitle" xml:space="preserve"><value>Акт сверки (печать)</value></data>
+  <data name="ToolCashBadDate" xml:space="preserve"><value>Дата — в формате ГГГГ-ММ-ДД.</value></data>
+  <data name="ToolCashDesc" xml:space="preserve"><value>Остаток денежных средств на конец дня по каждой организации базы 1С, по бухгалтерскому учёту (план счетов «Типовой»): касса (1010), банк (1030, 1040, 1050), прочие (остальные счета 10xx: в пути, ограниченные, электронные и др.) и итого, в валюте регламентированного учёта (тенге). Вызывай на вопросы «сколько у нас денег», «что на счетах», «остаток в кассе». Без base — по всем базам сразу.</value></data>
+  <data name="ToolCashDescExtra" xml:space="preserve"><value> В ответе — as_of: дата последней проведённой банковской выписки по каждому счёту, последний проведённый документ и предупреждения о давности; дату данных обязательно назовите пользователю (as_of.say).</value></data>
+  <data name="ToolCashParamDate" xml:space="preserve"><value>Дата ГГГГ-ММ-ДД, остаток на конец этого дня. По умолчанию — сегодня.</value></data>
+  <data name="ToolCashTitle" xml:space="preserve"><value>Остаток денег</value></data>
+  <data name="ToolFailed" xml:space="preserve"><value>Не удалось выполнить: {0}</value></data>
+  <data name="ToolFindDesc" xml:space="preserve"><value>Поиск контрагента (покупателя, поставщика) в базе 1С по части наименования или по БИН/ИИН (цифры). Возвращает до 10 найденных: наименование, полное наименование, БИН/ИИН. Вызывай, когда пользователь называет компанию или БИН и нужно понять, о ком речь. Без base — по всем базам сразу.</value></data>
+  <data name="ToolFindParamQuery" xml:space="preserve"><value>Часть наименования или БИН/ИИН (можно часть цифр).</value></data>
+  <data name="ToolFindTitle" xml:space="preserve"><value>Найти контрагента</value></data>
+  <data name="ToolFindTooShort" xml:space="preserve"><value>Запрос — не короче 2 символов.</value></data>
+  <data name="ToolListBasesDesc" xml:space="preserve"><value>Список баз 1С, подключённых к Bilem Agent на этом компьютере: короткое имя (base), конфигурация, версия. Вызывай, если нужно перечислить базы или понять, какая из них какая.</value></data>
+  <data name="ToolListBasesTitle" xml:space="preserve"><value>Подключённые базы 1С</value></data>
+  <data name="ToolNoBases" xml:space="preserve"><value>Не подключено ни одной базы: добавьте базу в Bilem Agent.</value></data>
+  <data name="ToolNoSuchBase" xml:space="preserve"><value>Нет базы «{0}». Подключены: {1}.</value></data>
+  <data name="ToolNone" xml:space="preserve"><value>ни одной</value></data>
+  <data name="ToolObjectOff" xml:space="preserve"><value>Объект «{0}» в базе {1} выключен на вкладке «Доступ» — ИИ этот объект не видит.</value></data>
+  <data name="ToolParamBase" xml:space="preserve"><value>Короткое имя базы из list_bases. Не указывай, если пользователь не назвал базу: ответ придёт по всем базам сразу.</value></data>
+  <data name="ToolPoaDesc" xml:space="preserve"><value>Печатает доверенность (форма Д-1), которая уже есть в 1С: PDF с логотипом, печатью и подписью этой базы, удостоверение личности получателя — из 1С, только внутри PDF. Без number и last — поиск: список доверенностей по сотруднику (employee) и периоду (period) без печати. Ответ — файл PDF (и картинка первой страницы), номер, дата, действительна по, кому, от кого. Ничего в 1С не меняет. Отправить по почте — send_document с document: power_of_attorney (только на адреса из поля «Список адресов для отправки доверенностей» вкладки SMTP).</value></data>
+  <data name="ToolPoaNeedNumber" xml:space="preserve"><value>Укажите номер доверенности, last: true (последняя) или для поиска — employee (часть ФИО) и/или period.</value></data>
+  <data name="ToolPoaNote" xml:space="preserve"><value>PDF доверенности сохранён на компьютере с агентом и приложен к ответу. Удостоверение личности — только в PDF.</value></data>
+  <data name="ToolPoaParamEmployee" xml:space="preserve"><value>Кому выдана: часть ФИО сотрудника — поиск или уточнение номера.</value></data>
+  <data name="ToolPoaParamLast" xml:space="preserve"><value>true — последняя доверенность.</value></data>
+  <data name="ToolPoaParamNumber" xml:space="preserve"><value>Номер доверенности — как на печати (например, «12») или как в 1С.</value></data>
+  <data name="ToolPoaTitle" xml:space="preserve"><value>Доверенность (печать)</value></data>
+  <data name="ToolPrintDesc" xml:space="preserve"><value>Счета на оплату покупателю, которые уже есть в 1С. С number или last — делает PDF с логотипом, печатью и подписью этой базы: возвращает сам PDF (ресурсом), картинку первой страницы и текст (номер, дата, покупатель, сумма; warning — если печатная форма базы не настроена); копия — в «Документы\Bilem\&lt;база&gt;\Счета». Без number и last, с counterparty (БИН или часть названия) и/или period — только список найденных счетов (номер, дата, покупатель, сумма), без печати. Ничего в 1С не создаёт и не меняет.</value></data>
+  <data name="ToolPrintNeedNumber" xml:space="preserve"><value>Укажите номер счёта (number), last: true — или counterparty/period, чтобы найти счета.</value></data>
+  <data name="ToolPrintNote" xml:space="preserve"><value>PDF — в этом ответе (ресурс) и копией на компьютере с 1С по пути path.</value></data>
+  <data name="ToolPrintParamCounterparty" xml:space="preserve"><value>Покупатель — БИН/ИИН или часть названия. Без number и last — список счетов на него (без печати); с number — уточняет, чей счёт.</value></data>
+  <data name="ToolPrintParamLast" xml:space="preserve"><value>true — последний счёт по дате (при одинаковой дате — по номеру); номер не нужен.</value></data>
+  <data name="ToolPrintParamNumber" xml:space="preserve"><value>Номер счёта — как на печати («4») или как в базе («00-000004»).</value></data>
+  <data name="ToolPrintParamPeriod" xml:space="preserve"><value>Период поиска: 2022, 2022-04, 2022-04-13 или 2022-01-01..2022-06-30.</value></data>
+  <data name="ToolPrintTitle" xml:space="preserve"><value>Счёт на оплату в PDF</value></data>
+  <data name="ToolPrintWhichBase" xml:space="preserve"><value>Баз несколько — укажите base: {0}.</value></data>
+  <data name="ToolSendDesc" xml:space="preserve"><value>Отправляет документ агента по e-mail СРАЗУ: счёт на оплату, акт сверки или доверенность — PDF с печатью и подписью, сделанный по данным 1С. Перед отправкой предложи пользователю показать документ — вызови print_* и покажи PDF; отправляй, когда пользователь согласен или явно просит отправить сразу. Счёт и акт сверки — на любой e-mail (адрес назвал пользователь; не назван — e-mail контрагента из 1С; если их несколько — вернётся список candidates, спроси пользователя и вызови снова с to). Доверенность — только на адреса из поля «Список адресов для отправки доверенностей» вкладки SMTP. Ответ — «отправлено на …, копия на …» или ошибка SMTP с текстом. Ничего в 1С не меняет.</value></data>
+  <data name="ToolSendParamCounterparty" xml:space="preserve"><value>Счёт: покупатель (БИН или часть названия) — уточняет, чей счёт. Акт сверки: контрагент (обязательно).</value></data>
+  <data name="ToolSendParamDocument" xml:space="preserve"><value>Вид документа: invoice — счёт на оплату (number / last); reconciliation — акт сверки (counterparty, period_from, period_to, contract); power_of_attorney — доверенность (number / last, employee; только на адреса из поля «Список адресов для отправки доверенностей»).</value></data>
+  <data name="ToolSendParamNote" xml:space="preserve"><value>Приписка к письму, до 300 символов.</value></data>
+  <data name="ToolSendParamTo" xml:space="preserve"><value>E-mail получателя. Счёт и акт сверки — любой адрес, который назвал пользователь; пусто — e-mail контрагента из 1С (несколько — вернётся список, спроси пользователя). Доверенность — только адрес из поля «Список адресов для отправки доверенностей» во вкладке SMTP.</value></data>
+  <data name="ToolSendTitle" xml:space="preserve"><value>Отправить документ по почте</value></data>
+  <data name="ToolTruncated" xml:space="preserve"><value>показаны первые {0} из {1}, уточните запрос</value></data>
+  <data name="ToolWhoamiDesc" xml:space="preserve"><value>Сведения о базе 1С: конфигурация и версия, организации (наименование и БИН/ИИН), пользователь, под которым читаем. Вызывай на вопросы «что это за организация», «чья это база», «какие у нас организации». Без base — по всем базам сразу.</value></data>
+  <data name="ToolWhoamiTitle" xml:space="preserve"><value>Что за база и организация</value></data>
+  <data name="TrayBaseError" xml:space="preserve"><value>база {0}: {1}</value></data>
+  <data name="TrayConnecting" xml:space="preserve"><value>Bilem Agent — подключение…</value></data>
+  <data name="TrayError" xml:space="preserve"><value>Bilem Agent — ошибка: {0}</value></data>
+  <data name="TrayNoAnswer" xml:space="preserve"><value>нет ответа</value></data>
+  <data name="TrayNoBases" xml:space="preserve"><value>Bilem Agent — офлайн: базы не подключены</value></data>
+  <data name="TrayNoSecret" xml:space="preserve"><value>нет пароля bilem</value></data>
+  <data name="TrayOk" xml:space="preserve"><value>Bilem Agent — работает · баз: {0}</value></data>
+  <data name="TrayPortBusy" xml:space="preserve"><value>порт {0} занят</value></data>
+  <data name="TrayStopped" xml:space="preserve"><value>Bilem Agent — MCP остановлен</value></data>
+  <data name="TrayStuck" xml:space="preserve"><value>долго нет ответа</value></data>
+  <data name="UiAboutData" xml:space="preserve"><value>Настройки и журналы: {0}</value></data>
+  <data name="UiAboutGitHub" xml:space="preserve"><value>Исходный код на GitHub</value></data>
+  <data name="UiAboutText" xml:space="preserve"><value>Bilem Agent подключает базы 1С этого компьютера к ИИ-ассистентам (Claude Code, Claude Desktop, Cursor) через MCP; доступ к данным открыт только для этой машины.
+
+Bilem не меняет ваш бухгалтерский учёт: читает данные и готовит только счета, доверенности, акты сверки и карточки контрагентов — после вашего подтверждения, непроведёнными.</value></data>
+  <data name="UiAccessApply" xml:space="preserve"><value>Применить</value></data>
+  <data name="UiAccessBase" xml:space="preserve"><value>База:</value></data>
+  <data name="UiAccessCancel" xml:space="preserve"><value>Отменить</value></data>
+  <data name="UiAccessColObject" xml:space="preserve"><value>Раздел и объект</value></data>
+  <data name="UiAccessColRead" xml:space="preserve"><value>Чтение</value></data>
+  <data name="UiAccessColWrite" xml:space="preserve"><value>Запись</value></data>
+  <data name="UiAccessCredHint" xml:space="preserve"><value>Изменения уже действуют для ИИ. Чтобы применить их и в 1С (состав OData, роли пользователя bilem), нужен вход администратора 1С. Пароль не сохраняется. После — автоматическая проверка.</value></data>
+  <data name="UiAccessCredTitle" xml:space="preserve"><value>Применить доступ в 1С — {0}</value></data>
+  <data name="UiAccessFallbackNote" xml:space="preserve"><value>Разделы — по образцу; как в вашей 1С — «Разделы из 1С…».</value></data>
+  <data name="UiAccessLockedTip" xml:space="preserve"><value>Персональные данные — не отдаём ИИ. В облаке можно открыть отдельным людям.</value></data>
+  <data name="UiAccessMcpOnly" xml:space="preserve"><value>Для ИИ изменения уже действуют. В 1С они не применены — нажмите «Применить» ещё раз, когда будет пароль администратора 1С.</value></data>
+  <data name="UiAccessMore" xml:space="preserve"><value> и ещё {0}</value></data>
+  <data name="UiAccessNote" xml:space="preserve"><value>Только просмотр. У пользователя bilem — только чтение; запись запрещена самой 1С и проверяется при каждой настройке и проверке базы.</value></data>
+  <data name="UiAccessNow" xml:space="preserve"><value>Чтение: {0} из {1} · запись: {2}. Галочка раздела — все объекты раздела.</value></data>
+  <data name="UiAccessPending1C" xml:space="preserve"><value>Слой MCP применён, в 1С — ещё нет. «Применить» — с паролем администратора 1С.</value></data>
+  <data name="UiAccessReadOff" xml:space="preserve"><value>чтение −{0} ({1})</value></data>
+  <data name="UiAccessReadOn" xml:space="preserve"><value>чтение +{0} ({1})</value></data>
+  <data name="UiAccessReload" xml:space="preserve"><value>Разделы из 1С…</value></data>
+  <data name="UiAccessReloadHint" xml:space="preserve"><value>Разделы и названия объектов берутся из подсистем вашей 1С (как в левом меню). Нужен вход администратора 1С; в базе ничего не меняется, пароль не сохраняется.</value></data>
+  <data name="UiAccessReloadTitle" xml:space="preserve"><value>Разделы из 1С — {0}</value></data>
+  <data name="UiAccessRunTitle" xml:space="preserve"><value>Доступ — {0}</value></data>
+  <data name="UiAccessSectionCount" xml:space="preserve"><value>{0} — чтение {1} из {2} · запись {3} из {4}</value></data>
+  <data name="UiAccessSectionCountRead" xml:space="preserve"><value>{0} — чтение {1} из {2}</value></data>
+  <data name="UiAccessWillChange" xml:space="preserve"><value>Изменится:</value></data>
+  <data name="UiAccessWriteLockTip" xml:space="preserve"><value>Bilem не создаёт документы, которые меняют бухгалтерский учёт. Нужно — напишите нам (Сервис → GitHub).</value></data>
+  <data name="UiAccessWriteOff" xml:space="preserve"><value>запись −{0} ({1})</value></data>
+  <data name="UiAccessWriteOn" xml:space="preserve"><value>запись +{0} ({1})</value></data>
+  <data name="UiAccessWriteWarn" xml:space="preserve"><value>ИИ сможет готовить черновики этих документов. В 1С они попадут только после вашего подтверждения, непроведёнными.
+
+Проведение и удаление Bilem Agent не делает никогда.</value></data>
+  <data name="UiAdd" xml:space="preserve"><value>Добавить…</value></data>
+  <data name="UiAddBaseNote" xml:space="preserve"><value>Bilem Agent создаст в базе пользователя bilem только с правами чтения, опубликует базу для этой машины (127.0.0.1) и проверит, что запись запрещена. Учёт не меняется. Пароль администратора нужен только на время настройки и нигде не сохраняется.</value></data>
+  <data name="UiAddBaseTitle" xml:space="preserve"><value>Добавить базу 1С</value></data>
+  <data name="UiAdminLogin" xml:space="preserve"><value>Логин администратора 1С:</value></data>
+  <data name="UiAdminPassword" xml:space="preserve"><value>Пароль:</value></data>
+  <data name="UiBrowse" xml:space="preserve"><value>Указать папку вручную…</value></data>
+  <data name="UiBrowseHint" xml:space="preserve"><value>Папка файловой базы 1С (в ней лежит файл 1Cv8.1CD)</value></data>
+  <data name="UiCancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="UiCheckUpdates" xml:space="preserve"><value>Проверить обновления</value></data>
+  <data name="UiClose" xml:space="preserve"><value>Закрыть</value></data>
+  <data name="UiCloudBadge" xml:space="preserve"><value>Облако</value></data>
+  <data name="UiCloudPeople" xml:space="preserve"><value>Доступ по людям</value></data>
+  <data name="UiCloudPeopleText" xml:space="preserve"><value>• Разные права для разных людей и номеров: директор видит зарплату, менеджер — только продажи.
+• Кто может подтверждать документы, а кто только спрашивать.
+• Раздел «Зарплата и кадры» — только тем, кому вы разрешили.
+• ChatGPT, телефон, голос, WhatsApp/Telegram — вход по учётной записи (OAuth), без токена в адресе.</value></data>
+  <data name="UiCloudText" xml:space="preserve"><value>Вопросы к 1С из Telegram, WhatsApp и ChatGPT — через облако bilem.ai, без открытия базы наружу. Сейчас недоступно.</value></data>
+  <data name="UiCloudTitle" xml:space="preserve"><value>Облако bilem — скоро</value></data>
+  <data name="UiColConfig" xml:space="preserve"><value>Конфигурация</value></data>
+  <data name="UiColFolder" xml:space="preserve"><value>Папка</value></data>
+  <data name="UiColKind" xml:space="preserve"><value>Тип</value></data>
+  <data name="UiColSlug" xml:space="preserve"><value>Имя</value></data>
+  <data name="UiColStatus" xml:space="preserve"><value>Статус</value></data>
+  <data name="UiColText" xml:space="preserve"><value>Событие</value></data>
+  <data name="UiColTime" xml:space="preserve"><value>Время</value></data>
+  <data name="UiColVersion" xml:space="preserve"><value>Версия</value></data>
+  <data name="UiConnectBase" xml:space="preserve"><value>Подключить</value></data>
+  <data name="UiConnectClaudeCode" xml:space="preserve"><value>Подключить к Claude Code</value></data>
+  <data name="UiConnectClaudeDesktop" xml:space="preserve"><value>Подключить к Claude Desktop</value></data>
+  <data name="UiConnectCursor" xml:space="preserve"><value>Подключить к Cursor</value></data>
+  <data name="UiConnectDone_claudecode" xml:space="preserve"><value>Готово: MCP Bilem подключён к Claude Code. Откройте новую сессию и спросите, например: «сколько у нас денег на сегодня?»</value></data>
+  <data name="UiConnectDone_claudedesktop" xml:space="preserve"><value>Готово: MCP Bilem прописан в Claude Desktop. Перезапустите Claude Desktop (нужен Node.js).</value></data>
+  <data name="UiConnectDone_cursor" xml:space="preserve"><value>Готово: MCP Bilem прописан в Cursor. Перезапустите Cursor.</value></data>
+  <data name="UiConnectFailed" xml:space="preserve"><value>Не получилось подключить — подробности во вкладке «Журнал».</value></data>
+  <data name="UiCopied" xml:space="preserve"><value>Адрес MCP скопирован. Вставьте его в настройки ИИ-клиента или нажмите кнопку подключения ниже.</value></data>
+  <data name="UiCopy" xml:space="preserve"><value>Скопировать</value></data>
+  <data name="UiDiagAgain" xml:space="preserve"><value>Проверить ещё раз</value></data>
+  <data name="UiDiagButton" xml:space="preserve"><value>Диагностика компонентов</value></data>
+  <data name="UiDiagColCheck" xml:space="preserve"><value>Проверка</value></data>
+  <data name="UiDiagColHint" xml:space="preserve"><value>Что делать</value></data>
+  <data name="UiDiagColResult" xml:space="preserve"><value>Результат</value></data>
+  <data name="UiDiagCopied" xml:space="preserve"><value>Отчёт скопирован — его можно вставить в issue на GitHub (паролей и токенов в нём нет).</value></data>
+  <data name="UiDiagCopy" xml:space="preserve"><value>Скопировать отчёт</value></data>
+  <data name="UiDiagNote" xml:space="preserve"><value>Быстрый самотест всего, что нужно Bilem Agent: Windows, .NET, 1С, IIS, MCP и каждая подключённая база. Ничего не меняет. Красное — без этого не работает, жёлтое — стоит поправить, серое — справочно.</value></data>
+  <data name="UiDiagRunning" xml:space="preserve"><value>Проверяю…</value></data>
+  <data name="UiDiagTitle" xml:space="preserve"><value>Диагностика компонентов</value></data>
+  <data name="UiEnableIis" xml:space="preserve"><value>Включить IIS и «Ограничения по IP», если их нет (компоненты Windows)</value></data>
+  <data name="UiFolder" xml:space="preserve"><value>Папка базы:</value></data>
+  <data name="UiFoundHint" xml:space="preserve"><value>Базы из списков 1С на этом компьютере. Выберите базу или укажите папку вручную. В этой версии — только файловые базы.</value></data>
+  <data name="UiFoundKind" xml:space="preserve"><value>Тип</value></data>
+  <data name="UiFoundName" xml:space="preserve"><value>Название</value></data>
+  <data name="UiFoundWhere" xml:space="preserve"><value>Где</value></data>
+  <data name="UiInstalledVersion" xml:space="preserve"><value>Установлена версия {0}</value></data>
+  <data name="UiKindFile" xml:space="preserve"><value>файловая</value></data>
+  <data name="UiKindFileMissing" xml:space="preserve"><value>файловая — папки нет</value></data>
+  <data name="UiKindServerSoon" xml:space="preserve"><value>серверная — скоро</value></data>
+  <data name="UiMcpAddress" xml:space="preserve"><value>Адрес MCP:</value></data>
+  <data name="UiMcpRunning" xml:space="preserve"><value>MCP работает</value></data>
+  <data name="UiMcpStart" xml:space="preserve"><value>Запустить MCP</value></data>
+  <data name="UiMcpStop" xml:space="preserve"><value>Остановить MCP</value></data>
+  <data name="UiMcpStopped" xml:space="preserve"><value>MCP остановлен</value></data>
+  <data name="UiODataCount" xml:space="preserve"><value>Состав OData: {0} объектов (с записями при настройке: {1}). Зарплата, кадры и физлица в состав не входят.</value></data>
+  <data name="UiOpenLogs" xml:space="preserve"><value>Открыть папку журналов</value></data>
+  <data name="UiPaidSupportSoon" xml:space="preserve"><value>Платная техподдержка появится в коммерческой версии. Сейчас — только через GitHub Issues.</value></data>
+  <data name="UiPrintActByContracts" xml:space="preserve"><value>Разбивка по договорам, если их несколько</value></data>
+  <data name="UiPrintActCounterparty" xml:space="preserve"><value>Контрагент (БИН или название):</value></data>
+  <data name="UiPrintActFromTo" xml:space="preserve"><value>Период:</value></data>
+  <data name="UiPrintActIntro" xml:space="preserve"><value>Текст вступления:</value></data>
+  <data name="UiPrintActIntroNote" xml:space="preserve"><value>Подстановки: {подписант} — должность, {организация}, {фио}, {контрагент}. Пусто — стандартный текст.</value></data>
+  <data name="UiPrintActMirror" xml:space="preserve"><value>Заполнять половину контрагента зеркально</value></data>
+  <data name="UiPrintActMirrorNote" xml:space="preserve"><value>Выключено — правая половина пустая, контрагент заполняет сам.</value></data>
+  <data name="UiPrintActPeriod" xml:space="preserve"><value>Период по умолчанию:</value></data>
+  <data name="UiPrintActPeriodMonth" xml:space="preserve"><value>Прошлый месяц</value></data>
+  <data name="UiPrintActPeriodQuarter" xml:space="preserve"><value>Прошлый квартал</value></data>
+  <data name="UiPrintActPeriodYear" xml:space="preserve"><value>С начала года</value></data>
+  <data name="UiPrintActSigner" xml:space="preserve"><value>Подписант:</value></data>
+  <data name="UiPrintActSignerNote" xml:space="preserve"><value>Из «Общего» — должность и ФИО руководителя. Подписант контрагента — «/________/» (мы его не знаем).</value></data>
+  <data name="UiPrintAddressFrom1C" xml:space="preserve"><value>Пусто — адрес из 1С: {0}</value></data>
+  <data name="UiPrintAddressNone" xml:space="preserve"><value>Пусто — адрес из 1С (ещё не загружен: «Реквизиты из 1С…»)</value></data>
+  <data name="UiPrintAddressOverride" xml:space="preserve"><value>Адрес поставщика:</value></data>
+  <data name="UiPrintAddresses" xml:space="preserve"><value>Адресов из 1С: {0}</value></data>
+  <data name="UiPrintChief" xml:space="preserve"><value>Главный бухгалтер:</value></data>
+  <data name="UiPrintColBuyer" xml:space="preserve"><value>Покупатель</value></data>
+  <data name="UiPrintColDate" xml:space="preserve"><value>Дата</value></data>
+  <data name="UiPrintColEmployee" xml:space="preserve"><value>Кому выдана</value></data>
+  <data name="UiPrintColFrom" xml:space="preserve"><value>От кого</value></data>
+  <data name="UiPrintColNumber" xml:space="preserve"><value>Номер</value></data>
+  <data name="UiPrintColSum" xml:space="preserve"><value>Сумма</value></data>
+  <data name="UiPrintCopied" xml:space="preserve"><value>Печатные формы: скопировано из {0} в {1}</value></data>
+  <data name="UiPrintCopyFrom" xml:space="preserve"><value>Скопировать из другой базы…</value></data>
+  <data name="UiPrintDirector" xml:space="preserve"><value>Руководитель:</value></data>
+  <data name="UiPrintDirectorTitle" xml:space="preserve"><value>Должность руководителя:</value></data>
+  <data name="UiPrintDirectorTitleCue" xml:space="preserve"><value>Руководитель</value></data>
+  <data name="UiPrintFilterLogo" xml:space="preserve"><value>Картинки (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg</value></data>
+  <data name="UiPrintFilterPng" xml:space="preserve"><value>PNG (*.png)|*.png</value></data>
+  <data name="UiPrintFooter" xml:space="preserve"><value>Примечание внизу:</value></data>
+  <data name="UiPrintFooterNote" xml:space="preserve"><value>Пусто — без примечания.</value></data>
+  <data name="UiPrintFrom1CNone" xml:space="preserve"><value>из 1С: не задано</value></data>
+  <data name="UiPrintGeneralNote" xml:space="preserve"><value>Пусто — из 1С (серым в поле): адрес — контактная информация организации, руководитель и главный бухгалтер — «Ответственные лица организаций»; загружаются при подключении базы. Своё значение главнее. ФИО — в виде «Фамилия И.О.».</value></data>
+  <data name="UiPrintHeader" xml:space="preserve"><value>Текст в шапке счёта:</value></data>
+  <data name="UiPrintImages" xml:space="preserve"><value>Логотип, печать, подпись:</value></data>
+  <data name="UiPrintImagesNote" xml:space="preserve"><value>Логотип — PNG/JPG до 200 КБ; печать и подпись — PNG с прозрачным фоном (до 200 и 100 КБ). Больше — уменьшим сами. Хранятся только на этом компьютере, доступ — администраторам.</value></data>
+  <data name="UiPrintIssuedBy" xml:space="preserve"><value>Счёт от имени:</value></data>
+  <data name="UiPrintIssuedByNote" xml:space="preserve"><value>Печатается в строке «Исполнитель ___ /…/» — должность или Фамилия И.О., как вам нужно.</value></data>
+  <data name="UiPrintKbe" xml:space="preserve"><value>Кбе:</value></data>
+  <data name="UiPrintKnp" xml:space="preserve"><value>КНП:</value></data>
+  <data name="UiPrintLoad" xml:space="preserve"><value>Загрузить…</value></data>
+  <data name="UiPrintLogo" xml:space="preserve"><value>Логотип</value></data>
+  <data name="UiPrintMake" xml:space="preserve"><value>Сделать PDF</value></data>
+  <data name="UiPrintOrNumber" xml:space="preserve"><value>или номер:</value></data>
+  <data name="UiPrintPartLogo" xml:space="preserve"><value>логотип</value></data>
+  <data name="UiPrintPartSign" xml:space="preserve"><value>подпись</value></data>
+  <data name="UiPrintPartStamp" xml:space="preserve"><value>печать</value></data>
+  <data name="UiPrintParts" xml:space="preserve"><value>Что печатать:</value></data>
+  <data name="UiPrintPaySample" xml:space="preserve"><value>Образец платёжного поручения</value></data>
+  <data name="UiPrintPoaDays" xml:space="preserve"><value>Срок действия по умолчанию:</value></data>
+  <data name="UiPrintPoaDaysNote" xml:space="preserve"><value>Если в 1С срок не указан.</value></data>
+  <data name="UiPrintPoaDaysUnit" xml:space="preserve"><value>дней</value></data>
+  <data name="UiPrintPoaIdentity" xml:space="preserve"><value>Удостоверение личности из 1С</value></data>
+  <data name="UiPrintPoaIdentityNote" xml:space="preserve"><value>Номер, дата и кем выдано — только в PDF доверенности; ИИ и журналы их не получают.</value></data>
+  <data name="UiPrintPoaSend" xml:space="preserve"><value>Только на адреса из поля «Список адресов для отправки доверенностей» вкладки SMTP.</value></data>
+  <data name="UiPrintPoaSigners" xml:space="preserve"><value>Руководитель организации {0}, главный бухгалтер {1} — из «Общего».</value></data>
+  <data name="UiPrintRemove" xml:space="preserve"><value>Убрать</value></data>
+  <data name="UiPrintSave" xml:space="preserve"><value>Сохранить</value></data>
+  <data name="UiPrintSaved" xml:space="preserve"><value>Печатные формы {0}: настройки сохранены</value></data>
+  <data name="UiPrintSend" xml:space="preserve"><value>Отправка:</value></data>
+  <data name="UiPrintSign" xml:space="preserve"><value>Подпись (факсимиле)</value></data>
+  <data name="UiPrintSigner" xml:space="preserve"><value>Подписант:</value></data>
+  <data name="UiPrintSignerTitle" xml:space="preserve"><value>Должность:</value></data>
+  <data name="UiPrintSigners" xml:space="preserve"><value>Подписи:</value></data>
+  <data name="UiPrintStamp" xml:space="preserve"><value>Печать</value></data>
+  <data name="UiPrintTabAct" xml:space="preserve"><value>Акт сверки</value></data>
+  <data name="UiPrintTabGeneral" xml:space="preserve"><value>Общее</value></data>
+  <data name="UiPrintTabInvoice" xml:space="preserve"><value>Счёт на оплату</value></data>
+  <data name="UiPrintTabPoa" xml:space="preserve"><value>Доверенность</value></data>
+  <data name="UiPrintTrialActTitle" xml:space="preserve"><value>Пробный акт сверки — {0}</value></data>
+  <data name="UiPrintTrialDoc" xml:space="preserve"><value>Пробный документ…</value></data>
+  <data name="UiPrintTrialPoaTitle" xml:space="preserve"><value>Пробная доверенность — {0}</value></data>
+  <data name="UiPrintTrialTitle" xml:space="preserve"><value>Пробный счёт — {0}</value></data>
+  <data name="UiPromise" xml:space="preserve"><value>Bilem не меняет ваш бухгалтерский учёт: читает данные и готовит только счета, доверенности, акты сверки и карточки контрагентов — после вашего подтверждения, непроведёнными.</value></data>
+  <data name="UiRemove" xml:space="preserve"><value>Удалить</value></data>
+  <data name="UiRemoveConfirm" xml:space="preserve"><value>Убрать базу «{0}» ({1}) из Bilem Agent?
+
+Да — убрать и удалить пользователя bilem из самой базы (нужен логин администратора 1С).
+Нет — убрать публикацию и пароль, пользователя bilem в базе оставить.
+Отмена — ничего не делать.</value></data>
+  <data name="UiRemoveCredHint" xml:space="preserve"><value>Чтобы удалить пользователя bilem из базы, войдите администратором 1С. Пароль нигде не сохраняется.</value></data>
+  <data name="UiRemoveRunTitle" xml:space="preserve"><value>Удаление базы «{0}»</value></data>
+  <data name="UiRemoveTitle" xml:space="preserve"><value>Удаление пользователя bilem</value></data>
+  <data name="UiReportIssue" xml:space="preserve"><value>Сообщить о проблеме на GitHub</value></data>
+  <data name="UiReportIssueNote" xml:space="preserve"><value>Приложите системную информацию — она уже в буфере обмена после кнопки выше.</value></data>
+  <data name="UiRoles" xml:space="preserve"><value>Роли пользователя {0}: {1}</value></data>
+  <data name="UiRotateConfirm" xml:space="preserve"><value>Сменить токен? Старый адрес MCP перестанет работать — ИИ-клиентов нужно будет подключить заново.</value></data>
+  <data name="UiRotateDone" xml:space="preserve"><value>Токен сменён. Подключите ИИ-клиентов заново кнопками выше.</value></data>
+  <data name="UiRotateToken" xml:space="preserve"><value>Сменить токен</value></data>
+  <data name="UiRunFail" xml:space="preserve"><value>Не получилось — что случилось и что делать, смотрите в журнале ниже.</value></data>
+  <data name="UiRunOk" xml:space="preserve"><value>Готово — всё прошло.</value></data>
+  <data name="UiSelectBase" xml:space="preserve"><value>Выберите базу в списке.</value></data>
+  <data name="UiServiceDiagNote" xml:space="preserve"><value>Проверить всё, что нужно Bilem Agent: Windows, .NET, 1С, IIS, MCP и каждую базу — что в порядке и что исправить.</value></data>
+  <data name="UiServiceSupport" xml:space="preserve"><value>Проверка и поддержка</value></data>
+  <data name="UiServiceUpdates" xml:space="preserve"><value>Обновления</value></data>
+  <data name="UiSetupTitle" xml:space="preserve"><value>Настройка базы «{0}»</value></data>
+  <data name="UiShowToken" xml:space="preserve"><value>Показать токен</value></data>
+  <data name="UiSlug" xml:space="preserve"><value>Короткое имя:</value></data>
+  <data name="UiSmtpAbout" xml:space="preserve"><value>Только отправка документов агента (счёт с печатью): письмо уходит сразу, когда пользователь попросит в чате; скрытая копия — на адрес ниже, каждое письмо — в журнале. Приём почты не делаем. Выключено — ИИ ничего не отправит.</value></data>
+  <data name="UiSmtpBccNote" xml:space="preserve"><value>пусто — без копии</value></data>
+  <data name="UiSmtpBccTo" xml:space="preserve"><value>Скрытая копия:</value></data>
+  <data name="UiSmtpBody" xml:space="preserve"><value>Текст:</value></data>
+  <data name="UiSmtpBox" xml:space="preserve"><value>Почтовый ящик — общий для всех баз</value></data>
+  <data name="UiSmtpCloud" xml:space="preserve"><value>Подтверждение с телефона, права по людям, цепочки одобрений</value></data>
+  <data name="UiSmtpFrom" xml:space="preserve"><value>Адрес отправителя:</value></data>
+  <data name="UiSmtpFromName" xml:space="preserve"><value>Имя отправителя:</value></data>
+  <data name="UiSmtpHost" xml:space="preserve"><value>Сервер:</value></data>
+  <data name="UiSmtpLetter" xml:space="preserve"><value>Письмо от базы</value></data>
+  <data name="UiSmtpLimits" xml:space="preserve"><value>Лимиты:</value></data>
+  <data name="UiSmtpLogin" xml:space="preserve"><value>Логин:</value></data>
+  <data name="UiSmtpNoTls" xml:space="preserve"><value>без шифрования</value></data>
+  <data name="UiSmtpOffLog" xml:space="preserve"><value>SMTP-клиент выключен</value></data>
+  <data name="UiSmtpOn" xml:space="preserve"><value>SMTP-клиент включён</value></data>
+  <data name="UiSmtpOnLog" xml:space="preserve"><value>SMTP-клиент включён</value></data>
+  <data name="UiSmtpPassword" xml:space="preserve"><value>Пароль приложения:</value></data>
+  <data name="UiSmtpPerDay" xml:space="preserve"><value>в день</value></data>
+  <data name="UiSmtpPerHour" xml:space="preserve"><value>в час,</value></data>
+  <data name="UiSmtpPort" xml:space="preserve"><value>Порт:</value></data>
+  <data name="UiSmtpPreset" xml:space="preserve"><value>Почта:</value></data>
+  <data name="UiSmtpPresetChoose" xml:space="preserve"><value>— выберите —</value></data>
+  <data name="UiSmtpPwdNone" xml:space="preserve"><value>не задан</value></data>
+  <data name="UiSmtpPwdSaved" xml:space="preserve"><value>сохранён (зашифрован для этой машины)</value></data>
+  <data name="UiSmtpSaved" xml:space="preserve"><value>SMTP: настройки сохранены</value></data>
+  <data name="UiSmtpSignature" xml:space="preserve"><value>Подпись:</value></data>
+  <data name="UiSmtpSubject" xml:space="preserve"><value>Тема:</value></data>
+  <data name="UiSmtpTemplate" xml:space="preserve"><value>Шаблон письма:</value></data>
+  <data name="UiSmtpTest" xml:space="preserve"><value>Отправить тестовое письмо</value></data>
+  <data name="UiSmtpTestTo" xml:space="preserve"><value>Тестовое письмо на:</value></data>
+  <data name="UiSmtpTrusted" xml:space="preserve"><value>Список адресов для отправки доверенностей (через запятую):</value></data>
+  <data name="UiSmtpTrustedNote" xml:space="preserve"><value>Доверенности уходят только на эти адреса (руководитель, бухгалтер). Счета и акты сверки — на любой e-mail: адрес назовёт ИИ, иначе — e-mail контрагента из 1С.</value></data>
+  <data name="UiSmtpVars" xml:space="preserve"><value>Подстановки: {номер} {дата} {сумма} {организация} {покупатель} {приписка} {подпись}</value></data>
+  <data name="UiSmtpWho" xml:space="preserve"><value>Кому можно отправлять</value></data>
+  <data name="UiStaleDays" xml:space="preserve"><value>Выписка устарела через</value></data>
+  <data name="UiStaleDaysNote" xml:space="preserve"><value>рабочих дня — ИИ предупредит, что остаток и должники могут быть неточны</value></data>
+  <data name="UiStateRunning" xml:space="preserve"><value>MCP работает · порт {0} · баз: {1}</value></data>
+  <data name="UiStateStopped" xml:space="preserve"><value>MCP остановлен · порт {0} · баз: {1}</value></data>
+  <data name="UiStatusBases" xml:space="preserve"><value>баз: {0}</value></data>
+  <data name="UiStatusCheckFailed" xml:space="preserve"><value>✖ проверка {0:dd.MM.yyyy HH:mm} не прошла</value></data>
+  <data name="UiStatusChecked" xml:space="preserve"><value>проверено {0:dd.MM.yyyy HH:mm}</value></data>
+  <data name="UiStatusColumn" xml:space="preserve"><value>Состояние</value></data>
+  <data name="UiStatusNotChecked" xml:space="preserve"><value>ещё не проверялась</value></data>
+  <data name="UiStatusOk" xml:space="preserve"><value>✔ проверено {0:dd.MM.yyyy HH:mm}</value></data>
+  <data name="UiStatusPort" xml:space="preserve"><value>порт {0}</value></data>
+  <data name="UiStepColumn" xml:space="preserve"><value>Шаг</value></data>
+  <data name="UiStep_Fail" xml:space="preserve"><value>ошибка</value></data>
+  <data name="UiStep_Ok" xml:space="preserve"><value>готово</value></data>
+  <data name="UiStep_Pending" xml:space="preserve"><value>ожидает</value></data>
+  <data name="UiStep_Running" xml:space="preserve"><value>выполняется…</value></data>
+  <data name="UiStep_Skipped" xml:space="preserve"><value>не требуется</value></data>
+  <data name="UiStep_Warn" xml:space="preserve"><value>внимание</value></data>
+  <data name="UiSupportReport" xml:space="preserve"><value>Собрать отчёт для поддержки</value></data>
+  <data name="UiSupportReportDone" xml:space="preserve"><value>Отчёт сохранён: {0}
+В нём журналы, системная информация и диагностика — без паролей и токенов.</value></data>
+  <data name="UiSupportReportNote" xml:space="preserve"><value>Архив для поддержки: журналы, системная информация и диагностика. Без паролей и токенов.</value></data>
+  <data name="UiSysInfo" xml:space="preserve"><value>Собрать системную информацию</value></data>
+  <data name="UiSysInfoCopied" xml:space="preserve"><value>Системная информация скопирована в буфер обмена — вставьте её в обращение на GitHub. Паролей, токенов и данных из 1С в ней нет.</value></data>
+  <data name="UiSysInfoNote" xml:space="preserve"><value>Краткая сводка для техподдержки: версии Windows, .NET, 1С, IIS, MCP и подключённых баз — сразу в буфер обмена. Без паролей, токенов и данных из 1С.</value></data>
+  <data name="UiSysInfoSave" xml:space="preserve"><value>Сохранить в файл…</value></data>
+  <data name="UiTabAbout" xml:space="preserve"><value>О программе</value></data>
+  <data name="UiTabAccess" xml:space="preserve"><value>Доступ</value></data>
+  <data name="UiTabBases" xml:space="preserve"><value>Базы 1С</value></data>
+  <data name="UiTabConnect" xml:space="preserve"><value>MCP</value></data>
+  <data name="UiTabJournal" xml:space="preserve"><value>Журнал</value></data>
+  <data name="UiTabPrint" xml:space="preserve"><value>Печатные формы</value></data>
+  <data name="UiTabService" xml:space="preserve"><value>Сервис</value></data>
+  <data name="UiTabSmtp" xml:space="preserve"><value>SMTP</value></data>
+  <data name="UiTextFilter" xml:space="preserve"><value>Текст (*.txt)|*.txt</value></data>
+  <data name="UiTitle" xml:space="preserve"><value>Bilem Agent — локальный режим</value></data>
+  <data name="UiTokenDisclaimer" xml:space="preserve"><value>В адресе — секретный токен: с ним любая программа на этом компьютере может читать данные 1С через Bilem. Не пересылайте адрес и не публикуйте его. Если адрес мог попасть к чужим — нажмите «Сменить токен». Снаружи этот адрес недоступен: только с этой машины (127.0.0.1).</value></data>
+  <data name="UiTrayCopyUrl" xml:space="preserve"><value>Скопировать адрес MCP</value></data>
+  <data name="UiTrayExit" xml:space="preserve"><value>Выход (остановить MCP)</value></data>
+  <data name="UiTrayHint" xml:space="preserve"><value>Bilem Agent работает в трее — значок справа внизу (может быть под стрелкой ˄)</value></data>
+  <data name="UiTrayOpen" xml:space="preserve"><value>Открыть</value></data>
+  <data name="UiTrayResetWindow" xml:space="preserve"><value>Сбросить размер окна</value></data>
+  <data name="UiUpdAvailable" xml:space="preserve"><value>Доступна версия {0}</value></data>
+  <data name="UiUpdBeta" xml:space="preserve"><value>Получать бета-версии</value></data>
+  <data name="UiUpdChecking" xml:space="preserve"><value>Проверяем…</value></data>
+  <data name="UiUpdDownloading" xml:space="preserve"><value>Скачиваем и проверяем {0}…</value></data>
+  <data name="UiUpdInstall" xml:space="preserve"><value>Обновить</value></data>
+  <data name="UiUpdInstallTo" xml:space="preserve"><value>Обновить до {0}</value></data>
+  <data name="UiUpdNeverChecked" xml:space="preserve"><value>Обновления ещё не проверялись.</value></data>
+  <data name="UiUpdNote" xml:space="preserve"><value>Проверка — раз в сутки, с GitHub (github.com/skp-kz/bilem.ai). Перед установкой агент проверяет подпись релиза и хеш файла. «Обновить» закрывает агент, ставит новую версию и запускает её снова; базы, токен MCP, печатные формы и SMTP остаются.</value></data>
+  <data name="UiUpdRollbackConfirm" xml:space="preserve"><value>Вернуть Bilem Agent {0}? Агент закроется, поставит прежнюю версию и запустится снова. Базы и настройки не меняются.</value></data>
+  <data name="UiUpdRollbackTo" xml:space="preserve"><value>Откатить на {0}</value></data>
+  <data name="UiUpdUpToDate" xml:space="preserve"><value>Новых версий нет (проверено {0:dd.MM HH:mm}).</value></data>
+  <data name="UiUpdatesSoon" xml:space="preserve"><value>Скоро: обновление в один щелчок</value></data>
+  <data name="UiVerify" xml:space="preserve"><value>Проверить</value></data>
+  <data name="UiVerifyTitle" xml:space="preserve"><value>Проверка базы «{0}»</value></data>
+  <data name="UiVersion" xml:space="preserve"><value>Версия {0}</value></data>
+  <data name="UiWaitlist" xml:space="preserve"><value>Лист ожидания облачного режима — bilem.ai</value></data>
+  <data name="UiWriteAllowedN" xml:space="preserve"><value>Запись разрешена: {0} — проверено {1:dd.MM.yyyy HH:mm}</value></data>
+  <data name="UiWriteDenied" xml:space="preserve"><value>Запись запрещена — проверено {0:dd.MM.yyyy HH:mm}</value></data>
+  <data name="UiWriteNotChecked" xml:space="preserve"><value>Запрет записи ещё не проверялся — нажмите «Проверить» на вкладке «Базы 1С».</value></data>
+  <data name="Unexpected" xml:space="preserve"><value>Непредвиденная ошибка ({0}): {1}</value></data>
+  <data name="UpdAvailableLog" xml:space="preserve"><value>Доступна новая версия Bilem Agent: {0} («Сервис» → «Обновления»).</value></data>
+  <data name="UpdBadAuthenticode" xml:space="preserve"><value>подпись Authenticode MSI недействительна ({0})</value></data>
+  <data name="UpdBadHash" xml:space="preserve"><value>хеш MSI не совпадает с SHA256SUMS</value></data>
+  <data name="UpdBadSignature" xml:space="preserve"><value>подпись релиза (SHA256SUMS.sig) не сходится</value></data>
+  <data name="UpdCheckFailedQuiet" xml:space="preserve"><value>Проверка обновлений не удалась: {0}</value></data>
+  <data name="UpdDownloaded" xml:space="preserve"><value>Обновление {0} скачано и проверено (подпись и хеш).</value></data>
+  <data name="UpdHttpError" xml:space="preserve"><value>GitHub ответил {0}.</value></data>
+  <data name="UpdInstallFailed" xml:space="preserve"><value>Обновление до {0} не установилось (код msiexec {1}). Журнал установщика: {2}</value></data>
+  <data name="UpdInstallStarting" xml:space="preserve"><value>Обновление: {0} → {1}. Агент закрывается, установщик работает без окон.</value></data>
+  <data name="UpdNetwork" xml:space="preserve"><value>Нет связи с GitHub: {0}</value></data>
+  <data name="UpdNoAssets" xml:space="preserve"><value>В релизе нет MSI или подписи SHA256SUMS(.sig).</value></data>
+  <data name="UpdNoReleases" xml:space="preserve"><value>Релизов на GitHub нет.</value></data>
+  <data name="UpdNoRollbackRelease" xml:space="preserve"><value>Релиза текущей версии {0} на GitHub нет — откатиться на неё будет нельзя.</value></data>
+  <data name="UpdNotInSums" xml:space="preserve"><value>файла {0} нет в SHA256SUMS</value></data>
+  <data name="UpdRejected" xml:space="preserve"><value>Обновление {0} отклонено: {1}. Ничего не установлено, файл удалён.</value></data>
+  <data name="UpdRollbackStarting" xml:space="preserve"><value>Откат: {0} → {1}. Агент закрывается, установщик работает без окон.</value></data>
+  <data name="UpdRolledBack" xml:space="preserve"><value>Откат с {0} на {1}</value></data>
+  <data name="UpdUpdated" xml:space="preserve"><value>Обновлено с {0} на {1}</value></data>
+  <data name="UpdWrongPublisher" xml:space="preserve"><value>MSI подписан не SKP.kz LLC ({0})</value></data>
+  <data name="UserCreated" xml:space="preserve"><value>Пользователь {0} создан, роли: {1}</value></data>
+  <data name="UserDropped" xml:space="preserve"><value>Пользователь {0} удалён из базы</value></data>
+  <data name="UserPasswordSaved" xml:space="preserve"><value>Пароль bilem сохранён в DPAPI (LocalMachine): {0}; доступ к файлу — только Администраторы и SYSTEM</value></data>
+  <data name="UserRolesExtra" xml:space="preserve"><value>  лишние роли: {0}</value></data>
+  <data name="UserRolesMissing" xml:space="preserve"><value>  нет ролей: {0}</value></data>
+  <data name="UserRolesNow" xml:space="preserve"><value>Роли {0} сейчас ({1}): {2}</value></data>
+  <data name="UserUnchanged" xml:space="preserve"><value>Пользователь {0} уже настроен, роли: {1}</value></data>
+  <data name="UserUpdated" xml:space="preserve"><value>Пользователь {0} обновлён, роли: {1}</value></data>
+  <data name="VerifyBase" xml:space="preserve"><value>Проверка базы «{0}» ({1})</value></data>
+  <data name="VerifyExternal403" xml:space="preserve"><value>  по адресу машины {0}: HTTP 403</value></data>
+  <data name="VerifyExternalCode" xml:space="preserve"><value>  по адресу машины {0}: HTTP {1}, ожидалось 403</value></data>
+  <data name="VerifyMetadataFailed" xml:space="preserve"><value>Проверка OData не прошла: $metadata HTTP {0} {1}</value></data>
+  <data name="VerifyMetadataOk" xml:space="preserve"><value>$metadata: HTTP 200, наборов: {0}</value></data>
+  <data name="VerifyNoExternalIp" xml:space="preserve"><value>  внешних IPv4-адресов нет — проверка 403 пропущена</value></data>
+  <data name="VerifyNoPassword401" xml:space="preserve"><value>  без пароля: HTTP 401</value></data>
+  <data name="VerifyNoPasswordCode" xml:space="preserve"><value>  без пароля: HTTP {0}, ожидалось 401</value></data>
+  <data name="VerifyOffHidden" xml:space="preserve"><value>Выключенные объекты ({0}) в составе OData не видны</value></data>
+  <data name="VerifyOffVisible" xml:space="preserve"><value>Выключенные объекты всё ещё видны через OData: {0}</value></data>
+  <data name="VerifyPatchAllowed" xml:space="preserve"><value>  PATCH {0}: HTTP {1} — ЗАПИСЬ РАЗРЕШЕНА</value></data>
+  <data name="VerifyPatchDenied" xml:space="preserve"><value>  PATCH {0}: HTTP {1} — отказ 1С ({2}); версия данных не изменилась</value></data>
+  <data name="VerifyPatchSkipped" xml:space="preserve"><value>  в {0} нет записей (HTTP {1}) — PATCH не проверен</value></data>
+  <data name="VerifyPostAllowed" xml:space="preserve"><value>  POST {0}: HTTP {1}, документов было {2}, стало {3} — ЗАПИСЬ РАЗРЕШЕНА</value></data>
+  <data name="VerifyPostDenied" xml:space="preserve"><value>  POST {0}: HTTP {1} — отказ 1С ({2}); документов было {3}, стало {4}</value></data>
+  <data name="VerifyPostSkipped" xml:space="preserve"><value>  {0} нет в составе — POST не проверен</value></data>
+  <data name="VerifyReadEmpty" xml:space="preserve"><value>  {0}: HTTP 200, но пусто, хотя в базе записи есть — bilem их не видит (роли или ограничение доступа на уровне записей)</value></data>
+  <data name="VerifyReadHttp" xml:space="preserve"><value>  {0}: HTTP {1} {2}</value></data>
+  <data name="VerifyReadSummary" xml:space="preserve"><value>Чтение: {0} из {1} наборов — HTTP 200, видно всё, что есть в базе (с записями: {2})</value></data>
+  <data name="VerifySetMissing" xml:space="preserve"><value>  {0} — нет в $metadata</value></data>
+  <data name="VrdOData" xml:space="preserve"><value>default.vrd: OData включён, пул сессий</value></data>
+  <data name="WebinstNoVrd" xml:space="preserve"><value>webinst не создал default.vrd.</value></data>
+  <data name="WebinstResult" xml:space="preserve"><value>webinst: код {0}; {1}</value></data>
+  <data name="WhatToDo" xml:space="preserve"><value>Что делать:</value></data>
+  <data name="Yes" xml:space="preserve"><value>есть</value></data>
+</root>

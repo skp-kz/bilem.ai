@@ -1,0 +1,59 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{284DBDCF-BCC1-41ED-B658-DE9ACF566E7E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bilem.Agent.Core", "src\Bilem.Agent.Core\Bilem.Agent.Core.csproj", "{7AF70601-71BB-4C08-B908-6FEE2601A0D1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Bilem.Agent.Com", "Bilem.Agent.Com", "{90BB04BD-18A6-469F-A1A6-7E2819B10AEB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bilem.Agent.Com32", "src\Bilem.Agent.Com\x86\Bilem.Agent.Com32.csproj", "{7F9BF168-E533-47C8-8645-F13ECD4E8BEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bilem.Agent.Com64", "src\Bilem.Agent.Com\x64\Bilem.Agent.Com64.csproj", "{2B34B343-B645-41E0-9187-A2F082B0D7F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bilem.Agent", "src\Bilem.Agent\Bilem.Agent.csproj", "{4A1845EB-3807-4B77-95FE-273FB01F0A2A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7E88247D-D048-438A-93EE-F2282FB51DC9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bilem.Agent.Core.Tests", "tests\Bilem.Agent.Core.Tests\Bilem.Agent.Core.Tests.csproj", "{F40072FB-141D-4355-A783-B876B0A0B532}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7AF70601-71BB-4C08-B908-6FEE2601A0D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AF70601-71BB-4C08-B908-6FEE2601A0D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AF70601-71BB-4C08-B908-6FEE2601A0D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AF70601-71BB-4C08-B908-6FEE2601A0D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F9BF168-E533-47C8-8645-F13ECD4E8BEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F9BF168-E533-47C8-8645-F13ECD4E8BEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F9BF168-E533-47C8-8645-F13ECD4E8BEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F9BF168-E533-47C8-8645-F13ECD4E8BEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B34B343-B645-41E0-9187-A2F082B0D7F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B34B343-B645-41E0-9187-A2F082B0D7F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B34B343-B645-41E0-9187-A2F082B0D7F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B34B343-B645-41E0-9187-A2F082B0D7F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A1845EB-3807-4B77-95FE-273FB01F0A2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A1845EB-3807-4B77-95FE-273FB01F0A2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A1845EB-3807-4B77-95FE-273FB01F0A2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A1845EB-3807-4B77-95FE-273FB01F0A2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F40072FB-141D-4355-A783-B876B0A0B532}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F40072FB-141D-4355-A783-B876B0A0B532}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F40072FB-141D-4355-A783-B876B0A0B532}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F40072FB-141D-4355-A783-B876B0A0B532}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7AF70601-71BB-4C08-B908-6FEE2601A0D1} = {284DBDCF-BCC1-41ED-B658-DE9ACF566E7E}
+		{90BB04BD-18A6-469F-A1A6-7E2819B10AEB} = {284DBDCF-BCC1-41ED-B658-DE9ACF566E7E}
+		{7F9BF168-E533-47C8-8645-F13ECD4E8BEC} = {90BB04BD-18A6-469F-A1A6-7E2819B10AEB}
+		{2B34B343-B645-41E0-9187-A2F082B0D7F2} = {90BB04BD-18A6-469F-A1A6-7E2819B10AEB}
+		{4A1845EB-3807-4B77-95FE-273FB01F0A2A} = {284DBDCF-BCC1-41ED-B658-DE9ACF566E7E}
+		{F40072FB-141D-4355-A783-B876B0A0B532} = {7E88247D-D048-438A-93EE-F2282FB51DC9}
+	EndGlobalSection
+EndGlobal

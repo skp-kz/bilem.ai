@@ -1,0 +1,119 @@
+name: release
+
+# Релиз по тегу vX.Y.Z (бета — vX.Y.Z-beta.N → prerelease): тесты → сборка → [Authenticode exe] → MSI → [Authenticode MSI]
+# → SHA256SUMS + подпись Ed25519 (секрет RELEASE_SIGNING_KEY) → GitHub Release с заметками из CHANGELOG.md.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write   # создать релиз
+  id-token: write   # вход в Azure по OIDC для Authenticode (когда заведены переменные)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Тесты и сборка (версия из тега)
+        shell: pwsh
+        run: ./build/release.ps1 -Tag $env:TAG -Stage build
+
+      # --- Authenticode (решение 0012): Microsoft Artifact Signing по OIDC. Пока переменных репозитория нет — шаги пропускаются.
+      # Переменные: AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_SUBSCRIPTION_ID, AZURE_SIGNING_ENDPOINT, AZURE_SIGNING_ACCOUNT, AZURE_SIGNING_PROFILE.
+      - name: Вход в Azure (OIDC)
+        if: ${{ vars.AZURE_CLIENT_ID != '' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Authenticode — exe агента и помощников
+        if: ${{ vars.AZURE_CLIENT_ID != '' }}
+        uses: azure/trusted-signing-action@v0.5.1
+        with:
+          endpoint: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ vars.AZURE_SIGNING_PROFILE }}
+          files-folder: artifacts/bin/Release
+          files-folder-filter: exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+          exclude-environment-credential: true
+          exclude-workload-identity-credential: true
+          exclude-managed-identity-credential: true
+          exclude-shared-token-cache-credential: true
+          exclude-visual-studio-credential: true
+          exclude-visual-studio-code-credential: true
+          exclude-azure-cli-credential: false
+          exclude-azure-powershell-credential: true
+          exclude-azure-developer-cli-credential: true
+          exclude-interactive-browser-credential: true
+
+      - name: MSI
+        id: msi
+        shell: pwsh
+        run: ./build/release.ps1 -Tag $env:TAG -Stage msi
+
+      - name: Authenticode — MSI
+        if: ${{ vars.AZURE_CLIENT_ID != '' }}
+        uses: azure/trusted-signing-action@v0.5.1
+        with:
+          endpoint: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ vars.AZURE_SIGNING_PROFILE }}
+          files-folder: artifacts/release
+          files-folder-filter: msi
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+          exclude-environment-credential: true
+          exclude-workload-identity-credential: true
+          exclude-managed-identity-credential: true
+          exclude-shared-token-cache-credential: true
+          exclude-visual-studio-credential: true
+          exclude-visual-studio-code-credential: true
+          exclude-azure-cli-credential: false
+          exclude-azure-powershell-credential: true
+          exclude-azure-developer-cli-credential: true
+          exclude-interactive-browser-credential: true
+
+      - name: SHA256SUMS и подпись Ed25519
+        shell: pwsh
+        env:
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+        run: |
+          if (-not $env:RELEASE_SIGNING_KEY) { throw "нет секрета RELEASE_SIGNING_KEY — релиз без подписи не выпускаем" }
+          $key = Join-Path $env:RUNNER_TEMP 'release-key.pem'
+          [IO.File]::WriteAllText($key, $env:RELEASE_SIGNING_KEY)
+          try { ./build/sign-release.ps1 -Dir artifacts/release -KeyFile $key }
+          finally { Remove-Item $key -Force }
+
+      - name: Заметки из CHANGELOG.md
+        shell: pwsh
+        run: |
+          $ver = $env:TAG.TrimStart('v')
+          $lines = Get-Content CHANGELOG.md -Encoding UTF8
+          $start = [Array]::FindIndex($lines, [Predicate[string]]{ param($l) $l -match "^## \[?$([regex]::Escape($ver))\]?" })
+          if ($start -lt 0) { throw "в CHANGELOG.md нет раздела $ver" }
+          $end = [Array]::FindIndex($lines, $start + 1, [Predicate[string]]{ param($l) $l -match '^## ' })
+          if ($end -lt 0) { $end = $lines.Length }
+          ($lines[($start + 1)..($end - 1)] -join "`n").Trim() | Out-File artifacts/notes.md -Encoding utf8
+
+      - name: GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $pre = if ($env:TAG -match '-') { '--prerelease' } else { '--latest' }
+          $files = Get-ChildItem artifacts/release -File | ForEach-Object { $_.FullName }
+          gh release create $env:TAG --title "Bilem Agent $($env:TAG.TrimStart('v'))" --notes-file artifacts/notes.md $pre @files

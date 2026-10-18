@@ -1,6 +1,6 @@
-name: Новая функция API
-description: Нужен новый запрос в /hs/bilem/v1 или инструмент MCP
-labels: ["enhancement", "api"]
+name: Новая функция агента
+description: Новый вопрос, инструмент MCP или печатная форма
+labels: ["enhancement"]
 body:
   - type: textarea
     id: question

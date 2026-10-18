@@ -1,0 +1,96 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+
+namespace Bilem.Agent.Core.Mcp
+{
+    /// <summary>MCP-сервер агента: базы из конфига, токен из конфига (DPAPI), HTTP на 127.0.0.1:порт.</summary>
+    public sealed class McpHost : IDisposable
+    {
+        private McpHttpServer _http;
+        private List<BaseRuntime> _bases = new List<BaseRuntime>();
+        private string _token;
+
+        public bool Running => _http?.Running == true;
+        public int Port { get; private set; }
+        public int BaseCount => _bases.Count;
+
+        /// <summary>Версия агента SemVer («0.3.0-beta.1») — та же, что в теге релиза и в MSI.</summary>
+        public static string Version => Updates.SemVer.Current.ToString();
+
+        public void Start()
+        {
+            var cfg = AgentConfig.Load();
+            Port = cfg.Port;
+            _token = cfg.GetOrCreateToken();
+            Reload(cfg);
+            Tools.StaleWorkdays = cfg.StaleWorkdays;
+            var proto = new McpProtocol(Tools.Create(Current, cfg.MaxRows), Version);
+            // Почта — в списке инструментов, только когда SMTP-клиент включён (тумблер на вкладке «SMTP» / в трее)
+            proto.Visible = t => t.Name != "send_document" || _smtpOn;
+            _proto = proto;
+            _http = new McpHttpServer(cfg.Port, () => _token, proto);
+            _http.Start();
+            _signature = Signature();
+            // config.json изменился (окно, командная строка) — перечитать; сменился набор инструментов — уведомить клиентов
+            _watch = new System.Threading.Timer(_ => Watch(), null, 2000, 2000);
+        }
+
+        private DateTime _cfgStamp;
+
+        /// <summary>Базы для вызова инструмента: config.json изменился (окно, командная строка) — перечитываем, «Доступ» действует сразу.</summary>
+        private IReadOnlyList<BaseRuntime> Current()
+        {
+            try { if (System.IO.File.GetLastWriteTimeUtc(Paths.ConfigFile) != _cfgStamp) Reload(); }
+            catch (Exception e) { Log.Warn(e.Message); }
+            return _bases;
+        }
+
+        /// <summary>Перечитать базы и токен (после добавления/удаления базы или смены токена).</summary>
+        public void Reload(AgentConfig cfg = null)
+        {
+            try { _cfgStamp = System.IO.File.GetLastWriteTimeUtc(Paths.ConfigFile); } catch { }
+            cfg = cfg ?? AgentConfig.Load();
+            Tools.StaleWorkdays = cfg.StaleWorkdays;
+            var list = new List<BaseRuntime>();
+            foreach (var b in cfg.Bases)
+            {
+                try { list.Add(BaseRuntime.FromConfig(b)); }
+                catch (Exception e) { Log.Warn(Txt.F("McpBaseSkipped", b.Slug, e.Message)); }
+            }
+            _bases = list;
+            _smtpOn = cfg.Smtp?.Enabled == true;
+            _accessStamp = string.Join(";", cfg.Bases.Select(b => b.Slug + ":" + string.Join(",", b.ReadEffective.OrderBy(x => x)) + "/" + string.Join(",", (b.Write ?? new List<string>()).OrderBy(x => x))));
+            if (!string.IsNullOrEmpty(cfg.TokenProtected)) _token = cfg.GetOrCreateToken();
+            Log.Info(Txt.F("McpBases", _bases.Count, string.Join(", ", _bases.Select(x => x.Config.Slug))));
+        }
+
+        private McpProtocol _proto;
+        private System.Threading.Timer _watch;
+        private string _signature;
+        private volatile bool _smtpOn;
+        private string _accessStamp = "";
+
+        /// <summary>Отпечаток: видимые инструменты + «Доступ» (чтение/запись по базам) — сменился → notifications/tools/list_changed.</summary>
+        private string Signature() => (_proto?.ToolsSignature() ?? "") + "|" + _accessStamp;
+
+        private void Watch()
+        {
+            try
+            {
+                // Конфиг мог перечитать и вызов инструмента (Current) — поэтому отпечаток сравниваем всегда
+                if (System.IO.File.GetLastWriteTimeUtc(Paths.ConfigFile) != _cfgStamp) Reload();
+                var sig = Signature();
+                if (sig == _signature) return;
+                _signature = sig;
+                _http?.Notify(McpProtocol.ListChangedNotification);
+                Log.Info(Txt.F("McpListChanged", _http?.StreamCount ?? 0));
+            }
+            catch (Exception e) { Log.Warn(e.Message); }
+        }
+
+        public void Stop() { _watch?.Dispose(); _watch = null; _http?.Stop(); _http = null; }
+        public void Dispose() => Stop();
+    }
+}

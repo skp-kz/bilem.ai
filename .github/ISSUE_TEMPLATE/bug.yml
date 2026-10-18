@@ -6,13 +6,13 @@ body:
     id: part
     attributes:
       label: Где
-      options: ["bilem.cfe (расширение 1С)", "bilem-mcp (MCP-сервер)", "bilem-agent (служба)", "Кабинет app.bilem.ai", "Документация"]
+      options: ["Bilem Agent (программа Windows)", "Установщик / обновление", "Кабинет app.bilem.ai", "Документация"]
     validations: { required: true }
   - type: input
     id: version
     attributes:
       label: Версия
-      placeholder: "cfe 0.1.0 / mcp 0.1.0"
+      placeholder: "0.3.0-beta.1 («Сервис» → «Обновления»)"
     validations: { required: true }
   - type: input
     id: platform
@@ -34,6 +34,6 @@ body:
   - type: textarea
     id: logs
     attributes:
-      label: Логи / ответ сервиса
-      description: Без ключей и данных клиентов. Ключ вида blm_k_… — замените на ***.
+      label: Журнал / ответ MCP
+      description: Без паролей, токенов и данных клиентов. Подойдёт «Сервис» → «Собрать системную информацию»; токен MCP в адресе замените на ***.
       render: text

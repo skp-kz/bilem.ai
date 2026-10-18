@@ -1,0 +1,4 @@
+node_modules/
+bases.json
+# Номера версий в lock-файле совпадают с шаблоном IP в проверке перед push; версии зависимостей зафиксированы в package.json
+package-lock.json

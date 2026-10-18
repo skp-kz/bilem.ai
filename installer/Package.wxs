@@ -1,0 +1,57 @@
+<!--
+  Bilem Agent — MSI (WiX 5).
+  • Установка на машину: «Program Files\Bilem Agent», ярлыки «Bilem Agent» на рабочем столе и в «Пуске» (для всех).
+  • MajorUpgrade: новая версия заменяет старую; разрешены та же версия (бета → бета; AllowDowngrades включает и её) и откат на прежнюю («Откатить» в агенте).
+  • Данные C:\ProgramData\Bilem (базы, токен MCP, печати, SMTP, журнал) установщик не создаёт и не трогает — ни при обновлении,
+    ни при удалении. Удалить и их: msiexec /x BilemAgent-….msi REMOVE_SETTINGS=1.
+  • Публикации IIS, пулы и пользователя bilem в базах установщик не удаляет — перед удалением программы: bilem-agent remove (README).
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+  <Package Name="Bilem Agent" Manufacturer="SKP.kz LLC" Version="$(var.MsiVersion)" UpgradeCode="0790128C-1323-4ACF-B2E5-DB25DE89CFDF"
+           Scope="perMachine" Language="1049" Codepage="1251" InstallerVersion="500">
+    <SummaryInformation Description="Bilem Agent $(var.SemVer)" Manufacturer="SKP.kz LLC" />
+    <MajorUpgrade AllowDowngrades="yes" Schedule="afterInstallInitialize" />
+    <!-- Откат на прежнюю версию: файлы старше установленных иначе не ставятся, а старая версия удаляется — остаётся пусто.
+         «a» — ставить все файлы независимо от версий. -->
+    <Property Id="REINSTALLMODE" Value="amus" />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="BilemAgentIcon" SourceFile="$(var.Icon)" />
+    <Property Id="ARPPRODUCTICON" Value="BilemAgentIcon" />
+    <Property Id="ARPURLINFOABOUT" Value="https://bilem.ai" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/skp-kz/bilem.ai" />
+    <Property Id="ARPCOMMENTS" Value="Bilem Agent $(var.SemVer)" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Bilem Agent" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+    <StandardDirectory Id="DesktopFolder" />
+
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(var.BinDir)\*.exe" />
+      <Files Include="$(var.BinDir)\*.dll" />
+      <Files Include="$(var.BinDir)\*.config" />
+    </ComponentGroup>
+
+    <!-- Ярлыки: те же имена, что создаёт сам агент (Shortcuts.cs) — при удалении программы исчезают -->
+    <Component Id="Shortcuts" Directory="INSTALLFOLDER" Guid="6E8D33B1-0C8B-4C0B-9D7E-4D1B2B7F3A10">
+      <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="Bilem Agent" Target="[INSTALLFOLDER]bilem-agent.exe" WorkingDirectory="INSTALLFOLDER" Icon="BilemAgentIcon" />
+      <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="Bilem Agent" Target="[INSTALLFOLDER]bilem-agent.exe" WorkingDirectory="INSTALLFOLDER" Icon="BilemAgentIcon" />
+      <RegistryValue Root="HKLM" Key="Software\Bilem\Agent" Name="InstallFolder" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+    </Component>
+
+    <!-- «Удалить и настройки»: только при удалении и только с REMOVE_SETTINGS=1 -->
+    <SetProperty Id="BILEMDATA" Value="[CommonAppDataFolder]Bilem" After="AppSearch" Sequence="execute" />
+    <Component Id="RemoveSettings" Directory="INSTALLFOLDER" Guid="A2F7C4D6-5E31-4C9A-8B2F-1D6E0B3C7A54">
+      <util:RemoveFolderEx On="uninstall" Property="BILEMDATA" Condition="REMOVE_SETTINGS = 1" />
+      <RegistryValue Root="HKLM" Key="Software\Bilem\Agent" Name="RemoveSettings" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <Feature Id="Main" Title="Bilem Agent">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="Shortcuts" />
+      <ComponentRef Id="RemoveSettings" />
+    </Feature>
+  </Package>
+</Wix>

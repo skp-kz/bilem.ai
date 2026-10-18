@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Окно (WinForms) и CLI в одном exe. Без аргументов — окно, с аргументами — команда.
+       Подсистема консольная: у CLI нормальные вывод и код возврата; при запуске двойным щелчком консоль скрывается. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <AssemblyName>bilem-agent</AssemblyName>
+    <RootNamespace>Bilem.Agent</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\assets\icons\bilem-agent.ico</ApplicationIcon>
+    <OutputPath>..\..\artifacts\bin\$(Configuration)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Security" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Иконки — встроенными ресурсами exe, не отдельными файлами рядом -->
+    <EmbeddedResource Include="..\..\assets\icons\bilem-agent.ico" LogicalName="bilem-agent.ico" />
+    <EmbeddedResource Include="..\..\assets\icons\tray-green.ico" LogicalName="tray-green.ico" />
+    <EmbeddedResource Include="..\..\assets\icons\tray-yellow.ico" LogicalName="tray-yellow.ico" />
+    <EmbeddedResource Include="..\..\assets\icons\tray-red.ico" LogicalName="tray-red.ico" />
+    <EmbeddedResource Include="..\..\assets\icons\tray-grey.ico" LogicalName="tray-grey.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Bilem.Agent.Core.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Bilem.Agent.Core\Bilem.Agent.Core.csproj" />
+    <!-- Помощники COM собираются рядом (тот же каталог вывода), ссылка нужна только для порядка сборки -->
+    <ProjectReference Include="..\Bilem.Agent.Com\x86\Bilem.Agent.Com32.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Bilem.Agent.Com\x64\Bilem.Agent.Com64.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>
