@@ -5,3 +5,6 @@ artifacts/
 TestResults/
 .vs/
 *.user
+
+# Web-установщик .NET 4.8 от Microsoft — скачивает build/release.ps1 (проверка подписи Microsoft)
+installer/redist/

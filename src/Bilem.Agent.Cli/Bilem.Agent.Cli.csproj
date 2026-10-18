@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Командная строка bilem-agent.com: консольная обёртка над тем же кодом, что окно (Cli.cs в bilem-agent.exe).
+    Окно — bilem-agent.exe (подсистема Windows: без консоли и без пустого чёрного окна, если что-то пошло не так при запуске).
+    В cmd и PowerShell «bilem-agent …» находит .com раньше .exe (PATHEXT) — команды из README работают как раньше,
+    с выводом в консоль и кодом возврата.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <AssemblyName>bilem-agent-cli</AssemblyName>
+    <RootNamespace>Bilem.AgentCli</RootNamespace>
+    <ApplicationManifest>..\Bilem.Agent\app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\assets\icons\bilem-agent.ico</ApplicationIcon>
+    <OutputPath>..\..\artifacts\obj\cli\$(Configuration)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AgentOut>$(MSBuildThisFileDirectory)..\..\artifacts\bin\$(Configuration)\</AgentOut>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Bilem.Agent\Bilem.Agent.csproj" Private="false" />
+  </ItemGroup>
+  <!-- Рядом с bilem-agent.exe: bilem-agent.com и его .config (переадресация сборок та же, что у агента) -->
+  <Target Name="CopyAsCom" AfterTargets="Build">
+    <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(AgentOut)bilem-agent.com" />
+    <Copy SourceFiles="$(AgentOut)bilem-agent.exe.config" DestinationFiles="$(AgentOut)bilem-agent.com.config" Condition="Exists('$(AgentOut)bilem-agent.exe.config')" />
+  </Target>
+</Project>

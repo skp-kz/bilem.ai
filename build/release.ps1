@@ -35,6 +35,18 @@ if ($Stage -eq 'build') { return }
 
 # --- Authenticode (exe агента и помощников) — шаг в GitHub Actions до MSI; здесь не подписываем
 
+# --- Web-установщик .NET Framework 4.8 (Microsoft, ~1,4 МБ) — внутрь MSI; берём с сайта Microsoft и проверяем подпись
+$redist = Join-Path $root 'installer/redist/ndp48-web.exe'
+if (-not (Test-Path $redist)) {
+    New-Item -ItemType Directory -Force (Split-Path $redist) | Out-Null
+    Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?LinkId=2085155' -OutFile $redist -UseBasicParsing
+}
+$sig = Get-AuthenticodeSignature $redist
+if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'O=Microsoft Corporation') {
+    Remove-Item $redist -Force
+    throw "ndp48-web.exe: подпись Microsoft не подтверждена ($($sig.Status))"
+}
+
 dotnet build installer/Bilem.Agent.Installer.wixproj -c Release "-p:SemVer=$semver" "-p:MsiVersion=$fileVersion"
 if ($LASTEXITCODE -ne 0) { throw "MSI не собрался" }
 

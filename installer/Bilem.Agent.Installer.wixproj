@@ -12,13 +12,17 @@
     <BinDir Condition="'$(BinDir)' == ''">$(MSBuildThisFileDirectory)..\artifacts\bin\Release</BinDir>
     <OutputName>BilemAgent-$(SemVer)</OutputName>
     <OutputPath>$(MSBuildThisFileDirectory)..\artifacts\msi\</OutputPath>
-    <DefineConstants>MsiVersion=$(MsiVersion);SemVer=$(SemVer);BinDir=$(BinDir);Icon=$(MSBuildThisFileDirectory)..\assets\icons\bilem-agent.ico</DefineConstants>
+    <DefineConstants>MsiVersion=$(MsiVersion);SemVer=$(SemVer);BinDir=$(BinDir);Redist=$(MSBuildThisFileDirectory)redist;Icon=$(MSBuildThisFileDirectory)..\assets\icons\bilem-agent.ico</DefineConstants>
     <SuppressValidation>false</SuppressValidation>
+    <!-- Мастер установки по-русски (WixUI ru-RU) -->
+    <Cultures>ru-RU</Cultures>
     <!-- Установка на машину (ALLUSERS=1): ярлыки «Пуска» и рабочего стола — общие, ICE43/57 считают их пользовательскими.
          ICE61 — намеренно: MajorUpgrade разрешает откат на прежнюю версию. -->
     <SuppressIces>ICE43;ICE57;ICE61</SuppressIces>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Netfx.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
   </ItemGroup>
 </Project>

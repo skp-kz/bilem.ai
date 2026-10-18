@@ -33,7 +33,7 @@
 
 ## Требования
 
-- Windows 10/11 или Windows Server 2016+ с .NET Framework 4.8, права администратора;
+- Windows 10 / Server 2012 R2+, **.NET Framework 4.8 (установщик предложит поставить)**, права администратора;
 - платформа 1С:Предприятие 8.3 с компонентой «Модули расширения веб-сервера»;
 - IIS (агент включит его сам);
 - файловая база 1С и логин администратора 1С. Проверено на «Бухгалтерии для Казахстана» 3.0.
@@ -81,4 +81,4 @@ C#, .NET Framework 4.8 (WinForms + командная строка), сборк�
 
 > **The app does not send data over the network unless the user explicitly asks for it** (e-mailing a document, checking GitHub for updates).
 
-Install: download `BilemAgent-<version>.msi` from [Releases](https://github.com/skp-kz/bilem.ai/releases). Beta builds are not yet Microsoft-signed: on the SmartScreen prompt choose “More info → Run anyway”; on Windows Server unblock the downloaded file first (Properties → Unblock, or `Unblock-File`). Uninstall: remove each database in the app (**Bases → Remove**), then uninstall “Bilem Agent” in Windows Settings; `C:\ProgramData\Bilem` is kept unless you run `msiexec /x … REMOVE_SETTINGS=1`. Releases are signed: `SHA256SUMS.sig` (Ed25519) over `SHA256SUMS`. License: MIT. Security: see [SECURITY.md](SECURITY.md).
+Requirements: Windows 10 / Server 2012 R2+, .NET Framework 4.8 (the installer offers to install it). Install: download `BilemAgent-<version>.msi` from [Releases](https://github.com/skp-kz/bilem.ai/releases). Beta builds are not yet Microsoft-signed: on the SmartScreen prompt choose “More info → Run anyway”; on Windows Server unblock the downloaded file first (Properties → Unblock, or `Unblock-File`). Uninstall: remove each database in the app (**Bases → Remove**), then uninstall “Bilem Agent” in Windows Settings; `C:\ProgramData\Bilem` is kept unless you run `msiexec /x … REMOVE_SETTINGS=1`. Releases are signed: `SHA256SUMS.sig` (Ed25519) over `SHA256SUMS`. License: MIT. Security: see [SECURITY.md](SECURITY.md).

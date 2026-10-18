@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace Bilem.Agent
 {
-    /// <summary>Один exe: без аргументов — окно, с аргументами — CLI.</summary>
+    /// <summary>bilem-agent.exe — окно (подсистема Windows); команды — bilem-agent.com, с аргументами exe тоже выполняет команду.</summary>
     internal static class Program
     {
         /// <summary>Одно окно агента на машину: повторный запуск показывает уже работающее.</summary>
@@ -15,10 +15,9 @@ namespace Bilem.Agent
         [STAThread]
         private static int Main(string[] args)
         {
-            if (args.Length > 0) return Cli.Run(args);
+            // С аргументами — команда (обычно через bilem-agent.com); вывод — в консоль, из которой запустили
+            if (args.Length > 0) { AttachConsole(-1); return Cli.Run(args); }
 
-            // Запуск двойным щелчком: консоль принадлежит только нам — прячем её и открываем окно
-            HideOwnConsole();
             using (var mutex = new Mutex(true, MutexName, out var first))
             {
                 if (!first)
@@ -34,20 +33,6 @@ namespace Bilem.Agent
             }
         }
 
-        private static void HideOwnConsole()
-        {
-            var ids = new uint[2];
-            if (GetConsoleProcessList(ids, 2) <= 1)
-            {
-                var h = GetConsoleWindow();
-                if (h != IntPtr.Zero) ShowWindow(h, 0);
-                FreeConsole();
-            }
-        }
-
-        [DllImport("kernel32.dll")] private static extern IntPtr GetConsoleWindow();
-        [DllImport("kernel32.dll")] private static extern uint GetConsoleProcessList(uint[] list, uint count);
-        [DllImport("kernel32.dll")] private static extern bool FreeConsole();
-        [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr h, int cmd);
+        [DllImport("kernel32.dll")] private static extern bool AttachConsole(int processId);
     }
 }

@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Окно (WinForms) и CLI в одном exe. Без аргументов — окно, с аргументами — команда.
-       Подсистема консольная: у CLI нормальные вывод и код возврата; при запуске двойным щелчком консоль скрывается. -->
+  <!-- Окно (WinForms). Подсистема Windows: без консоли — и без пустого чёрного окна, если при запуске что-то не так
+       (например, нет .NET Framework 4.8). Командная строка — bilem-agent.com (src/Bilem.Agent.Cli); с аргументами exe тоже
+       выполняет команду, выводя в консоль, из которой запущен. -->
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
     <AssemblyName>bilem-agent</AssemblyName>
@@ -28,6 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Bilem.Agent.Core.Tests" />
+    <InternalsVisibleTo Include="bilem-agent-cli" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bilem.Agent.Core\Bilem.Agent.Core.csproj" />
