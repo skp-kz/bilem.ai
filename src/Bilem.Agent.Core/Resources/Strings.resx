@@ -235,7 +235,6 @@
   <data name="McpListChanged" xml:space="preserve"><value>Набор инструментов MCP изменился — уведомление клиентам (открытых потоков: {0})</value></data>
   <data name="McpPortBusy" xml:space="preserve"><value>Не удалось занять порт MCP {0}: {1}</value></data>
   <data name="McpStarted" xml:space="preserve"><value>MCP работает: http://127.0.0.1:{0}/mcp/&lt;токен&gt;</value></data>
-  <data name="McpStartedAfterRetry" xml:space="preserve"><value>MCP запущен: порт освободился</value></data>
   <data name="McpStopped" xml:space="preserve"><value>MCP остановлен</value></data>
   <data name="ModeApply" xml:space="preserve"><value>Режим: применить. Windows {0}, процесс {1}-бит.</value></data>
   <data name="ModeDiag" xml:space="preserve"><value>Режим: только диагностика и план, ничего не меняется. Windows {0}, процесс {1}-бит.</value></data>
@@ -697,8 +696,11 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiUpdBeta" xml:space="preserve"><value>Получать бета-версии</value></data>
   <data name="UiUpdChecking" xml:space="preserve"><value>Проверяем…</value></data>
   <data name="UiUpdDownloading" xml:space="preserve"><value>Скачиваем и проверяем {0}…</value></data>
+  <data name="UiUpdDownloadingBytes" xml:space="preserve"><value>Скачиваю {0}: {1:0.0} МБ</value></data>
+  <data name="UiUpdDownloadingProgress" xml:space="preserve"><value>Скачиваю {0}: {1:0.0} из {2:0.0} МБ</value></data>
   <data name="UiUpdInstall" xml:space="preserve"><value>Обновить</value></data>
   <data name="UiUpdInstallTo" xml:space="preserve"><value>Обновить до {0}</value></data>
+  <data name="UiUpdInstalling" xml:space="preserve"><value>Устанавливаю {0} — агент закроется и через несколько секунд запустится снова</value></data>
   <data name="UiUpdNeverChecked" xml:space="preserve"><value>Обновления ещё не проверялись.</value></data>
   <data name="UiUpdNote" xml:space="preserve"><value>Проверка — раз в сутки, с GitHub (github.com/skp-kz/bilem.ai). Перед установкой агент проверяет подпись релиза и хеш файла. «Обновить» закрывает агент, ставит новую версию и запускает её снова; базы, токен MCP, печатные формы и SMTP остаются.</value></data>
   <data name="UiUpdRollbackConfirm" xml:space="preserve"><value>Вернуть Bilem Agent {0}? Агент закроется, поставит прежнюю версию и запустится снова. Базы и настройки не меняются.</value></data>

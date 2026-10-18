@@ -154,8 +154,7 @@ namespace Bilem.Agent
                 Shortcuts.EnsureExist();
                 // Было обновление — «Обновлено с X на Y» в журнал и аудит
                 Bilem.Agent.Core.Updates.Updater.CompleteIfPending();
-                StartMcp();
-                RetryMcpWhileBusy();
+                StartMcpPatiently();
                 RefreshAll();
                 _healthTimer.Start();
                 _recheckTimer.Start();
@@ -405,6 +404,8 @@ namespace Bilem.Agent
             UAdd(check);
             _updStatus = Note("");
             UAdd(_updStatus);
+            _updProgress = new ProgressBar { Width = Px(460), Height = Px(14), Visible = false, Margin = new Padding(0, 2, 0, 4), Maximum = 1000 };
+            UAdd(_updProgress);
             _updNotes = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Width = Px(460), Height = Px(110), Visible = false, Margin = new Padding(0, 2, 0, 4) };
             UAdd(_updNotes);
             _updButton = B("UiUpdInstall");
@@ -439,6 +440,7 @@ namespace Bilem.Agent
 
         private CheckBox _updBeta;
         private Label _updStatus;
+        private ProgressBar _updProgress;
         private TextBox _updNotes;
         private Button _updButton;
         private LinkLabel _updRollback;
@@ -504,17 +506,38 @@ namespace Bilem.Agent
             try
             {
                 ShowUpdateState(Txt.F("UiUpdDownloading", r.Version));
+                _updProgress.Value = 0;
+                _updProgress.Style = ProgressBarStyle.Marquee;
+                _updProgress.Visible = true;
                 var cur = Bilem.Agent.Core.Updates.SemVer.Current;
+                // Полоса и «получено из» — с потока скачивания через окно (не чаще 5 раз в секунду)
+                var downloaded = false;
+                void Progress(long got, long total) => BeginInvoke((Action)(() =>
+                {
+                    if (downloaded) return;
+                    if (total > 0)
+                    {
+                        _updProgress.Style = ProgressBarStyle.Continuous;
+                        _updProgress.Value = (int)Math.Min(1000, got * 1000 / total);
+                        _updStatus.Text = Txt.F("UiUpdDownloadingProgress", r.Version, got / 1048576.0, total / 1048576.0);
+                    }
+                    else _updStatus.Text = Txt.F("UiUpdDownloadingBytes", r.Version, got / 1048576.0);
+                }));
                 var msi = await Task.Run(() =>
                 {
                     // MSI текущей версии — для «Откатить», если его ещё нет
                     Bilem.Agent.Core.Updates.Updater.EnsureRollback(cur, _updReleases ?? Bilem.Agent.Core.Updates.Updater.Releases());
-                    return Bilem.Agent.Core.Updates.Updater.Download(r);
+                    return Bilem.Agent.Core.Updates.Updater.Download(r, Progress);
                 });
+                downloaded = true;
+                _updProgress.Style = ProgressBarStyle.Continuous;
+                _updProgress.Value = 1000;
+                ShowUpdateState(Txt.F("UiUpdInstalling", r.Version));
+                Application.DoEvents();
                 Bilem.Agent.Core.Updates.Updater.Install(msi, cur, r.Version, Application.ExecutablePath);
                 ExitApp();
             }
-            catch (Exception ex) { Warn(ex.Message); ShowUpdateState(ex.Message); }
+            catch (Exception ex) { _updProgress.Visible = false; Warn(ex.Message); ShowUpdateState(ex.Message); }
             finally { _updBusy = false; _updButton.Enabled = true; }
         }
 
@@ -583,24 +606,43 @@ namespace Bilem.Agent
         }
 
         /// <summary>
-        /// Порт ещё занят прежним процессом (после «Обновить» новый агент стартует, пока старый не отпустил 8796 — сервер 19.10):
-        /// повтор каждые 2 с до 30 с, потом остаётся ошибка в журнале и кнопка «Запустить».
+        /// Запуск MCP при старте агента — с терпением: после «Обновить» новый агент стартует, пока прежний процесс ещё
+        /// держит порт 8796 (сервер 19.10). Первые попытки — молча, раз в 2 с до 30 с (в трее — жёлтый «подключение»);
+        /// в журнал ошибка попадает, только если порт так и не освободился. Дальше — кнопка «Запустить».
         /// </summary>
-        private void RetryMcpWhileBusy()
+        private void StartMcpPatiently()
         {
-            if (_host.Running || _mcpStoppedByUser) return;
+            _mcpStoppedByUser = false;
+            _mcpError = null;
+            if (TryStartMcp(out _)) { UpdateHealth(); return; }
+            _busySince = _busySince ?? DateTime.Now;
+            _busy++;
+            UpdateHealth();
             var left = 15;
             var t = new Timer { Interval = 2000 };
             t.Tick += (s, e) =>
             {
-                if (_host.Running || _mcpStoppedByUser || --left < 0) { t.Stop(); t.Dispose(); return; }
-                _mcpError = null;
-                try { _host.Start(); Log.Ok(Txt.S("McpStartedAfterRetry")); }
-                catch (Exception ex) { _mcpError = (ex as AgentException)?.Short ?? ex.Message; }
+                if (_mcpStoppedByUser || _host.Running) { Done(); return; }
+                if (TryStartMcp(out var err)) { Done(); return; }
+                if (--left > 0) return;
+                Done();
+                StartMcp();   // последняя попытка — уже с ошибкой в журнале и в трее
+            };
+            void Done()
+            {
+                t.Stop(); t.Dispose();
+                if (--_busy == 0) _busySince = null;
                 UpdateHealth();
                 RefreshAll();
-            };
+            }
             t.Start();
+        }
+
+        private bool TryStartMcp(out Exception error)
+        {
+            error = null;
+            try { _host.Start(); return true; }
+            catch (Exception ex) { error = ex; return false; }
         }
 
         private void ToggleMcp()

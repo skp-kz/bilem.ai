@@ -109,7 +109,10 @@ namespace Bilem.Agent.Core.Updates
         }
 
         /// <summary>Скачать MSI релиза и проверить (подпись Ed25519, хеш, Authenticode). Не сошлось — файлы удаляются, отказ.</summary>
-        public static string Download(ReleaseInfo r)
+        /// <summary>Ход скачивания MSI для полосы в окне: (получено, всего; -1 — размер неизвестен). Только на потоке скачивания.</summary>
+        [ThreadStatic] private static Action<long, long> _progress;
+
+        public static string Download(ReleaseInfo r, Action<long, long> progress = null)
         {
             if (r?.MsiUrl == null || r.SumsUrl == null || r.SigUrl == null) throw new AgentException(Txt.S("UpdNoAssets"));
             var dir = Path.Combine(Dir, r.Version.ToString());
@@ -124,7 +127,9 @@ namespace Bilem.Agent.Core.Updates
             }
             var sums = Fetch(r.SumsUrl);
             var sig = Fetch(r.SigUrl);
-            File.WriteAllBytes(msi, Fetch(r.MsiUrl));
+            _progress = progress;
+            try { File.WriteAllBytes(msi, Fetch(r.MsiUrl)); }
+            finally { _progress = null; }
             var why = ReleaseVerifier.Check(msi, sums, sig);
             if (why != null)
             {
@@ -243,7 +248,21 @@ namespace Bilem.Agent.Core.Updates
                 using (var s = resp.GetResponseStream())
                 using (var ms = new MemoryStream())
                 {
-                    s.CopyTo(ms);
+                    var p = _progress;
+                    if (p == null) s.CopyTo(ms);
+                    else
+                    {
+                        var buf = new byte[81920];
+                        var total = resp.ContentLength;
+                        var last = DateTime.MinValue;
+                        int n;
+                        while ((n = s.Read(buf, 0, buf.Length)) > 0)
+                        {
+                            ms.Write(buf, 0, n);
+                            if ((DateTime.Now - last).TotalMilliseconds >= 200) { last = DateTime.Now; p(ms.Length, total); }
+                        }
+                        p(ms.Length, total);
+                    }
                     return ((int)resp.StatusCode, ms.ToArray(), resp.Headers[HttpResponseHeader.ETag]);
                 }
             }
