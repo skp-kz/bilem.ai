@@ -50,13 +50,14 @@
 Без аргументов — окно. Команды:
   diag  --base «папка» [--admin «логин» [--password «пароль»]] [--slug «имя»]
         диагностика и план, ничего не меняет
-  setup --base «папка» --admin «логин» [--password «пароль»] [--slug «имя»] [--enable-iis] [--reset-password]
+  setup --base «папка» --admin «логин» [--password «пароль»] [--slug «имя»] [--enable-iis] [--allow-dc] [--allow-com-register] [--reset-password]
         подключить базу: пользователь bilem (только чтение), состав OData, публикация только для этой машины, проверки
   verify [--slug «имя»] [--admin «логин» [--password «пароль»]]
         проверки: чтение, запрет записи, 401 без пароля, 403 по адресам машины (с --admin — и роли bilem)
   list  подключённые базы
   sysinfo системная информация для техподдержки (без паролей, токенов и данных 1С)
   doctor диагностика компонентов: Windows, .NET, 1С, IIS, MCP, каждая база — что в порядке и что делать (ничего не меняет)
+  restore-com — вернуть системную регистрацию COM-коннектора, которая была до Bilem Agent (при удалении агента)
   remove --slug «имя» [--drop-user --admin «логин» [--password «пароль»]]
         убрать базу: публикация, пул, пароль bilem; с --drop-user — и пользователь bilem в базе
   access --slug «имя» [--load] [--read-on|--read-off|--write-on|--write-off «Документ.X,Справочник.Y»] [--admin «логин» [--password «пароль»]]
@@ -78,6 +79,7 @@
   <data name="CliSeeHelp" xml:space="preserve"><value>Справка: bilem-agent help.</value></data>
   <data name="CliServeStop" xml:space="preserve"><value>MCP-сервер работает без окна. Остановить — Ctrl+C.</value></data>
   <data name="CliUnknownCommand" xml:space="preserve"><value>Неизвестная команда «{0}».</value></data>
+  <data name="ComAsk" xml:space="preserve"><value>Сейчас зарегистрирован COM-коннектор {0}. Bilem Agent нужен {1}. Перерегистрация может повлиять на другие программы, которые используют COM-подключение к 1С.</value></data>
   <data name="ComCrashed" xml:space="preserve"><value>Помощник COM завершился с ошибкой (код {0}): {1}</value></data>
   <data name="ComError" xml:space="preserve"><value>1С: {0}</value></data>
   <data name="ComHelperMissing" xml:space="preserve"><value>Не найден помощник COM {0} рядом с агентом.</value></data>
@@ -86,6 +88,12 @@
   <data name="ComOk" xml:space="preserve"><value>COM-коннектор V83.COMConnector доступен</value></data>
   <data name="ComOtherDll" xml:space="preserve"><value>зарегистрирован COM-коннектор другой версии платформы ({0})</value></data>
   <data name="ComRegisterFailed" xml:space="preserve"><value>Не удалось зарегистрировать COM-коннектор: {0}.</value></data>
+  <data name="ComReregistered" xml:space="preserve"><value>COM-коннектор перерегистрирован: был {0}, стал {1}. Прежний вернётся при удалении базы или Bilem Agent</value></data>
+  <data name="ComRestoreFailed" xml:space="preserve"><value>Не удалось вернуть регистрацию COM-коннектора {0} (regsvr32, код {1})</value></data>
+  <data name="ComRestoreMissing" xml:space="preserve"><value>Прежний COM-коннектор не найден ({0}) — регистрацию оставляю как есть</value></data>
+  <data name="ComRestoreSkipped" xml:space="preserve"><value>Регистрацию COM-коннектора не возвращаю: после Bilem Agent её сменили ({0})</value></data>
+  <data name="ComRestored" xml:space="preserve"><value>Системная регистрация COM-коннектора возвращена: {0}</value></data>
+  <data name="ComRestoredNone" xml:space="preserve"><value>Регистрация COM-коннектора снята (до Bilem Agent его не было): {0}</value></data>
   <data name="ComTimeout" xml:space="preserve"><value>Помощник COM не ответил за 10 минут.</value></data>
   <data name="ConfigInfo" xml:space="preserve"><value>Конфигурация: {0} ({1}), версия {2}</value></data>
   <data name="ConnectClaudeFailed" xml:space="preserve"><value>claude mcp add завершился с кодом {0}: {1}</value></data>
@@ -98,12 +106,17 @@
   <data name="ConnectUnknown" xml:space="preserve"><value>Неизвестный клиент «{0}». Можно: claude-code, claude-desktop, cursor.</value></data>
   <data name="DataFlagError" xml:space="preserve"><value>  не удалось проверить наличие записей: {0} — {1}</value></data>
   <data name="DataFlags" xml:space="preserve"><value>Объектов с записями в базе: {0} из {1}</value></data>
+  <data name="DcNoIis" xml:space="preserve"><value>Это контроллер домена, IIS на нём нет — не ставлю без вашего согласия.</value></data>
+  <data name="DcWarning" xml:space="preserve"><value>Это контроллер домена. Microsoft не рекомендует ставить IIS на контроллер домена.</value></data>
   <data name="DiagAdmin" xml:space="preserve"><value>Права администратора Windows</value></data>
   <data name="DiagAnonymousPool" xml:space="preserve"><value>Вход публикации от имени пула</value></data>
   <data name="DiagBaseFolder" xml:space="preserve"><value>Папка базы (1Cv8.1CD)</value></data>
   <data name="DiagBases" xml:space="preserve"><value>Подключённые базы</value></data>
   <data name="DiagCom" xml:space="preserve"><value>COM-коннектор {0}</value></data>
   <data name="DiagConfig" xml:space="preserve"><value>Настройки (config.json)</value></data>
+  <data name="DiagCrash" xml:space="preserve"><value>Падения {0} за сутки</value></data>
+  <data name="DiagCrashDetail" xml:space="preserve"><value>{0} раз, модуль {1} {2}, код {3}, последнее {4:dd.MM HH:mm:ss}</value></data>
+  <data name="DiagDc" xml:space="preserve"><value>Контроллер домена</value></data>
   <data name="DiagGroup1C" xml:space="preserve"><value>1С:Предприятие</value></data>
   <data name="DiagGroupAgent" xml:space="preserve"><value>Bilem Agent</value></data>
   <data name="DiagGroupBase" xml:space="preserve"><value>База «{0}»</value></data>
@@ -144,7 +157,8 @@
   <data name="DismFailed" xml:space="preserve"><value>Установка компонентов Windows (dism) завершилась с кодом {0}: {1}</value></data>
   <data name="Done" xml:space="preserve"><value>ГОТОВО. База «{0}» подключена: OData {1} (только с этой машины), пользователь bilem — только чтение.</value></data>
   <data name="DoneWithWrite" xml:space="preserve"><value>ГОТОВО. База «{0}» подключена: OData {1} (только с этой машины), пользователь bilem — чтение и черновики для {2} объектов (вкладка «Доступ»); проведения и удаления нет.</value></data>
-  <data name="FolderRights" xml:space="preserve"><value>Права на {0} — пулу {1}</value></data>
+  <data name="FolderRights" xml:space="preserve"><value>Пулу IIS {1} выдано чтение и запись на папку базы {0} (снимается при удалении базы)</value></data>
+  <data name="FolderRightsRevoked" xml:space="preserve"><value>Права пула {1} на папку базы {0} сняты</value></data>
   <data name="Hint401" xml:space="preserve"><value>Пользователь bilem не принят: запустите настройку базы ещё раз с флагом --reset-password.</value></data>
   <data name="Hint403" xml:space="preserve"><value>IIS запретил доступ: проверьте ограничение по IP (запрос должен идти с 127.0.0.1).</value></data>
   <data name="Hint404" xml:space="preserve"><value>Публикация не найдена: запустите настройку базы ещё раз.</value></data>
@@ -157,9 +171,12 @@
   <data name="HintBaseFolder" xml:space="preserve"><value>Укажите папку, где лежит файл 1Cv8.1CD (файловая база). Серверные базы — в следующей версии.</value></data>
   <data name="HintBaseMoved" xml:space="preserve"><value>Базу перенесли или удалили: уберите её из Bilem Agent и подключите заново.</value></data>
   <data name="HintBaseNeedsUpdate" xml:space="preserve"><value>Базе нужно обновление: откройте её один раз в 1С:Предприятие под администратором, дождитесь обновления и повторите.</value></data>
-  <data name="HintComAuto" xml:space="preserve"><value>Не страшно: при подключении базы агент зарегистрирует COM-коннектор сам (нужны права администратора).</value></data>
+  <data name="HintComAsk" xml:space="preserve"><value>Разрешите перерегистрацию: в окне — «Да» на вопрос о COM-коннекторе, в командной строке — флаг --allow-com-register. Прежняя регистрация вернётся при удалении базы или Bilem Agent.</value></data>
+  <data name="HintComAuto" xml:space="preserve"><value>Не страшно: при подключении базы агент зарегистрирует COM-коннектор этой платформы — если сейчас зарегистрирован другой, сначала спросит вас; прежняя регистрация вернётся при удалении базы.</value></data>
   <data name="HintConfigBroken" xml:space="preserve"><value>Файл настроек повреждён: переименуйте C:\ProgramData\Bilem\config.json и подключите базы заново.</value></data>
+  <data name="HintDc" xml:space="preserve"><value>Лучше установить Bilem Agent на другой компьютер, где есть 1С и доступ к базам. Продолжить всё равно — флаг --allow-dc (в окне — «Да» на вопрос о контроллере домена).</value></data>
   <data name="HintEnableIis" xml:space="preserve"><value>Повторите с флагом --enable-iis (в окне — галочка «Включить IIS, если его нет»): агент включит компоненты Windows сам.</value></data>
+  <data name="HintIisCrash" xml:space="preserve"><value>Это сбой модуля 1С в IIS, а не Bilem Agent. Проверьте лицензию 1С на этом компьютере и что публикация использует нужную версию платформы; соберите отчёт для поддержки (вкладка «Журнал») — в нём записи журнала событий.</value></data>
   <data name="HintIisManual" xml:space="preserve"><value>Проверьте IIS вручную («Компоненты Windows» / Server Manager) и пришлите отчёт для поддержки.</value></data>
   <data name="HintInstallPlatform" xml:space="preserve"><value>Установите платформу 1С:Предприятие 8.3 с компонентой «Модули расширения веб-сервера».</value></data>
   <data name="HintList" xml:space="preserve"><value>Список подключённых баз: bilem-agent list.</value></data>
@@ -181,6 +198,8 @@
   <data name="HintWebinst" xml:space="preserve"><value>Проверьте, что при установке платформы выбраны «Модули расширения веб-сервера».</value></data>
   <data name="HintWindows32" xml:space="preserve"><value>32-битная Windows поддерживается, но не проверялась.</value></data>
   <data name="IisCommandFailed" xml:space="preserve"><value>IIS: {0} — код {1}: {2}</value></data>
+  <data name="IisCrash1C" xml:space="preserve"><value>Модуль веб-сервера 1С ({0} {1}) аварийно завершается в IIS (w3wp.exe, код {2}): {3} раз — {4}. Запрос к OData обрывается, поэтому «HTTP 0».</value></data>
+  <data name="IisCrashOther" xml:space="preserve"><value>Рабочий процесс IIS (w3wp.exe) аварийно завершается в модуле {0} {1} (код {2}): {3} раз — {4}. Запрос к OData обрывается, поэтому «HTTP 0».</value></data>
   <data name="IisEnabled" xml:space="preserve"><value>IIS включён</value></data>
   <data name="IisInstalled" xml:space="preserve"><value>IIS установлен</value></data>
   <data name="IpSecurityEnabled" xml:space="preserve"><value>Компонент IIS «Ограничения по IP» включён</value></data>
@@ -379,6 +398,7 @@
   <data name="TrayBaseError" xml:space="preserve"><value>база {0}: {1}</value></data>
   <data name="TrayConnecting" xml:space="preserve"><value>Bilem Agent — подключение…</value></data>
   <data name="TrayError" xml:space="preserve"><value>Bilem Agent — ошибка: {0}</value></data>
+  <data name="TrayIisCrash" xml:space="preserve"><value>модуль 1С падает в IIS — см. «Диагностику»</value></data>
   <data name="TrayNoAnswer" xml:space="preserve"><value>нет ответа</value></data>
   <data name="TrayNoBases" xml:space="preserve"><value>Bilem Agent — офлайн: базы не подключены</value></data>
   <data name="TrayNoSecret" xml:space="preserve"><value>нет пароля bilem</value></data>
@@ -447,6 +467,12 @@ Bilem не меняет ваш бухгалтерский учёт: читает
   <data name="UiColText" xml:space="preserve"><value>Событие</value></data>
   <data name="UiColTime" xml:space="preserve"><value>Время</value></data>
   <data name="UiColVersion" xml:space="preserve"><value>Версия</value></data>
+  <data name="UiComAsk" xml:space="preserve"><value>Сейчас зарегистрирован COM-коннектор:
+{0}
+
+Bilem Agent нужен {1}. Перерегистрация может повлиять на другие программы, которые используют COM-подключение к 1С. Прежняя регистрация вернётся при удалении базы или Bilem Agent.
+
+Перерегистрировать?</value></data>
   <data name="UiConnectBase" xml:space="preserve"><value>Подключить</value></data>
   <data name="UiConnectClaudeCode" xml:space="preserve"><value>Подключить к Claude Code</value></data>
   <data name="UiConnectClaudeDesktop" xml:space="preserve"><value>Подключить к Claude Desktop</value></data>
@@ -457,6 +483,9 @@ Bilem не меняет ваш бухгалтерский учёт: читает
   <data name="UiConnectFailed" xml:space="preserve"><value>Не получилось подключить — подробности во вкладке «Журнал».</value></data>
   <data name="UiCopied" xml:space="preserve"><value>Адрес MCP скопирован. Вставьте его в настройки ИИ-клиента или нажмите кнопку подключения ниже.</value></data>
   <data name="UiCopy" xml:space="preserve"><value>Скопировать</value></data>
+  <data name="UiDcAsk" xml:space="preserve"><value>Это контроллер домена. Microsoft не рекомендует ставить IIS на контроллер домена. Лучше установить Bilem Agent на другой компьютер, где есть 1С и доступ к базам.
+
+Продолжить всё равно?</value></data>
   <data name="UiDiagAgain" xml:space="preserve"><value>Проверить ещё раз</value></data>
   <data name="UiDiagButton" xml:space="preserve"><value>Диагностика компонентов</value></data>
   <data name="UiDiagColCheck" xml:space="preserve"><value>Проверка</value></data>

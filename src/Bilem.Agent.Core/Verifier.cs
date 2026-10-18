@@ -29,11 +29,15 @@ namespace Bilem.Agent.Core
             var r = new VerifyResult();
             var od = new ODataClient(b.OData, b.User, password);
 
+            var started = DateTime.Now;
             var meta = od.Send("GET", b.OData + "/$metadata");
             if (meta.Code != 200)
             {
                 Log.Fail(Txt.F("VerifyMetadataFailed", meta.Code, ODataClient.ErrorText(meta.Body)));
-                Log.Fail(Txt.S("WhatToDo") + " " + HintForCode(meta.Code));
+                // Обрыв соединения или 5xx — часто это упавший рабочий процесс IIS: причина в журнале событий Windows
+                var crash = meta.Code == 0 || meta.Code >= 500 ? Crashes.IisExplain(started) : null;
+                if (crash != null) { Log.Fail(crash); Log.Fail(Txt.S("WhatToDo") + " " + Txt.S("HintIisCrash")); }
+                else Log.Fail(Txt.S("WhatToDo") + " " + HintForCode(meta.Code));
                 r.Failures++;
                 return r;
             }

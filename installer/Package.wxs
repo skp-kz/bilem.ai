@@ -72,6 +72,14 @@
       <RegistryValue Root="HKLM" Key="Software\Bilem\Agent" Name="RemoveSettings" Type="integer" Value="1" KeyPath="yes" />
     </Component>
 
+    <!-- Удаление агента (не обновление): вернуть системную регистрацию COM-коннектора 1С, которая была до него.
+         Сбой не мешает удалению (Return="ignore"): без .NET или без записи о прежней регистрации команда ничего не делает. -->
+    <CustomAction Id="RestoreCom" Directory="INSTALLFOLDER" ExeCommand="&quot;[INSTALLFOLDER]bilem-agent.com&quot; restore-com"
+                  Execute="deferred" Impersonate="no" Return="ignore" />
+    <InstallExecuteSequence>
+      <Custom Action="RestoreCom" Before="RemoveFiles" Condition="REMOVE ~= &quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+    </InstallExecuteSequence>
+
     <Feature Id="Main" Title="Bilem Agent">
       <ComponentGroupRef Id="AppFiles" />
       <ComponentRef Id="NetFxWeb" />

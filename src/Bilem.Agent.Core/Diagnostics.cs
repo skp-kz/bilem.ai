@@ -44,6 +44,14 @@ namespace Bilem.Agent.Core
             var rel = NetRelease();
             Add(gSys, Txt.S("DiagNet"), rel >= Net48Release ? CheckStatus.Ok : CheckStatus.Fail,
                 rel > 0 ? Txt.F("DiagNetRelease", NetName(rel), rel) : Txt.S("DiagNetMissing"), Txt.S("HintNet48"));
+            if (WinInfo.IsDomainController()) Add(gSys, Txt.S("DiagDc"), CheckStatus.Warn, Txt.S("Yes"), Txt.S("HintDc"));
+            // Падения за сутки: IIS (модуль 1С), помощники COM, агент — из журнала событий Windows
+            foreach (var g in Crashes.Since(DateTime.Now.AddDays(-1), "w3wp.exe", "bilem-com64.exe", "bilem-com32.exe", "bilem-agent.exe").GroupBy(x => x.App + " / " + x.Module))
+            {
+                var last = g.Last();
+                Add(gSys, Txt.F("DiagCrash", last.App), CheckStatus.Warn,
+                    Txt.F("DiagCrashDetail", g.Count(), last.Module, last.ModuleVersion, last.Code, last.Time), Txt.S("HintSendLog"));
+            }
 
             // --- 1С
             var g1c = Txt.S("DiagGroup1C");
@@ -53,7 +61,8 @@ namespace Bilem.Agent.Core
             {
                 Add(g1c, Txt.F("DiagPlatformItem", p), CheckStatus.Ok, p.Bin);
                 var com = Safe(() => Platform.ComProblem(p));
-                Add(g1c, Txt.F("DiagCom", p), com.Length == 0 ? CheckStatus.Ok : CheckStatus.Warn, com.Length == 0 ? Txt.S("ComOk") : com, Txt.S("HintComAuto"));
+                // Системная регистрация агенту не нужна (коннектор — напрямую из папки платформы): справочно
+                Add(g1c, Txt.F("DiagCom", p), com.Length == 0 ? CheckStatus.Ok : CheckStatus.Info, com.Length == 0 ? Txt.S("ComOk") : com + ". " + Txt.S("HintComAuto"));
                 var web = File.Exists(Path.Combine(p.Bin, "wsisapi.dll")) && File.Exists(p.Webinst);
                 Add(g1c, Txt.F("DiagWebModules", p), web ? CheckStatus.Ok : CheckStatus.Fail, web ? "wsisapi.dll, webinst.exe" : Txt.S("DiagWebModulesMissing"), Txt.S("HintWebinst"));
                 var helper = Platform.ComHelper(p);
@@ -120,9 +129,12 @@ namespace Bilem.Agent.Core
             if (pwd != null)
             {
                 var sw = System.Diagnostics.Stopwatch.StartNew();
+                var started = DateTime.Now;
                 var m = new ODataClient(b.OData, b.User, pwd).Send("GET", b.OData + "/$metadata", timeoutMs: 30000);
+                var crash = m.Code == 0 || m.Code >= 500 ? Crashes.IisExplain(started) : null;
                 Add(Txt.S("DiagOData"), m.Code == 200 ? CheckStatus.Ok : CheckStatus.Fail,
-                    Txt.F("DiagODataCode", m.Code, sw.ElapsedMilliseconds), Verifier.HintForCode(m.Code));
+                    Txt.F("DiagODataCode", m.Code, sw.ElapsedMilliseconds) + (crash != null ? ". " + crash : ""),
+                    crash != null ? Txt.S("HintIisCrash") : Verifier.HintForCode(m.Code));
             }
             Add(Txt.S("DiagWriteDenied"), b.WriteDeniedAt.HasValue ? CheckStatus.Ok : CheckStatus.Warn,
                 b.WriteDeniedAt.HasValue ? Txt.F("DiagWriteDeniedAt", b.WriteDeniedAt.Value) : Txt.S("UiWriteNotChecked"), Txt.S("HintVerify"));

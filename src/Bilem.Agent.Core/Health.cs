@@ -60,8 +60,27 @@ namespace Bilem.Agent.Core
             string pwd;
             try { pwd = Secrets.ReadSecretFile(b.SecretFile); }
             catch { return Txt.S("TrayNoSecret"); }
+            // Публикация роняет рабочий процесс IIS — не повторять запрос каждые 5 минут (боевой сервер 19.10: каждая фоновая
+            // проверка — два падения w3wp в журнале событий, а пять падений за 5 минут IIS считает поводом остановить пул)
+            lock (Pause)
+                if (Pause.TryGetValue(b.Slug, out var p) && DateTime.Now < p.Until) return p.Error;
+            var started = DateTime.Now;
             var r = new ODataClient(b.OData, b.User, pwd).Send("GET", b.OData + "/$metadata", timeoutMs: 15000);
-            return r.Code == 200 ? null : (r.Code == 0 ? Txt.S("TrayNoAnswer") : "HTTP " + r.Code);
+            if (r.Code == 200) { lock (Pause) Pause.Remove(b.Slug); return null; }
+            var err = r.Code == 0 ? Txt.S("TrayNoAnswer") : "HTTP " + r.Code;
+            if ((r.Code == 0 || r.Code >= 500) && Crashes.IisExplain(started) != null)
+            {
+                err = Txt.S("TrayIisCrash");
+                lock (Pause) Pause[b.Slug] = (DateTime.Now + CrashPause, err);
+            }
+            return err;
         }
+
+        /// <summary>После падения IIS фоновая проверка базы молчит час; «Проверить» вручную и переподключение — сразу.</summary>
+        public static readonly TimeSpan CrashPause = TimeSpan.FromHours(1);
+        private static readonly Dictionary<string, (DateTime Until, string Error)> Pause = new Dictionary<string, (DateTime, string)>();
+
+        /// <summary>Снять паузу (ручная проверка, повторная настройка).</summary>
+        public static void Resume(string slug) { lock (Pause) Pause.Remove(slug); }
     }
 }

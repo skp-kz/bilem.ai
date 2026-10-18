@@ -90,7 +90,23 @@ namespace Bilem.Agent
             if (!File.Exists(Path.Combine(path, "1Cv8.1CD"))) { MessageBox.Show(this, Txt.F("NoBaseFile", path) + Environment.NewLine + Txt.S("HintBaseFolder"), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
             if (!Onboarding.SlugRx.IsMatch(_slug.Text.Trim())) { MessageBox.Show(this, Txt.F("BadSlug", _slug.Text) + Environment.NewLine + Txt.S("HintSlug"), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
             if (string.IsNullOrWhiteSpace(_user.Text)) { MessageBox.Show(this, Txt.S("HintAdminLogin"), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
-            Options = new SetupOptions { BasePath = path, Slug = _slug.Text.Trim(), AdminUser = _user.Text.Trim(), AdminPassword = _pwd.Text, EnableIis = _iis.Checked };
+            // Контроллер домена без IIS: Microsoft не рекомендует ставить туда IIS — спрашиваем до установки
+            var allowDc = false;
+            if (_iis.Checked && !Iis.Installed && WinInfo.IsDomainController())
+            {
+                if (MessageBox.Show(this, Txt.S("UiDcAsk"), Text, MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                allowDc = true;
+            }
+            // Зарегистрирован COM-коннектор другой платформы — им могут пользоваться другие программы: менять только с «да»
+            var allowCom = false;
+            var plat = Platform.Choose(Platform.Find());
+            var inUse = plat == null ? null : Platform.ComInUse(plat);
+            if (inUse != null)
+            {
+                if (MessageBox.Show(this, Txt.F("UiComAsk", inUse, plat.Version), Text, MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                allowCom = true;
+            }
+            Options = new SetupOptions { BasePath = path, Slug = _slug.Text.Trim(), AdminUser = _user.Text.Trim(), AdminPassword = _pwd.Text, EnableIis = _iis.Checked, AllowDomainController = allowDc, AllowComRegister = allowCom };
             DialogResult = DialogResult.OK;
             Close();
         }

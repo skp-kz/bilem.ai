@@ -18,6 +18,10 @@ namespace Bilem.Agent.Core
         public bool EnableIis { get; set; }
         public bool ResetPassword { get; set; }
         public string PlatformVersion { get; set; }
+        /// <summary>Человек ответил «да» на предупреждение «это контроллер домена» (IIS на DC Microsoft не рекомендует).</summary>
+        public bool AllowDomainController { get; set; }
+        /// <summary>Человек разрешил сменить системную регистрацию COM-коннектора с другой платформы на выбранную.</summary>
+        public bool AllowComRegister { get; set; }
     }
 
     public enum StepStatus { Pending, Running, Ok, Warn, Fail, Skipped }
@@ -127,11 +131,17 @@ namespace Bilem.Agent.Core
                 var com = Platform.ComProblem(plat);
                 if (com.Length > 0)
                 {
-                    if (!apply) { Log.Plan(Txt.F("PlanRegisterCom", com, plat.ComDll)); End(StepStatus.Warn, com); return PlanDone(); }
+                    // Зарегистрирован коннектор другой платформы — им могут пользоваться обмены и обработки: только с «да» человека
+                    var inUse = Platform.ComInUse(plat);
+                    if (!apply) { Log.Plan(Txt.F("PlanRegisterCom", com, plat.ComDll)); if (inUse != null) Log.Plan(Txt.F("ComAsk", inUse, plat.Version)); End(StepStatus.Warn, com); return PlanDone(); }
+                    if (inUse != null && !o.AllowComRegister) { End(StepStatus.Fail); return Fail(Txt.F("ComAsk", inUse, plat.Version), Txt.S("HintComAsk")); }
                     Log.Warn(Txt.F("RegisteringCom", com));
+                    Platform.RememberCom(cfg, plat);
+                    cfg.Save();
                     Platform.RegisterCom(plat);
                     com = Platform.ComProblem(plat);
                     if (com.Length > 0) { End(StepStatus.Fail); return Fail(Txt.F("ComRegisterFailed", com), Txt.F("HintRegsvr", plat.ComDll)); }
+                    if (inUse != null) Log.Ok(Txt.F("ComReregistered", inUse, plat.ComDll));
                 }
                 Log.Ok(Txt.S("ComOk"));
                 End(StepStatus.Ok, plat.ToString());
@@ -252,8 +262,11 @@ namespace Bilem.Agent.Core
 
                 // 6. IIS
                 Begin("iis");
+                var dc = WinInfo.IsDomainController();
+                if (dc) Log.Warn(Txt.S("DcWarning"));
                 if (!Iis.Installed)
                 {
+                    if (dc && apply && o.EnableIis && !o.AllowDomainController) { End(StepStatus.Fail); return Fail(Txt.S("DcNoIis"), Txt.S("HintDc")); }
                     if (!apply || !o.EnableIis)
                     {
                         Log.Plan(Txt.S("PlanEnableIis"));
@@ -337,6 +350,7 @@ namespace Bilem.Agent.Core
         private bool VerifyStep(AgentConfig cfg, BaseConfig b)
         {
             Begin("verify");
+            Health.Resume(b.Slug);
             var pwd = File.Exists(b.SecretFile) ? Secrets.ReadSecretFile(b.SecretFile) : null;
             if (pwd == null) { End(StepStatus.Fail); return Fail(Txt.F("NoSecret", b.SecretFile), Txt.S("HintResetPassword")); }
             var vr = Verifier.Run(b, pwd);
@@ -568,9 +582,16 @@ namespace Bilem.Agent.Core
                 var dir = Path.Combine(Iis.WwwRoot, b.Publication);
                 if (Directory.Exists(dir)) Directory.Delete(dir, true);
                 Iis.RevokePool(b.Path, b.Pool);
+                Log.Ok(Txt.F("FolderRightsRevoked", b.Path, b.Pool));
                 if (File.Exists(b.SecretFile)) File.Delete(b.SecretFile);
                 if (File.Exists(Paths.StateFile(slug))) File.Delete(Paths.StateFile(slug));
                 cfg.Bases.Remove(b);
+                // Последняя база этой разрядности — вернуть системную регистрацию COM, которая была до агента
+                if (!cfg.Bases.Any(x => x.PlatformBits == b.PlatformBits))
+                {
+                    var restored = Platform.RestoreCom(cfg, b.PlatformBits);
+                    if (restored != null) Log.Ok(restored);
+                }
                 cfg.Save();
                 Log.Ok(Txt.F("Removed", slug, b.Publication, b.Pool));
                 if (!dropUser) Log.Info(Txt.S("RemoveUserKept"));

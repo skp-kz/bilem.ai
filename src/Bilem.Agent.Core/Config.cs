@@ -59,6 +59,15 @@ namespace Bilem.Agent.Core
         [JsonIgnore] public string DisplayName => string.IsNullOrEmpty(Synonym) ? Configuration : Synonym;
     }
 
+    public sealed class ComRegistration
+    {
+        /// <summary>Что было зарегистрировано до агента: путь к comcntr.dll или "" (ничего).</summary>
+        public string Previous { get; set; }
+        /// <summary>Что зарегистрировал агент — возвращаем прежнее, только если регистрация всё ещё наша.</summary>
+        public string Ours { get; set; }
+        public DateTime At { get; set; }
+    }
+
     public sealed class AgentConfig
     {
         public int Port { get; set; } = 8796;
@@ -75,6 +84,12 @@ namespace Bilem.Agent.Core
         public Bilem.Agent.Core.Mail.SmtpAccount Smtp { get; set; } = new Bilem.Agent.Core.Mail.SmtpAccount();
         /// <summary>Подсказку «Bilem Agent работает в трее» уже показали — больше не показываем.</summary>
         public bool TrayHintShown { get; set; }
+        /// <summary>
+        /// Системная регистрация COM-коннектора до Bilem Agent, по разрядности ("32"/"64"): путь к comcntr.dll, "" — не было.
+        /// Записывается, когда агент перерегистрирует коннектор (с согласия человека); возвращается при удалении последней базы
+        /// этой разрядности или агента. Ключа нет — агент регистрацию не менял.
+        /// </summary>
+        public Dictionary<string, ComRegistration> ComBefore { get; set; } = new Dictionary<string, ComRegistration>();
 
         private static readonly JsonSerializerSettings Js = new JsonSerializerSettings
         {

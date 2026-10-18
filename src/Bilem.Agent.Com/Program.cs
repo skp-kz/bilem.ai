@@ -35,8 +35,14 @@ namespace Bilem.Agent.Com
             }
             using (var w = new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false)))
                 w.Write(JsonConvert.SerializeObject(reply, ComReply.Js));
+            // Ответ записан — выходим без выгрузки библиотек: comcntr.dll 8.3.24 при выгрузке на выходе процесса падал в ucrtbase
+            // с 0xc0000409 (Server 2016, боевой сервер 19.10) — запись в журнале событий на каждый вызов, хотя работа уже сделана.
+            TerminateProcess(GetCurrentProcess(), reply.Ok ? 0u : 1u);
             return reply.Ok ? 0 : 1;
         }
+
+        [DllImport("kernel32.dll")] private static extern IntPtr GetCurrentProcess();
+        [DllImport("kernel32.dll")] private static extern bool TerminateProcess(IntPtr process, uint exitCode);
 
         private static string Clean(Exception e)
         {

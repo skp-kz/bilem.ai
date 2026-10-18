@@ -45,6 +45,18 @@ namespace Bilem.Agent
                             if (drop && admin == null) { Log.Fail(Txt.S("CliDropNeedsAdmin")); return 1; }
                             return new Onboarding().Remove(slug, drop, admin, drop ? Password(a) : null) ? 0 : 1;
                         }
+                    case "restore-com":
+                        {
+                            // Удаление агента (MSI): вернуть системную регистрацию COM-коннектора, которая была до него
+                            var cfg = AgentConfig.Load();
+                            foreach (var bits in cfg.ComBefore.Keys.Select(int.Parse).ToList())
+                            {
+                                var m = Platform.RestoreCom(cfg, bits);
+                                if (m != null) Log.Ok(m);
+                            }
+                            cfg.Save();
+                            return 0;
+                        }
                     case "access": return AccessCmd(a);
                     case "print": return PrintCmd(a);
                     case "serve": return Serve();
@@ -85,6 +97,8 @@ namespace Bilem.Agent
                 AdminUser = Get(a, "admin"),
                 Slug = Get(a, "slug"),
                 EnableIis = a.ContainsKey("enable-iis"),
+                AllowDomainController = a.ContainsKey("allow-dc"),
+                AllowComRegister = a.ContainsKey("allow-com-register"),
                 ResetPassword = a.ContainsKey("reset-password"),
                 PlatformVersion = Get(a, "platform"),
             };

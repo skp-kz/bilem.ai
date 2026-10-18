@@ -85,11 +85,68 @@ namespace Bilem.Agent.Core
             return "";
         }
 
-        /// <summary>regsvr32 той же разрядности, что платформа.</summary>
-        public static ProcResult RegisterCom(Platform1C p)
+        /// <summary>Путь к comcntr.dll, зарегистрированному сейчас как V83.COMConnector в этой разрядности; null — не зарегистрирован.</summary>
+        public static string RegisteredComDll(int bits)
         {
-            var dir = p.Bits == 64 ? Paths.NativeSystem32 : Paths.Wow64System32;
-            return Proc.Run(Path.Combine(dir, "regsvr32.exe"), "/s " + Proc.Quote(p.ComDll));
+            var view = bits == 64 ? RegistryView.Registry64 : RegistryView.Registry32;
+            using (var hkcr = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, view))
+            {
+                var clsid = hkcr.OpenSubKey(@"V83.COMConnector\CLSID")?.GetValue("") as string;
+                if (string.IsNullOrEmpty(clsid)) return null;
+                var dll = hkcr.OpenSubKey($@"CLSID\{clsid}\InprocServer32")?.GetValue("") as string;
+                return string.IsNullOrEmpty(dll) ? null : dll;
+            }
+        }
+
+        /// <summary>
+        /// Перерегистрация меняет то, чем уже пользуются: зарегистрирован коннектор другой платформы (файл на месте).
+        /// Тогда — только с явного «да» человека. Не зарегистрирован никакой или файл удалён — менять нечего, регистрируем сами.
+        /// </summary>
+        public static string ComInUse(Platform1C p)
+        {
+            var dll = RegisteredComDll(p.Bits);
+            if (dll == null || !File.Exists(dll)) return null;
+            return string.Equals(Path.GetFullPath(dll), Path.GetFullPath(p.ComDll), StringComparison.OrdinalIgnoreCase) ? null : dll;
+        }
+
+        /// <summary>regsvr32 той же разрядности, что платформа.</summary>
+        public static ProcResult RegisterCom(Platform1C p) => Regsvr(p.ComDll, p.Bits, false);
+
+        private static ProcResult Regsvr(string dll, int bits, bool unregister)
+        {
+            var dir = bits == 64 ? Paths.NativeSystem32 : Paths.Wow64System32;
+            return Proc.Run(Path.Combine(dir, "regsvr32.exe"), (unregister ? "/s /u " : "/s ") + Proc.Quote(dll));
+        }
+
+        /// <summary>Перед перерегистрацией: запомнить, что было (только первый раз — иначе «прежней» станет наша же).</summary>
+        public static void RememberCom(AgentConfig cfg, Platform1C p)
+        {
+            var key = p.Bits.ToString();
+            if (cfg.ComBefore.ContainsKey(key)) { cfg.ComBefore[key].Ours = p.ComDll; return; }
+            cfg.ComBefore[key] = new ComRegistration { Previous = RegisteredComDll(p.Bits) ?? "", Ours = p.ComDll, At = DateTime.Now };
+        }
+
+        /// <summary>
+        /// Вернуть регистрацию, которая была до агента (при удалении последней базы этой разрядности или агента).
+        /// Только если сейчас зарегистрирован наш коннектор: если после нас регистрацию сменил кто-то ещё — не трогаем.
+        /// Возвращает строку для журнала или null — нечего возвращать.
+        /// </summary>
+        public static string RestoreCom(AgentConfig cfg, int bits)
+        {
+            var key = bits.ToString();
+            if (!cfg.ComBefore.TryGetValue(key, out var reg)) return null;
+            cfg.ComBefore.Remove(key);
+            var now = RegisteredComDll(bits);
+            if (now == null || !string.Equals(Path.GetFullPath(now), Path.GetFullPath(reg.Ours ?? "x:\\"), StringComparison.OrdinalIgnoreCase))
+                return Txt.F("ComRestoreSkipped", now ?? "—");
+            if (string.IsNullOrEmpty(reg.Previous))
+            {
+                Regsvr(reg.Ours, bits, true);
+                return Txt.F("ComRestoredNone", reg.Ours);
+            }
+            if (!File.Exists(reg.Previous)) return Txt.F("ComRestoreMissing", reg.Previous);
+            var r = Regsvr(reg.Previous, bits, false);
+            return r.ExitCode == 0 ? Txt.F("ComRestored", reg.Previous) : Txt.F("ComRestoreFailed", reg.Previous, r.ExitCode);
         }
 
         /// <summary>Помощник COM той же разрядности, что платформа: bilem-com32.exe / bilem-com64.exe рядом с агентом.</summary>
