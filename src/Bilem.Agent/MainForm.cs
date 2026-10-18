@@ -61,7 +61,6 @@ namespace Bilem.Agent
         private readonly ToolTip _tips = new ToolTip();
         private PrintPanel _print;
         private SmtpPanel _smtp;
-        private ToolStripMenuItem _trayMailOff;
         // Журнал
         private readonly ListView _journal = new ListView { View = View.Details, FullRowSelect = true, Dock = DockStyle.Fill };
 
@@ -115,21 +114,7 @@ namespace Bilem.Agent
             };
             menu.Items.Add(trayMcp);
             menu.Items.Add(trayRestart);
-            menu.Items.Add(new ToolStripSeparator());
-            // Рубильник почты — и в трее (вкладка «SMTP» — тот же флаг)
-            // Тумблер «SMTP-клиент включён» — тот же, что на вкладке «SMTP»
-            _trayMailOff = new ToolStripMenuItem(Txt.S("UiSmtpOn")) { CheckOnClick = true };
-            _trayMailOff.CheckedChanged += (s, e) =>
-            {
-                var c = AgentConfig.Load();
-                c.Smtp = c.Smtp ?? new Bilem.Agent.Core.Mail.SmtpAccount();
-                if (c.Smtp.Enabled == _trayMailOff.Checked) return;
-                c.Smtp.Enabled = _trayMailOff.Checked; c.Save();
-                Log.Info(Txt.S(c.Smtp.Enabled ? "UiSmtpOnLog" : "UiSmtpOffLog"));
-                _smtp?.RefreshEnabled();
-            };
-            menu.Opening += (s, e) => _trayMailOff.Checked = AgentConfig.Load().Smtp?.Enabled == true;
-            menu.Items.Add(_trayMailOff);
+            // Тумблер «SMTP-клиент включён» — только на вкладке «SMTP» (решение Славы 19.10: из трея убран)
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(Txt.S("UiTrayExit"), null, (s, e) => { _exiting = true; Close(); });
             _tray.ContextMenuStrip = menu;

@@ -213,7 +213,7 @@
   <data name="MailDocInvoice" xml:space="preserve"><value>Счёт №{0} от {1} ({2})</value></data>
   <data name="MailDocPoa" xml:space="preserve"><value>Доверенность №{0} от {1} ({2})</value></data>
   <data name="MailFailedLog" xml:space="preserve"><value>{0} на {1} — не отправлено: {2}</value></data>
-  <data name="MailIsOff" xml:space="preserve"><value>SMTP-клиент Bilem Agent выключен (вкладка «SMTP» или меню трея) — письмо не отправлено.</value></data>
+  <data name="MailIsOff" xml:space="preserve"><value>SMTP-клиент Bilem Agent выключен (вкладка «SMTP») — письмо не отправлено.</value></data>
   <data name="MailLimitDay" xml:space="preserve"><value>Лимит писем: не больше {0} в день (вкладка «SMTP»). Письмо не отправлено.</value></data>
   <data name="MailLimitHour" xml:space="preserve"><value>Лимит писем: не больше {0} в час (вкладка «SMTP»). Письмо не отправлено.</value></data>
   <data name="MailNoCounterpartyEmail" xml:space="preserve"><value>У контрагента счёта в 1С нет e-mail — укажите адрес получателя (to).</value></data>
