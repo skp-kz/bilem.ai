@@ -61,6 +61,8 @@
       <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="Bilem Agent" Target="[INSTALLFOLDER]bilem-agent.exe" WorkingDirectory="INSTALLFOLDER" Icon="BilemAgentIcon" />
       <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="Bilem Agent" Target="[INSTALLFOLDER]bilem-agent.exe" WorkingDirectory="INSTALLFOLDER" Icon="BilemAgentIcon" />
       <RegistryValue Root="HKLM" Key="Software\Bilem\Agent" Name="InstallFolder" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+      <!-- Значок записи в «Программах и компонентах» — явно, из exe агента (у beta.2 на сервере записи не было видно) -->
+      <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\[ProductCode]" Name="DisplayIcon" Type="string" Value="[INSTALLFOLDER]bilem-agent.exe,0" />
     </Component>
 
     <!-- «Удалить и настройки»: только при удалении и только с REMOVE_SETTINGS=1 -->
@@ -77,18 +79,23 @@
       <ComponentRef Id="RemoveSettings" />
     </Feature>
 
-    <!-- После установки (мастер, «Готово»): .NET нет — запустить web-установщик Microsoft; он сам попросит права и, если надо,
-         перезагрузку. Внутри транзакции одного установщика другой запускать нельзя — поэтому по «Готово», без ожидания:
-         мастер закрывается, открывается установщик .NET (одно окно за другим). -->
-    <CustomAction Id="RunNetFxWeb" FileRef="Ndp48Web" ExeCommand="" Return="asyncNoWait" Impersonate="yes" />
+    <!-- «Готово» в конце мастера: запуск через оболочку Windows (WixShellExec — ShellExecute, с запросом прав и записью ошибки
+         в журнал установщика). beta.2: прямой запуск процесса из мастера на сервере без .NET молча не срабатывал.
+         Нет .NET — запускается web-установщик Microsoft; есть — Bilem Agent (если галочка). -->
+    <CustomAction Id="ShellLaunch" BinaryRef="Wix4UtilCA_X86" DllEntry="WixShellExec" Impersonate="yes" />
 
-    <!-- Конец мастера: .NET есть — галочка «Запустить Bilem Agent»; нет — текст, что запустить после установки .NET -->
-    <CustomAction Id="LaunchAgent" Directory="INSTALLFOLDER" ExeCommand="&quot;[INSTALLFOLDER]bilem-agent.exe&quot;" Return="asyncNoWait" Impersonate="yes" />
+    <!-- Конец мастера: .NET есть — галочка «Запустить Bilem Agent»; нет — текст про установщик .NET -->
     <SetProperty Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Запустить Bilem Agent" After="CostFinalize" Sequence="ui"
                  Condition="WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED AND NOT REMOVE" />
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
-    <SetProperty Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="После нажатия «Готово» откроется установщик .NET Framework 4.8 от Microsoft. После установки .NET (и перезагрузки, если он попросит) запустите Bilem Agent с ярлыка на рабочем столе. Нет интернета — офлайн-установщик: dotnet.microsoft.com/download/dotnet-framework/net48"
+    <SetProperty Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="Требуется Microsoft .NET Framework 4.8. После нажатия «Готово» запустится веб-установщик Microsoft: следуйте его инструкциям, при запросе перезагрузите компьютер. Затем запустите Bilem Agent с ярлыка. Без интернета: dotnet.microsoft.com/download/dotnet-framework/net48"
                  After="CostFinalize" Sequence="ui" Condition="NOT WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED AND NOT Installed" />
+
+    <!-- Нет .NET — окно про него первым экраном, до копирования файлов (вместо «Добро пожаловать»); есть — обычное приветствие -->
+    <InstallUISequence>
+      <Show Dialog="NetFxDlg" Before="ProgressDlg" Condition="NOT Installed AND NOT WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED" />
+      <Show Dialog="BilemWelcomeDlg" Before="ProgressDlg" Condition="NOT Installed AND WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED" />
+    </InstallUISequence>
 
     <UI Id="BilemUI">
       <TextStyle Id="WixUI_Font_Normal" FaceName="Segoe UI" Size="9" />
@@ -105,13 +112,10 @@
       <DialogRef Id="ProgressDlg" />
       <DialogRef Id="ResumeDlg" />
       <DialogRef Id="UserExit" />
-      <DialogRef Id="WelcomeDlg" />
 
-      <!-- Первая установка: «Добро пожаловать» → (нет .NET — окно про .NET) → «Готово к установке» → установка → конец -->
-      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="NetFxDlg" Condition="NOT WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED" />
-      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED" />
+      <!-- Первая установка: (нет .NET — окно про .NET | есть — «Добро пожаловать») → «Готово к установке» → установка → конец -->
       <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="NetFxDlg" Condition="NOT Installed AND NOT WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED" />
-      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Condition="NOT Installed AND WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED" />
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="BilemWelcomeDlg" Condition="NOT Installed AND WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED" />
       <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Condition="Installed" />
 
       <!-- Повторный запуск MSI: исправить / удалить -->
@@ -120,24 +124,38 @@
       <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="VerifyReadyDlg" />
       <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg" />
 
-      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchAgent"
-               Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED AND NOT Installed" />
-      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="RunNetFxWeb"
+      <Publish Dialog="ExitDialog" Control="Finish" Event="[WixShellExecTarget]" Value="[REDISTFOLDER]ndp48-web.exe" Order="1"
                Condition="NOT Installed AND NOT WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED AND NOT REMOVE" />
+      <Publish Dialog="ExitDialog" Control="Finish" Event="[WixShellExecTarget]" Value="[INSTALLFOLDER]bilem-agent.exe" Order="2"
+               Condition="NOT Installed AND WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED AND WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1" />
+      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="ShellLaunch" Order="3"
+               Condition="NOT Installed AND NOT REMOVE AND (NOT WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED OR WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1)" />
       <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999" />
 
-      <!-- Окно про .NET Framework 4.8: «Установить» (дальше — «Готово к установке») / «Отмена» (ничего не ставится) -->
+      <!-- Приветствие (как стандартное WixUI) — когда .NET есть; своё, чтобы окно про .NET могло стоять первым вместо него -->
+      <Dialog Id="BilemWelcomeDlg" Width="370" Height="270" Title="!(loc.WelcomeDlg_Title)">
+        <Control Id="Bitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="234" TabSkip="no" Text="!(loc.WelcomeDlgBitmap)" />
+        <Control Id="Title" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="!(loc.WelcomeDlgTitle)" />
+        <Control Id="Description" Type="Text" X="135" Y="80" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="!(loc.WelcomeDlgDescription)" />
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Disabled="yes" Text="!(loc.WixUIBack)" />
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
+          <Publish Event="NewDialog" Value="VerifyReadyDlg" />
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg" />
+        </Control>
+      </Dialog>
+
+      <!-- Окно про .NET Framework 4.8 — первый экран: «Установить» (дальше — «Готово к установке») / «Отмена» (ничего не ставится) -->
       <Dialog Id="NetFxDlg" Width="370" Height="270" Title="!(loc.WelcomeDlg_Title)">
         <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="!(loc.InstallDirDlgBannerBitmap)" />
         <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
-        <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}.NET Framework 4.8" />
-        <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes" Text="Нужен компонент Windows от Microsoft" />
-        <Control Id="Body" Type="Text" X="25" Y="60" Width="320" Height="120" NoPrefix="yes"
-                 Text="На этом компьютере не установлен .NET Framework 4.8. Без него Bilem Agent не будет работать.&#13;&#10;&#13;&#10;Установить сейчас? Скачается с сайта Microsoft (~70 МБ), может понадобиться перезагрузка.&#13;&#10;&#13;&#10;Сначала установится Bilem Agent, затем откроется установщик .NET от Microsoft." />
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="280" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}Не найден необходимый компонент" />
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes" Text="Microsoft .NET Framework 4.8" />
+        <Control Id="Body" Type="Text" X="25" Y="58" Width="320" Height="160" NoPrefix="yes"
+                 Text="Для работы Bilem Agent требуется Microsoft .NET Framework 4.8. На этом компьютере он не установлен.&#13;&#10;&#13;&#10;Нажмите «Установить»: будет установлен Bilem Agent, а после нажатия «Готово» в конце мастера запустится веб-установщик Microsoft .NET Framework 4.8 (около 70 МБ загрузки с сайта Microsoft; может потребоваться перезагрузка).&#13;&#10;&#13;&#10;Нажмите «Отмена», чтобы выйти без изменений." />
         <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
-        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">
-          <Publish Event="NewDialog" Value="WelcomeDlg" />
-        </Control>
         <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="Установить">
           <Publish Event="NewDialog" Value="VerifyReadyDlg" />
         </Control>

@@ -15,6 +15,14 @@ namespace Bilem.Agent
         [STAThread]
         private static int Main(string[] args)
         {
+            // Первым делом — .NET 4.8: нет его — своё окно «установить?» вместо системной ошибки (до любого кода, которому нужен 4.8)
+            if (args.Length == 0 && !NetFxCheck.EnsureOrAsk()) return 1;
+            return Run(args);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static int Run(string[] args)
+        {
             // С аргументами — команда (обычно через bilem-agent.com); вывод — в консоль, из которой запустили
             if (args.Length > 0) { AttachConsole(-1); return Cli.Run(args); }
 
