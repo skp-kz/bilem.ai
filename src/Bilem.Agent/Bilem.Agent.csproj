@@ -17,6 +17,7 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Security" />
+    <Reference Include="System.ServiceProcess" />
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>

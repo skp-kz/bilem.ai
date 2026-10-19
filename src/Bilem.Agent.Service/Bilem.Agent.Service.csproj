@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Служба Windows BilemAgent (часть I): MCP-сервер работает сам после перезагрузки, без входа на сервер и без окна.
+    Внутри — AgentServer из Bilem.Agent.Core (то же, что «bilem-agent serve»). Учётка — LocalSystem: секреты (DPAPI LocalMachine)
+    лежат в папке «Администраторы и SYSTEM». Ставит и запускает MSI.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <AssemblyName>bilem-agent-svc</AssemblyName>
+    <RootNamespace>Bilem.Agent.Service</RootNamespace>
+    <ApplicationIcon>..\..\assets\icons\bilem-agent.ico</ApplicationIcon>
+    <OutputPath>..\..\artifacts\bin\$(Configuration)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.ServiceProcess" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Bilem.Agent.Core\Bilem.Agent.Core.csproj" />
+  </ItemGroup>
+</Project>

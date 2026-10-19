@@ -28,6 +28,8 @@ namespace Bilem.Agent
         // Общее
         private readonly Dictionary<PrintImage, PictureBox> _pics = new Dictionary<PrintImage, PictureBox>();
         private readonly TextBox _address = Tb(380);
+        /// <summary>Папка документов — общая для всех баз (служба пишет PDF сюда; часть I).</summary>
+        private readonly TextBox _docsRoot = Tb(380);
         private readonly TextBox _director = Tb(220);
         private readonly TextBox _directorTitle = Tb(160);
         private readonly TextBox _chief = Tb(220);
@@ -123,7 +125,7 @@ namespace Bilem.Agent
             Controls.Add(root);
 
             _base.SelectedIndexChanged += (s, e) => ShowBase();
-            foreach (var tb in new[] { _address, _director, _directorTitle, _chief, _issuedBy, _kbe, _knp, _header, _footer, _actIntro }) tb.Leave += (s, e) => Save(false);
+            foreach (var tb in new[] { _docsRoot, _address, _director, _directorTitle, _chief, _issuedBy, _kbe, _knp, _header, _footer, _actIntro }) tb.Leave += (s, e) => Save(false);
             foreach (var cb in _invParts.All.Concat(_poaParts.All).Concat(_actParts.All).Concat(new[] { _paySample, _poaId, _actMirror, _actByContracts }))
                 cb.CheckedChanged += (s, e) => Save(false);
             _poaDays.ValueChanged += (s, e) => Save(false);
@@ -204,6 +206,18 @@ namespace Bilem.Agent
             Add(t, "UiPrintDirector", _director);
             Add(t, "UiPrintDirectorTitle", _directorTitle);
             Add(t, "UiPrintChief", _chief);
+            var docs = Flow();
+            docs.Controls.Add(_docsRoot);
+            var pick = new LinkLabel { Text = Txt.S("UiPrintDocsPick"), AutoSize = true, Margin = new Padding(6, 6, 6, 0) };
+            var open = new LinkLabel { Text = Txt.S("UiPrintDocsOpen"), AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
+            pick.LinkClicked += (s, e) =>
+            {
+                using (var d = new FolderBrowserDialog { Description = Txt.S("UiPrintDocsPickTitle"), SelectedPath = PrintService.Root })
+                    if (d.ShowDialog(this) == DialogResult.OK) { _docsRoot.Text = d.SelectedPath; Save(false); }
+            };
+            open.LinkClicked += (s, e) => { try { PrintService.EnsureRootPublic(); System.Diagnostics.Process.Start(PrintService.Root); } catch { } };
+            docs.Controls.Add(pick); docs.Controls.Add(open);
+            Add(t, "UiPrintDocs", docs, "UiPrintDocsNote");
             // Отдельного окна «Реквизиты из 1С…» нет (решение пачки 2 v0.2, п. 3а): адрес и ФИО из 1С загружаются при настройке базы
             // и показываются серой подсказкой в полях
             Add(t, null, Gray(Txt.S("UiPrintGeneralNote")));
@@ -303,6 +317,8 @@ namespace Bilem.Agent
 
             // Общее: пусто = из 1С, значение 1С — серой подсказкой в поле
             _address.Text = ps.AddressOverride ?? "";
+            _docsRoot.Text = AgentConfig.Load().DocumentsRoot ?? "";
+            Cue(_docsRoot, PrintService.DefaultRoot);
             Cue(_address, ps.Addresses?.Values.FirstOrDefault() ?? Txt.S("UiPrintFrom1CNone"));
             _director.Text = ps.Director ?? "";
             Cue(_director, Words.ShortName(s1c?.Director?.Name) is var dn && !string.IsNullOrEmpty(dn) ? dn : Txt.S("UiPrintFrom1CNone"));
@@ -385,6 +401,7 @@ namespace Bilem.Agent
             ps.ActMirror = _actMirror.Checked;
             ps.ActByContracts = _actByContracts.Checked;
             ps.ActIntro = _actIntro.Text;
+            cfg.DocumentsRoot = V(_docsRoot);
             cfg.Upsert(b); cfg.Save();
             if (tell) Log.Ok(Txt.F("UiPrintSaved", b.Slug));
             ShowStatus(b);

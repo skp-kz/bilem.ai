@@ -21,8 +21,51 @@ namespace Bilem.Agent.Core.Print
     public static class PrintService
     {
         public const string InvoicesFolder = "Счета", PoaFolder = "Доверенности", ActsFolder = "Акты сверки";
-        public static string Root => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Bilem");
-        public static string OutputDir(string slug, string kind) => System.IO.Path.Combine(Root, slug, kind);
+        /// <summary>
+        /// Папка документов: из настройки («Печатные формы» → «Общее»), по умолчанию C:\ProgramData\Bilem\Документы.
+        /// У службы нет «Документов» пользователя (часть I), поэтому папка общая: пишут Администраторы и SYSTEM, читают «Пользователи».
+        /// </summary>
+        public static string Root
+        {
+            get
+            {
+                string custom = null;
+                try { custom = AgentConfig.Load().DocumentsRoot; } catch { }
+                return string.IsNullOrWhiteSpace(custom) ? DefaultRoot : custom.Trim();
+            }
+        }
+
+        public static string DefaultRoot => System.IO.Path.Combine(Paths.Home, "Документы");
+
+        public static string OutputDir(string slug, string kind)
+        {
+            EnsureRoot(Root);
+            return System.IO.Path.Combine(Root, slug, kind);
+        }
+
+        /// <summary>Корень документов с правами — для кнопки «Открыть» в «Печатных формах».</summary>
+        public static void EnsureRootPublic() => EnsureRoot(Root);
+
+        /// <summary>Создать корень документов с правами: Администраторы и SYSTEM — полный, «Пользователи» — чтение (открыть PDF из трея).</summary>
+        internal static void EnsureRoot(string root)
+        {
+            if (Directory.Exists(root)) return;
+            Directory.CreateDirectory(root);
+            try
+            {
+                var sec = new System.Security.AccessControl.DirectorySecurity();
+                sec.SetAccessRuleProtection(true, false);
+                var inh = System.Security.AccessControl.InheritanceFlags.ContainerInherit | System.Security.AccessControl.InheritanceFlags.ObjectInherit;
+                void Allow(System.Security.Principal.WellKnownSidType sid, System.Security.AccessControl.FileSystemRights rights) =>
+                    sec.AddAccessRule(new System.Security.AccessControl.FileSystemAccessRule(new System.Security.Principal.SecurityIdentifier(sid, null),
+                        rights, inh, System.Security.AccessControl.PropagationFlags.None, System.Security.AccessControl.AccessControlType.Allow));
+                Allow(System.Security.Principal.WellKnownSidType.BuiltinAdministratorsSid, System.Security.AccessControl.FileSystemRights.FullControl);
+                Allow(System.Security.Principal.WellKnownSidType.LocalSystemSid, System.Security.AccessControl.FileSystemRights.FullControl);
+                Allow(System.Security.Principal.WellKnownSidType.BuiltinUsersSid, System.Security.AccessControl.FileSystemRights.ReadAndExecute);
+                Directory.SetAccessControl(root, sec);
+            }
+            catch (Exception e) { Log.Warn(Txt.F("PrintDocsAclFailed", root, e.Message)); }
+        }
 
         private static bool _migrated;
 

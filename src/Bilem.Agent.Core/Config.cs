@@ -84,6 +84,8 @@ namespace Bilem.Agent.Core
         public Bilem.Agent.Core.Mail.SmtpAccount Smtp { get; set; } = new Bilem.Agent.Core.Mail.SmtpAccount();
         /// <summary>Подсказку «Bilem Agent работает в трее» уже показали — больше не показываем.</summary>
         public bool TrayHintShown { get; set; }
+        /// <summary>Папка документов (PDF счетов, доверенностей, актов); пусто — C:\ProgramData\Bilem\Документы.</summary>
+        public string DocumentsRoot { get; set; }
         /// <summary>
         /// Системная регистрация COM-коннектора до Bilem Agent, по разрядности ("32"/"64"): путь к comcntr.dll, "" — не было.
         /// Записывается, когда агент перерегистрирует коннектор (с согласия человека); возвращается при удалении последней базы

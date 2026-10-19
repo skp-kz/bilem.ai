@@ -276,6 +276,7 @@
   <data name="PreviousFailedAt" xml:space="preserve"><value>Прошлый запуск ({1:dd.MM.yyyy HH:mm}) остановился на шаге «{0}» — продолжаю: сделанные шаги пройдут без изменений.</value></data>
   <data name="PrintBadPeriod" xml:space="preserve"><value>Не понял период «{0}». Примеры: 2022, 2022-04, 2022-04-13, 2022-01-01..2022-06-30.</value></data>
   <data name="PrintDetailsLoaded" xml:space="preserve"><value>Адреса организаций из 1С: {0}</value></data>
+  <data name="PrintDocsAclFailed" xml:space="preserve"><value>Папка документов {0}: не удалось задать права ({1})</value></data>
   <data name="PrintDone" xml:space="preserve"><value>PDF готов: {0}</value></data>
   <data name="PrintImageSaved" xml:space="preserve"><value>Сохранено: {0}.</value></data>
   <data name="PrintImageShrunk" xml:space="preserve"><value>Картинка больше лимита — уменьшена до {0}×{1} px, {2} КБ.</value></data>
@@ -337,6 +338,11 @@
   <data name="Step_roles" xml:space="preserve"><value>Роли пользователя bilem</value></data>
   <data name="Step_user" xml:space="preserve"><value>Пользователь bilem (только чтение)</value></data>
   <data name="Step_verify" xml:space="preserve"><value>Проверки: чтение, запрет записи, доступ</value></data>
+  <data name="SvcCrashed" xml:space="preserve"><value>Необработанная ошибка в службе: {0}</value></data>
+  <data name="SvcNeedAdmin" xml:space="preserve"><value>Команда службе — только от администратора (с повышенными правами).</value></data>
+  <data name="SvcPipeError" xml:space="preserve"><value>Канал состояния службы: {0}</value></data>
+  <data name="SvcStarted" xml:space="preserve"><value>Служба Bilem Agent {0} запущена</value></data>
+  <data name="SvcStopped" xml:space="preserve"><value>Служба Bilem Agent остановлена</value></data>
   <data name="SysInfoBase" xml:space="preserve"><value>- {0}: {1}; {2} ({3}) {4}; БСП: {5}; платформа {6} ({7}-бит)</value></data>
   <data name="SysInfoBaseCheck" xml:space="preserve"><value>  последняя проверка: {0} — {1}; запись запрещена — проверено {2}</value></data>
   <data name="SysInfoBaseOData" xml:space="preserve"><value>  объектов OData: {0}; роли bilem: {1}</value></data>
@@ -479,12 +485,14 @@ Bilem не меняет ваш бухгалтерский учёт: читает
   <data name="UiCloudText" xml:space="preserve"><value>Вопросы к 1С из Telegram, WhatsApp и ChatGPT — через облако bilem.ai, без открытия базы наружу. Сейчас недоступно.</value></data>
   <data name="UiCloudTitle" xml:space="preserve"><value>Облако bilem — скоро</value></data>
   <data name="UiColConfig" xml:space="preserve"><value>Конфигурация</value></data>
+  <data name="UiColEvent" xml:space="preserve"><value>Событие</value></data>
   <data name="UiColFolder" xml:space="preserve"><value>Папка</value></data>
   <data name="UiColKind" xml:space="preserve"><value>Тип</value></data>
   <data name="UiColSlug" xml:space="preserve"><value>Имя</value></data>
   <data name="UiColStatus" xml:space="preserve"><value>Статус</value></data>
   <data name="UiColText" xml:space="preserve"><value>Событие</value></data>
   <data name="UiColTime" xml:space="preserve"><value>Время</value></data>
+  <data name="UiColType" xml:space="preserve"><value>Тип</value></data>
   <data name="UiColVersion" xml:space="preserve"><value>Версия</value></data>
   <data name="UiComAsk" xml:space="preserve"><value>Сейчас зарегистрирован COM-коннектор:
 {0}
@@ -562,6 +570,11 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiPrintDirector" xml:space="preserve"><value>Руководитель:</value></data>
   <data name="UiPrintDirectorTitle" xml:space="preserve"><value>Должность руководителя:</value></data>
   <data name="UiPrintDirectorTitleCue" xml:space="preserve"><value>Руководитель</value></data>
+  <data name="UiPrintDocs" xml:space="preserve"><value>Папка документов</value></data>
+  <data name="UiPrintDocsNote" xml:space="preserve"><value>Сюда Bilem Agent кладёт PDF счетов, доверенностей и актов сверки — по папке на базу. Общая для всех баз; пусто — папка по умолчанию. Читать могут «Пользователи» компьютера, писать — администраторы и служба.</value></data>
+  <data name="UiPrintDocsOpen" xml:space="preserve"><value>Открыть</value></data>
+  <data name="UiPrintDocsPick" xml:space="preserve"><value>Выбрать…</value></data>
+  <data name="UiPrintDocsPickTitle" xml:space="preserve"><value>Папка для PDF Bilem Agent</value></data>
   <data name="UiPrintFilterLogo" xml:space="preserve"><value>Картинки (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg</value></data>
   <data name="UiPrintFilterPng" xml:space="preserve"><value>PNG (*.png)|*.png</value></data>
   <data name="UiPrintFooter" xml:space="preserve"><value>Примечание внизу:</value></data>
@@ -670,8 +683,10 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiStaleDays" xml:space="preserve"><value>Выписка устарела через</value></data>
   <data name="UiStaleDaysNote" xml:space="preserve"><value>рабочих дня — ИИ предупредит, что остаток и должники могут быть неточны</value></data>
   <data name="UiStateRunning" xml:space="preserve"><value>MCP работает · порт {0} · баз: {1}</value></data>
+  <data name="UiStateRunningSvc" xml:space="preserve"><value>MCP работает в службе · порт {0} · баз: {1}</value></data>
   <data name="UiStateStartFailed" xml:space="preserve"><value>Ошибка запуска MCP: {0} — нажмите «Запустить» на вкладке «MCP»</value></data>
   <data name="UiStateStarting" xml:space="preserve"><value>MCP запускается… ждём, пока освободится порт {0} ({1} из {2} с)</value></data>
+  <data name="UiStateStartingSvc" xml:space="preserve"><value>MCP запускается… служба ждёт, пока освободится порт {0}</value></data>
   <data name="UiStateStopped" xml:space="preserve"><value>MCP остановлен · порт {0} · баз: {1}</value></data>
   <data name="UiStateUpdating" xml:space="preserve"><value>Устанавливаю обновление {0} — агент закроется и запустится снова</value></data>
   <data name="UiStatusBases" xml:space="preserve"><value>баз: {0}</value></data>
@@ -692,6 +707,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiSupportReportDone" xml:space="preserve"><value>Отчёт сохранён: {0}
 В нём журналы, системная информация и диагностика — без паролей и токенов.</value></data>
   <data name="UiSupportReportNote" xml:space="preserve"><value>Архив для поддержки: журналы, системная информация и диагностика. Без паролей и токенов.</value></data>
+  <data name="UiSvcNotRunning" xml:space="preserve"><value>Служба Bilem Agent не отвечает — запустите её (кнопка «Запустить службу» в окне в трее или «Службы» Windows)</value></data>
   <data name="UiSysInfo" xml:space="preserve"><value>Собрать системную информацию</value></data>
   <data name="UiSysInfoCopied" xml:space="preserve"><value>Системная информация скопирована в буфер обмена — вставьте её в обращение на GitHub. Паролей, токенов и данных из 1С в ней нет.</value></data>
   <data name="UiSysInfoNote" xml:space="preserve"><value>Краткая сводка для техподдержки: версии Windows, .NET, 1С, IIS, MCP и подключённых баз — сразу в буфер обмена. Без паролей, токенов и данных из 1С.</value></data>
@@ -706,15 +722,34 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiTabSmtp" xml:space="preserve"><value>SMTP</value></data>
   <data name="UiTextFilter" xml:space="preserve"><value>Текст (*.txt)|*.txt</value></data>
   <data name="UiTitle" xml:space="preserve"><value>Bilem Agent — локальный режим</value></data>
+  <data name="UiTitleSettings" xml:space="preserve"><value>Bilem Agent — настройки</value></data>
+  <data name="UiTitleTray" xml:space="preserve"><value>Bilem Agent</value></data>
   <data name="UiTokenDisclaimer" xml:space="preserve"><value>В адресе — секретный токен: с ним любая программа на этом компьютере может читать данные 1С через Bilem. Не пересылайте адрес и не публикуйте его. Если адрес мог попасть к чужим — нажмите «Сменить токен». Снаружи этот адрес недоступен: только с этой машины (127.0.0.1).</value></data>
+  <data name="UiTrayBaseError" xml:space="preserve"><value>ошибка: {0}</value></data>
+  <data name="UiTrayBaseOk" xml:space="preserve"><value>в порядке, проверено {0}</value></data>
   <data name="UiTrayCopyUrl" xml:space="preserve"><value>Скопировать адрес MCP</value></data>
   <data name="UiTrayExit" xml:space="preserve"><value>Выход (остановить MCP)</value></data>
+  <data name="UiTrayExitTray" xml:space="preserve"><value>Убрать из трея (MCP продолжит работать)</value></data>
   <data name="UiTrayHint" xml:space="preserve"><value>Bilem Agent работает в трее — значок справа внизу (может быть под стрелкой ˄)</value></data>
+  <data name="UiTrayJournal" xml:space="preserve"><value>Журнал службы</value></data>
   <data name="UiTrayMcpRestart" xml:space="preserve"><value>Перезапустить MCP</value></data>
+  <data name="UiTrayMcpRunning" xml:space="preserve"><value>MCP работает · 127.0.0.1:{0} · баз: {1}</value></data>
   <data name="UiTrayMcpStart" xml:space="preserve"><value>Запустить MCP</value></data>
   <data name="UiTrayMcpStop" xml:space="preserve"><value>Остановить MCP</value></data>
+  <data name="UiTrayMcpUnknown" xml:space="preserve"><value>MCP: нет связи со службой</value></data>
+  <data name="UiTrayNote" xml:space="preserve"><value>Кнопки со щитом попросят права администратора. Закрыть окно — оно останется в трее; MCP работает в службе и без окна.</value></data>
   <data name="UiTrayOpen" xml:space="preserve"><value>Открыть</value></data>
   <data name="UiTrayResetWindow" xml:space="preserve"><value>Сбросить размер окна</value></data>
+  <data name="UiTraySettings" xml:space="preserve"><value>Настройки…</value></data>
+  <data name="UiTrayStartService" xml:space="preserve"><value>Запустить службу</value></data>
+  <data name="UiTraySvcMissing" xml:space="preserve"><value>Служба Bilem Agent не установлена — переустановите Bilem Agent</value></data>
+  <data name="UiTraySvcNoAnswer" xml:space="preserve"><value>Служба Bilem Agent работает, но не отвечает</value></data>
+  <data name="UiTraySvcNoAnswerShort" xml:space="preserve"><value>служба не отвечает</value></data>
+  <data name="UiTraySvcRunning" xml:space="preserve"><value>Служба Bilem Agent работает (запускается сама после перезагрузки)</value></data>
+  <data name="UiTraySvcStarting" xml:space="preserve"><value>Служба Bilem Agent запускается…</value></data>
+  <data name="UiTraySvcStopped" xml:space="preserve"><value>Служба Bilem Agent остановлена — MCP не работает. Нажмите «Запустить службу».</value></data>
+  <data name="UiTraySvcStoppedShort" xml:space="preserve"><value>служба остановлена</value></data>
+  <data name="UiTrayUpdate" xml:space="preserve"><value>Доступна версия {0} — обновить: «Настройки…» → «Сервис» → «Обновления»</value></data>
   <data name="UiUpdAvailable" xml:space="preserve"><value>Доступна версия {0}</value></data>
   <data name="UiUpdBeta" xml:space="preserve"><value>Получать бета-версии</value></data>
   <data name="UiUpdChecking" xml:space="preserve"><value>Проверяем…</value></data>

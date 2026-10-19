@@ -44,7 +44,10 @@
     <StandardDirectory Id="DesktopFolder" />
 
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
-      <Files Include="$(var.BinDir)\*.exe" />
+      <Files Include="$(var.BinDir)\*.exe">
+        <!-- Служба — отдельным компонентом (ServiceInstall должен быть в одном компоненте с её файлом) -->
+        <Exclude Files="$(var.BinDir)\bilem-agent-svc.exe" />
+      </Files>
       <!-- bilem-agent.com — командная строка -->
       <Files Include="$(var.BinDir)\*.com" />
       <Files Include="$(var.BinDir)\*.dll" />
@@ -80,7 +83,36 @@
       <Custom Action="RestoreCom" Before="RemoveFiles" Condition="REMOVE ~= &quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
     </InstallExecuteSequence>
 
+    <!-- Часть I: служба BilemAgent — MCP работает сам после перезагрузки, без входа на сервер.
+         Автоматически (отложенный запуск), LocalSystem, при сбое — перезапуск через минуту (три раза), сброс счётчика через сутки.
+         При обновлении и удалении MSI останавливает службу до замены файлов — порт MCP освобождается. -->
+    <Component Id="ServiceExe" Directory="INSTALLFOLDER" Guid="5D2A8E41-9C3B-4F6E-A7D1-2B8C4E6F0A93">
+      <File Id="BilemAgentSvc" Source="$(var.BinDir)\bilem-agent-svc.exe" KeyPath="yes" />
+      <ServiceInstall Id="BilemAgentService" Name="BilemAgent" DisplayName="Bilem Agent"
+                      Description="Bilem Agent — MCP-сервер для 1С: отвечает ИИ-ассистентам по данным 1С (только чтение и печать). Слушает только 127.0.0.1."
+                      Type="ownProcess" Start="auto" Account="LocalSystem" ErrorControl="normal" Vital="yes">
+        <ServiceConfig DelayedAutoStart="yes" OnInstall="yes" OnReinstall="yes" />
+        <util:ServiceConfig FirstFailureActionType="restart" SecondFailureActionType="restart" ThirdFailureActionType="restart"
+                            RestartServiceDelayInSeconds="60" ResetPeriodInDays="1" />
+      </ServiceInstall>
+      <ServiceControl Id="BilemAgentServiceStop" Name="BilemAgent" Stop="both" Remove="uninstall" Wait="yes" />
+    </Component>
+    <!-- Запуск службы при установке — только если .NET 4.8 уже есть: без него старт провалился бы и откатил установку.
+         Нет .NET — служба стартует сама после установки .NET и перезагрузки (автоматический запуск). -->
+    <Component Id="ServiceStart" Directory="INSTALLFOLDER" Guid="8B4F1C27-6E3A-4D95-B2C8-7A1E9D3F5C60" Condition="WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED">
+      <RegistryValue Root="HKLM" Key="Software\Bilem\Agent" Name="ServiceStartOnInstall" Type="integer" Value="1" KeyPath="yes" />
+      <ServiceControl Id="BilemAgentServiceStart" Name="BilemAgent" Start="install" Wait="no" />
+    </Component>
+    <!-- Окно в трее — при входе любого пользователя, без прав администратора (часть I) -->
+    <Component Id="TrayAutostart" Directory="INSTALLFOLDER" Guid="E3C7A2D9-4B18-4F6C-9E05-1D8B7A3C6F24">
+      <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Run" Name="Bilem Agent" Type="string"
+                     Value="&quot;[INSTALLFOLDER]bilem-agent.exe&quot; --tray" KeyPath="yes" />
+    </Component>
+
     <Feature Id="Main" Title="Bilem Agent">
+      <ComponentRef Id="ServiceExe" />
+      <ComponentRef Id="ServiceStart" />
+      <ComponentRef Id="TrayAutostart" />
       <ComponentGroupRef Id="AppFiles" />
       <ComponentRef Id="NetFxWeb" />
       <ComponentRef Id="Shortcuts" />

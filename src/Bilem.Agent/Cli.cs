@@ -82,6 +82,13 @@ namespace Bilem.Agent
                 if (!string.IsNullOrEmpty(e.Hint)) Log.Fail(Txt.S("WhatToDo") + " " + e.Hint);
                 return 1;
             }
+            catch (UnauthorizedAccessException)
+            {
+                // Настройки и секреты Bilem читают только администраторы (часть I): консоль — «от имени администратора»
+                Log.Fail(Txt.S("NeedAdmin"));
+                Log.Fail(Txt.S("WhatToDo") + " " + Txt.S("HintRunAsAdmin"));
+                return 1;
+            }
             catch (Exception e)
             {
                 Log.Fail(Txt.F("Unexpected", e.GetType().Name, e.Message));
@@ -236,28 +243,14 @@ namespace Bilem.Agent
 
         private static int Serve()
         {
-            using (var host = new McpHost())
+            // То же, что служба BilemAgent: MCP, фоновые проверки, канал состояния (для отладки — без службы)
+            using (var server = new Bilem.Agent.Core.Service.AgentServer())
             {
-                host.Start();
+                server.Start();
                 Log.Info(Txt.S("CliServeStop"));
-                Bilem.Agent.Core.Updates.Updater.CompleteIfPending();
-                // Режим без окна: обновления только проверяем и сообщаем в журнал; ставит человек кнопкой в окне
-                using (new Timer(_ =>
-                {
-                    try
-                    {
-                        var last = Bilem.Agent.Core.Updates.Updater.LastCheck;
-                        if (last != null && DateTime.Now - last.Value < TimeSpan.FromDays(1)) return;
-                        var r = Bilem.Agent.Core.Updates.Updater.CheckNewer(AgentConfig.Load().UpdateBeta);
-                        if (r != null) Log.Info(Txt.F("UpdAvailableLog", r.Version));
-                    }
-                    catch (Exception e) { Log.Info(Txt.F("UpdCheckFailedQuiet", e.Message)); }
-                }, null, TimeSpan.FromMinutes(1), TimeSpan.FromHours(1)))
-                {
-                    var done = new ManualResetEvent(false);
-                    Console.CancelKeyPress += (s, e) => { e.Cancel = true; done.Set(); };
-                    done.WaitOne();
-                }
+                var done = new ManualResetEvent(false);
+                Console.CancelKeyPress += (s, e) => { e.Cancel = true; done.Set(); };
+                done.WaitOne();
             }
             return 0;
         }

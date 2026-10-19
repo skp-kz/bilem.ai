@@ -201,10 +201,14 @@ namespace Bilem.Agent.Core.Updates
             sb.AppendLine("chcp 65001 >nul");
             sb.AppendLine(":wait");
             sb.AppendLine($"tasklist /fi \"PID eq {pid}\" | find \"{pid}\" >nul && (ping -n 2 127.0.0.1 >nul & goto wait)");
+            // Окна агента в трее — у каждого вошедшего пользователя свои (часть I): закрываем все, иначе файлы заняты.
+            // Службу MSI останавливает сам (ServiceControl) и запускает после установки
+            sb.AppendLine("taskkill /im bilem-agent.exe /f >nul 2>&1");
             sb.AppendLine($"msiexec /i \"{msi}\" /qn /norestart /l*v \"{log}\"");
             // Перенаправление — впереди: «echo 0> файл» cmd читает как перенаправление потока 0
             sb.AppendLine($">\"{Path.Combine(Dir, "install.rc")}\" echo %errorlevel%");
-            sb.AppendLine($"start \"\" \"{agentExe}\"");
+            // Окно — без прав администратора: через оболочку Windows (explorer запускает от имени вошедшего пользователя с обычными правами)
+            sb.AppendLine($"\"%windir%\\explorer.exe\" \"{agentExe}\"");
             File.WriteAllText(cmd, sb.ToString(), new UTF8Encoding(false));
             Log.Info(Txt.F(rollback ? "UpdRollbackStarting" : "UpdInstallStarting", from, to));
             // Через оболочку: дочерний процесс не наследует дескрипторы агента (сокет MCP, файлы журнала)

@@ -64,9 +64,17 @@ namespace Bilem.Agent
         // Журнал
         private readonly ListView _journal = new ListView { View = View.Details, FullRowSelect = true, Dock = DockStyle.Fill };
 
-        public MainForm()
+        /// <summary>
+        /// Окно настроек при установленной службе (часть I): MCP работает в службе BilemAgent — окно его не поднимает, значка в трее
+        /// не ставит (трей — отдельный процесс без прав администратора), состояние берёт у службы по каналу.
+        /// </summary>
+        private readonly bool _svc;
+        private Newtonsoft.Json.Linq.JObject _svcStatus;
+
+        public MainForm(bool viaService = false, string tab = null)
         {
-            Text = Txt.S("UiTitle");
+            _svc = viaService;
+            Text = Txt.S(_svc ? "UiTitleSettings" : "UiTitle");
             // Компактно по умолчанию (логические пиксели — масштабируются под экран); растягивать можно
             Size = WindowPlacement.DefaultSize;
             StartPosition = FormStartPosition.CenterScreen;
@@ -86,6 +94,9 @@ namespace Bilem.Agent
             tabs.TabPages.Add(ServiceTab());
             tabs.TabPages.Add(AboutTab());
             tabs.SelectedIndexChanged += (s, e) => { if (tabs.SelectedIndex == 2) RefreshAccess(); };
+            // «Настройки…» из трея открывают нужную вкладку: bases, mcp, access, print, smtp, journal, service, about
+            var tabIndex = Array.IndexOf(new[] { "bases", "mcp", "access", "print", "smtp", "journal", "service", "about" }, (tab ?? "").ToLowerInvariant());
+            if (tabIndex > 0) tabs.SelectedIndex = tabIndex;
 
             // Строка состояния: слева — MCP, порт, базы; справа — версия сборки
             var status = new StatusStrip();
@@ -120,17 +131,17 @@ namespace Bilem.Agent
             _tray.ContextMenuStrip = menu;
             _tray.DoubleClick += (s, e) => ShowFromTray();
             _tray.Icon = TrayIcons[AgentHealth.Yellow];
-            _tray.Visible = true;
-            Resize += (s, e) => { if (WindowState == FormWindowState.Minimized) HideToTray(); };
+            _tray.Visible = !_svc;
+            Resize += (s, e) => { if (!_svc && WindowState == FormWindowState.Minimized) HideToTray(); };
             FormClosing += (s, e) =>
             {
-                if (!_exiting && e.CloseReason == CloseReason.UserClosing) { e.Cancel = true; HideToTray(); return; }
+                if (!_svc && !_exiting && e.CloseReason == CloseReason.UserClosing) { e.Cancel = true; HideToTray(); return; }
                 _healthTimer.Stop();
                 _recheckTimer.Stop();
                 _host.Stop();
                 _tray.Visible = false;
             };
-            _healthTimer.Tick += (s, e) => UpdateHealth();
+            _healthTimer.Tick += (s, e) => { if (_svc && DateTime.Now.Second % 2 == 0) PollService(); UpdateHealth(); };
             _recheckTimer.Tick += (s, e) => { QuickCheckBases(); AutoCheckUpdates(); };
 
             Log.Written += en => { if (IsHandleCreated) BeginInvoke((Action)(() => AddJournal(en.Time, en.Level.ToString(), en.Text))); };
@@ -151,6 +162,15 @@ namespace Bilem.Agent
                 lastState = WindowState;
                 ListenForSecondLaunch();
                 Shortcuts.EnsureExist();
+                if (_svc)
+                {
+                    // MCP, проверки баз и «Обновлено с X на Y» — в службе; окно только показывает её состояние
+                    PollService();
+                    RefreshAll();
+                    _healthTimer.Start();
+                    AutoCheckUpdates();
+                    return;
+                }
                 // Было обновление — «Обновлено с X на Y» в журнал и аудит
                 Bilem.Agent.Core.Updates.Updater.CompleteIfPending();
                 StartMcpPatiently();
@@ -354,7 +374,7 @@ namespace Bilem.Agent
             void Add(Control c) => t.Controls.Add(c, 0, row++);
 
             var diag = B("UiDiagButton");
-            diag.Click += (s, e) => { using (var f = new DiagForm(_host.Running)) f.ShowDialog(this); };
+            diag.Click += (s, e) => { using (var f = new DiagForm(McpRunning)) f.ShowDialog(this); };
             Add(diag); Add(Note(Txt.S("UiServiceDiagNote")));
 
             var sysinfo = B("UiSysInfo");
@@ -654,9 +674,26 @@ namespace Bilem.Agent
             catch (Exception ex) { error = ex; return false; }
         }
 
+        /// <summary>Состояние службы по каналу — в фоне, без задержки окна.</summary>
+        private void PollService()
+        {
+            System.Threading.Tasks.Task.Run(() => Bilem.Agent.Core.Service.StatusPipe.Ask())
+                .ContinueWith(t => { if (!IsDisposed && IsHandleCreated) BeginInvoke((Action)(() => { _svcStatus = t.Result; UpdateHealth(); })); });
+        }
+
+        private bool McpRunning => _svc ? (bool?)_svcStatus?["mcp"]?["running"] == true : _host.Running;
+
         /// <summary>Перезапуск MCP (из трея): остановить и сразу запустить; клиенты переподключатся сами.</summary>
         private void RestartMcp()
         {
+            if (_svc)
+            {
+                var r = Bilem.Agent.Core.Service.StatusPipe.Ask("restart-mcp", 5000);
+                if (r == null) Warn(Txt.S("UiSvcNotRunning"));
+                else if (r["error"] != null) Warn((string)r["error"]);
+                PollService();
+                return;
+            }
             if (_host.Running) _host.Stop();
             Log.Info(Txt.S("McpRestarting"));
             StartMcp();
@@ -665,6 +702,8 @@ namespace Bilem.Agent
 
         private void ToggleMcp()
         {
+            // Со службой MCP не останавливают из окна — только перезапуск (остановить службу — в «Службах» Windows)
+            if (_svc) { RestartMcp(); return; }
             if (_host.Running) { _host.Stop(); _mcpStoppedByUser = true; }
             else StartMcp();
             RefreshAll();
@@ -740,6 +779,8 @@ namespace Bilem.Agent
 
         private void AfterChange()
         {
+            // Служба сама перечитывает config.json (раз в 2 с) и проверяет базы
+            if (_svc) { RefreshAll(); return; }
             _host.Reload();
             RefreshAll();
             QuickCheckBases();
@@ -771,6 +812,19 @@ namespace Bilem.Agent
         {
             if (IsDisposed) return;
             var cfg = AgentConfig.Load();
+            if (_svc)
+            {
+                // Строка состояния — по службе: работает / запускается / ошибка / служба не отвечает
+                var m = _svcStatus?["mcp"];
+                _stState.ForeColor = SystemColors.ControlText;
+                if (_updInstalling != null) _stState.Text = Txt.F("UiStateUpdating", _updInstalling);
+                else if (_svcStatus == null) _stState.Text = Txt.S("UiSvcNotRunning");
+                else if ((bool?)m?["running"] == true) _stState.Text = Txt.F("UiStateRunningSvc", cfg.Port, cfg.Bases.Count);
+                else if ((bool?)m?["starting"] == true) _stState.Text = Txt.F("UiStateStartingSvc", cfg.Port);
+                else _stState.Text = Txt.F("UiStateStartFailed", (string)m?["error"] ?? "—");
+                _mcpToggle.Text = Txt.S("UiTrayMcpRestart");
+                return;
+            }
             HealthState h;
             lock (_baseErrors)
             {
