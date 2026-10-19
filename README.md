@@ -44,14 +44,9 @@
 2. Откройте «Bilem Agent» (ярлык на рабочем столе) → **Базы 1С → Добавить…** — выберите базу, введите логин и пароль администратора 1С (пароль не сохраняется).
 3. **MCP → Подключить к Claude Code** (или Claude Desktop, Cursor) — и спрашивайте.
 
-### Если Windows предупреждает при запуске
+### Подлинность установщика
 
-Бета-версии пока выходят **без подписи Microsoft** (сертификат оформляется), поэтому Windows может остановить установку:
-
-- **«Windows защитила ваш компьютер» (SmartScreen)** — нажмите **«Подробнее» → «Выполнить в любом случае»**.
-- **Windows Server, файл скачан браузером** — щёлкните MSI правой кнопкой → **«Свойства»** → внизу отметьте **«Разблокировать»** → «OK», затем запустите. Или в PowerShell: `Unblock-File .\BilemAgent-<версия>.msi`.
-
-Убедиться, что файл настоящий, можно по `SHA256SUMS` в том же релизе: `Get-FileHash .\BilemAgent-<версия>.msi` — хеш должен совпасть.
+Начиная с 0.3.0-beta.9 установщик и программы подписаны сертификатом Microsoft на **SKP.KZ LLC**: «Свойства» файла → «Цифровые подписи». Кроме того, хеш MSI можно сверить с `SHA256SUMS` в том же релизе: `Get-FileHash .\BilemAgent-<версия>.msi`.
 
 Подробно — [docs.bilem.ai](https://docs.bilem.ai). Проверка подлинности: в релизе есть `SHA256SUMS` и подпись `SHA256SUMS.sig` (Ed25519); агент проверяет их сам при обновлении.
 
@@ -81,4 +76,4 @@ C#, .NET Framework 4.8 (WinForms + командная строка), сборк�
 
 > **The app does not send data over the network unless the user explicitly asks for it** (e-mailing a document, checking GitHub for updates).
 
-Requirements: Windows 10 / Server 2012 R2+, .NET Framework 4.8 (the installer offers to install it). Install: download `BilemAgent-<version>.msi` from [Releases](https://github.com/skp-kz/bilem.ai/releases). Beta builds are not yet Microsoft-signed: on the SmartScreen prompt choose “More info → Run anyway”; on Windows Server unblock the downloaded file first (Properties → Unblock, or `Unblock-File`). Uninstall: remove each database in the app (**Bases → Remove**), then uninstall “Bilem Agent” in Windows Settings; `C:\ProgramData\Bilem` is kept unless you run `msiexec /x … REMOVE_SETTINGS=1`. Releases are signed: `SHA256SUMS.sig` (Ed25519) over `SHA256SUMS`. License: MIT. Security: see [SECURITY.md](SECURITY.md).
+Requirements: Windows 10 / Server 2012 R2+, .NET Framework 4.8 (the installer offers to install it). Install: download `BilemAgent-<version>.msi` from [Releases](https://github.com/skp-kz/bilem.ai/releases). Since 0.3.0-beta.9 the installer and binaries are Authenticode-signed by SKP.KZ LLC. Uninstall: remove each database in the app (**Bases → Remove**), then uninstall “Bilem Agent” in Windows Settings; `C:\ProgramData\Bilem` is kept unless you run `msiexec /x … REMOVE_SETTINGS=1`. Releases are signed: `SHA256SUMS.sig` (Ed25519) over `SHA256SUMS`. License: MIT. Security: see [SECURITY.md](SECURITY.md).
