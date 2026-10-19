@@ -74,7 +74,28 @@ namespace Bilem.Agent.Core.Updates
             if (!string.Equals(Sha256File(file), want, StringComparison.OrdinalIgnoreCase)) return Txt.S("UpdBadHash");
             var a = Authenticode(file);
             if (a.Signed && !a.Valid) return Txt.F("UpdBadAuthenticode", a.Error);
-            if (a.Signed && (a.Subject ?? "").IndexOf(Publisher, StringComparison.OrdinalIgnoreCase) < 0) return Txt.F("UpdWrongPublisher", a.Subject);
+            if (a.Signed && !IsOurPublisher(a.Subject)) return Txt.F("UpdWrongPublisher", a.Subject);
+            return null;
+        }
+
+        /// <summary>
+        /// Издатель подписи — наш: CN сертификата равен «SKP.kz LLC» без учёта регистра (в сертификате Microsoft —
+        /// «CN=SKP.KZ LLC, O=SKP.KZ LLC, …»). Точное имя, а не вхождение подстроки: «CN=Not SKP.KZ LLC» — чужой.
+        /// </summary>
+        public static bool IsOurPublisher(string subject) =>
+            string.Equals(SubjectPart(subject, "CN"), Publisher, StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>Значение поля DN («CN=…, O=…»); кавычки вокруг значения снимаются. Нет поля — null.</summary>
+        internal static string SubjectPart(string subject, string key)
+        {
+            if (string.IsNullOrEmpty(subject)) return null;
+            foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(subject, @"(?:^|,)\s*([A-Za-z.]+)=(""(?:[^""]|"""")*""|[^,]*)"))
+            {
+                if (!string.Equals(m.Groups[1].Value, key, StringComparison.OrdinalIgnoreCase)) continue;
+                var v = m.Groups[2].Value.Trim();
+                if (v.Length >= 2 && v[0] == '"' && v[v.Length - 1] == '"') v = v.Substring(1, v.Length - 2).Replace("\"\"", "\"");
+                return v;
+            }
             return null;
         }
 

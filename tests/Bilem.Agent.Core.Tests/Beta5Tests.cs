@@ -50,6 +50,17 @@ namespace Bilem.Agent.Core.Tests
             Assert.Equal(@"C:\a\comcntr.dll", back.ComBefore["64"].Previous);
         }
 
+        [Theory]
+        [InlineData("CN=SKP.KZ LLC, O=SKP.KZ LLC, L=Plano, S=Texas, C=US", true)]   // сертификат Microsoft (F7)
+        [InlineData("CN=SKP.kz LLC, O=SKP.kz LLC", true)]
+        [InlineData("CN=\"SKP.KZ LLC\", O=X", true)]
+        [InlineData("CN=Not SKP.KZ LLC, O=SKP.KZ LLC", false)]   // вхождение подстроки — не наш
+        [InlineData("CN=Evil, O=SKP.KZ LLC", false)]             // O совпадает, CN — нет
+        [InlineData("", false)]
+        [InlineData(null, false)]
+        public void Publisher_ExactCnIgnoringCase(string subject, bool ours) =>
+            Assert.Equal(ours, Bilem.Agent.Core.Updates.ReleaseVerifier.IsOurPublisher(subject));
+
         [Fact]
         public void Crashes_ReadsLogWithoutThrowing()
         {

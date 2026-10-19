@@ -13,6 +13,8 @@ permissions:
 jobs:
   release:
     runs-on: windows-latest
+    # Среда release: к ней привязана федеративная учётка Azure (F7) — без неё Azure не выдаст токен для подписи
+    environment: release
     env:
       TAG: ${{ github.ref_name }}
     steps:
@@ -35,6 +37,8 @@ jobs:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          # У приложения нет ролей на подписку — только на аккаунт подписи
+          allow-no-subscriptions: true
 
       - name: Authenticode — exe агента и помощников
         if: ${{ vars.AZURE_CLIENT_ID != '' }}
@@ -44,7 +48,7 @@ jobs:
           trusted-signing-account-name: ${{ vars.AZURE_SIGNING_ACCOUNT }}
           certificate-profile-name: ${{ vars.AZURE_SIGNING_PROFILE }}
           files-folder: artifacts/bin/Release
-          files-folder-filter: exe
+          files-folder-filter: exe,com
           file-digest: SHA256
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
