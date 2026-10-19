@@ -38,9 +38,9 @@ namespace Bilem.Agent.Core.Tests
         {
             var bal = new JArray(Bal(A1210, Cp, K1, 1000), Bal(A3510, Cp, K1, -300), Bal(A3510, Cp, K2, -500), Bal(A1210, Cp2, K1, -50), Bal(A6010, Cp, K1, 999));
             var d = Debts.FromBalance(DebtKind.Receivables, bal, Main, Adv);
-            var atek = d.Single(x => x.Key == Cp);
-            Assert.Equal(700, atek.Amount);          // 1000 − 300 по договору K1; аванс по K2 с долгом K1 не зачитывается
-            Assert.Equal(800, atek.Advance);
+            var first = d.Single(x => x.Key == Cp);
+            Assert.Equal(700, first.Amount);         // 1000 − 300 по договору K1; аванс по K2 с долгом K1 не зачитывается
+            Assert.Equal(800, first.Advance);
             Assert.Equal(0, d.Single(x => x.Key == Cp2).Amount);   // Кт 1210 (переплата) — не долг
         }
 
