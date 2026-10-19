@@ -108,6 +108,11 @@
   <data name="DataFlags" xml:space="preserve"><value>Объектов с записями в базе: {0} из {1}</value></data>
   <data name="DcNoIis" xml:space="preserve"><value>Это контроллер домена, IIS на нём нет — не ставлю без вашего согласия.</value></data>
   <data name="DcWarning" xml:space="preserve"><value>Это контроллер домена. Microsoft не рекомендует ставить IIS на контроллер домена.</value></data>
+  <data name="DebtNoAccount" xml:space="preserve"><value>В плане счетов нет счёта {0} — посчитать задолженность нельзя.</value></data>
+  <data name="DebtNotePayables" xml:space="preserve"><value>Долг = сальдо 3310 по контрагенту и договору минус аванс выданный 1710; возраст — от самых старых неоплаченных поступлений (FIFO). Документы — самые старые неоплаченные, до 10 на контрагента.</value></data>
+  <data name="DebtNoteReceivables" xml:space="preserve"><value>Долг = сальдо 1210 по контрагенту и договору минус аванс 3510; возраст — от самых старых непогашенных реализаций (FIFO). Документы — самые старые непогашенные, до 10 на контрагента.</value></data>
+  <data name="DebtStalePayables" xml:space="preserve"><value>Выписки загружены не по всем счетам — мы могли уже заплатить.</value></data>
+  <data name="DebtStaleReceivables" xml:space="preserve"><value>Выписки загружены не по всем счетам — должник мог уже заплатить.</value></data>
   <data name="DiagAdmin" xml:space="preserve"><value>Права администратора Windows</value></data>
   <data name="DiagAnonymousPool" xml:space="preserve"><value>Вход публикации от имени пула</value></data>
   <data name="DiagBaseFolder" xml:space="preserve"><value>Папка базы (1Cv8.1CD)</value></data>
@@ -361,6 +366,13 @@
   <data name="ToolCashDescExtra" xml:space="preserve"><value> В ответе — as_of: дата последней проведённой банковской выписки по каждому счёту, последний проведённый документ и предупреждения о давности; дату данных обязательно назовите пользователю (as_of.say).</value></data>
   <data name="ToolCashParamDate" xml:space="preserve"><value>Дата ГГГГ-ММ-ДД, остаток на конец этого дня. По умолчанию — сегодня.</value></data>
   <data name="ToolCashTitle" xml:space="preserve"><value>Остаток денег</value></data>
+  <data name="ToolDebtDescCommon" xml:space="preserve"><value> Возраст долга — FIFO: оплаты закрывают самые старые документы (aging_method). Итог (osv.balance) совпадает с оборотно-сальдовой ведомостью по счёту на ту же дату. Только данные 1С: назови дату из as_of и, если выписки устарели, предупреди, что контрагент мог уже заплатить.</value></data>
+  <data name="ToolDebtParamAsOf" xml:space="preserve"><value>Дата долга, YYYY-MM-DD; по умолчанию — сегодня.</value></data>
+  <data name="ToolDebtParamCounterparty" xml:space="preserve"><value>Один контрагент: БИН или часть названия.</value></data>
+  <data name="ToolDebtParamIssuedBefore" xml:space="preserve"><value>Только долг по документам, выставленным раньше этой даты (YYYY-MM-DD). «Не оплатили с прошлого месяца» — первое число текущего месяца.</value></data>
+  <data name="ToolDebtParamMinAmount" xml:space="preserve"><value>Только контрагенты с долгом не меньше этой суммы, тенге.</value></data>
+  <data name="ToolDebtParamMinDays" xml:space="preserve"><value>Только долг по документам не моложе N дней (30 / 60 / 90).</value></data>
+  <data name="ToolDebtParamTop" xml:space="preserve"><value>Сколько контрагентов показать (по убыванию суммы), по умолчанию 20.</value></data>
   <data name="ToolFailed" xml:space="preserve"><value>Не удалось выполнить: {0}</value></data>
   <data name="ToolFindDesc" xml:space="preserve"><value>Поиск контрагента (покупателя, поставщика) в базе 1С по части наименования или по БИН/ИИН (цифры). Возвращает до 10 найденных: наименование, полное наименование, БИН/ИИН. Вызывай, когда пользователь называет компанию или БИН и нужно понять, о ком речь. Без base — по всем базам сразу.</value></data>
   <data name="ToolFindParamQuery" xml:space="preserve"><value>Часть наименования или БИН/ИИН (можно часть цифр).</value></data>
@@ -373,6 +385,8 @@
   <data name="ToolNone" xml:space="preserve"><value>ни одной</value></data>
   <data name="ToolObjectOff" xml:space="preserve"><value>Объект «{0}» в базе {1} выключен на вкладке «Доступ» — ИИ этот объект не видит.</value></data>
   <data name="ToolParamBase" xml:space="preserve"><value>Короткое имя базы из list_bases. Не указывай, если пользователь не назвал базу: ответ придёт по всем базам сразу.</value></data>
+  <data name="ToolPayDesc" xml:space="preserve"><value>Кому должны мы: поставщики, которым мы не оплатили поступления (сальдо счёта 3310 минус авансы выданные 1710 по тому же контрагенту и договору), по каким документам и сколько дней долгу. «Больше 30 дней» = min_days=30. По поставщику можно сделать акт сверки (print_reconciliation).</value></data>
+  <data name="ToolPayTitle" xml:space="preserve"><value>Кому должны мы</value></data>
   <data name="ToolPoaDesc" xml:space="preserve"><value>Печатает доверенность (форма Д-1), которая уже есть в 1С: PDF с логотипом, печатью и подписью этой базы, удостоверение личности получателя — из 1С, только внутри PDF. Без number и last — поиск: список доверенностей по сотруднику (employee) и периоду (period) без печати. Ответ — файл PDF (и картинка первой страницы), номер, дата, действительна по, кому, от кого. Ничего в 1С не меняет. Отправить по почте — send_document с document: power_of_attorney (только на адреса из поля «Список адресов для отправки доверенностей» вкладки SMTP).</value></data>
   <data name="ToolPoaNeedNumber" xml:space="preserve"><value>Укажите номер доверенности, last: true (последняя) или для поиска — employee (часть ФИО) и/или period.</value></data>
   <data name="ToolPoaNote" xml:space="preserve"><value>PDF доверенности сохранён на компьютере с агентом и приложен к ответу. Удостоверение личности — только в PDF.</value></data>
@@ -389,6 +403,8 @@
   <data name="ToolPrintParamPeriod" xml:space="preserve"><value>Период поиска: 2022, 2022-04, 2022-04-13 или 2022-01-01..2022-06-30.</value></data>
   <data name="ToolPrintTitle" xml:space="preserve"><value>Счёт на оплату в PDF</value></data>
   <data name="ToolPrintWhichBase" xml:space="preserve"><value>Баз несколько — укажите base: {0}.</value></data>
+  <data name="ToolRecvDesc" xml:space="preserve"><value>Кто нам должен: контрагенты с непогашенным долгом по выставленным актам / реализациям (сальдо счёта 1210 минус авансы 3510 по тому же контрагенту и договору), по каким документам (номер, дата, счёт-фактура) и сколько дней долгу. Счёт на оплату долга не создаёт — долг возникает от реализации, счёт-фактура — налоговый документ к ней. «С прошлого месяца» = issued_before = первое число текущего месяца; «больше 30 дней» = min_days=30. По должнику можно сразу сделать акт сверки (print_reconciliation) и отправить ему (send_document).</value></data>
+  <data name="ToolRecvTitle" xml:space="preserve"><value>Кто нам должен</value></data>
   <data name="ToolSendDesc" xml:space="preserve"><value>Отправляет документ агента по e-mail СРАЗУ: счёт на оплату, акт сверки или доверенность — PDF с печатью и подписью, сделанный по данным 1С. Перед отправкой предложи пользователю показать документ — вызови print_* и покажи PDF; отправляй, когда пользователь согласен или явно просит отправить сразу. Счёт и акт сверки — на любой e-mail (адрес назвал пользователь; не назван — e-mail контрагента из 1С; если их несколько — вернётся список candidates, спроси пользователя и вызови снова с to). Доверенность — только на адреса из поля «Список адресов для отправки доверенностей» вкладки SMTP. Ответ — «отправлено на …, копия на …» или ошибка SMTP с текстом. Ничего в 1С не меняет.</value></data>
   <data name="ToolSendParamCounterparty" xml:space="preserve"><value>Счёт: покупатель (БИН или часть названия) — уточняет, чей счёт. Акт сверки: контрагент (обязательно).</value></data>
   <data name="ToolSendParamDocument" xml:space="preserve"><value>Вид документа: invoice — счёт на оплату (number / last); reconciliation — акт сверки (counterparty, period_from, period_to, contract); power_of_attorney — доверенность (number / last, employee; только на адреса из поля «Список адресов для отправки доверенностей»).</value></data>

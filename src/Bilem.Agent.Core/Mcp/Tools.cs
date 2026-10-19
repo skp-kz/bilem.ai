@@ -194,6 +194,8 @@ namespace Bilem.Agent.Core.Mcp
                     }, "counterparty"),
                     Handler = a => PrintAct(OneBase(bases(), (string)a["base"]), a),
                 },
+                DebtTool("receivables", DebtKind.Receivables, bases, baseProp),
+                DebtTool("payables", DebtKind.Payables, bases, baseProp),
                 new McpTool
                 {
                     Name = "send_document", Title = Txt.S("ToolSendTitle"), Description = Txt.S("ToolSendDesc"),
@@ -215,6 +217,66 @@ namespace Bilem.Agent.Core.Mcp
                     Handler = a => SendDocument(bases(), a),
                 },
             };
+        }
+
+        // ---------- receivables / payables ----------
+
+        /// <summary>«Кто нам должен» / «кому должны мы» — одна схема параметров, зеркальные счета (часть G).</summary>
+        private static McpTool DebtTool(string name, DebtKind kind, Func<IReadOnlyList<BaseRuntime>> bases, JObject baseProp)
+        {
+            var p = kind == DebtKind.Receivables ? "ToolRecv" : "ToolPay";
+            var date = new JObject { ["type"] = "string", ["pattern"] = @"^\d{4}-\d{2}-\d{2}$" };
+            return new McpTool
+            {
+                Name = name, Title = Txt.S(p + "Title"), Description = Txt.S(p + "Desc") + Txt.S("ToolDebtDescCommon"),
+                InputSchema = Schema(new JObject
+                {
+                    ["as_of_date"] = new JObject(date) { ["description"] = Txt.S("ToolDebtParamAsOf") },
+                    ["min_days"] = new JObject { ["type"] = "integer", ["minimum"] = 0, ["description"] = Txt.S("ToolDebtParamMinDays") },
+                    ["issued_before"] = new JObject(date) { ["description"] = Txt.S("ToolDebtParamIssuedBefore") },
+                    ["min_amount"] = new JObject { ["type"] = "number", ["minimum"] = 0, ["description"] = Txt.S("ToolDebtParamMinAmount") },
+                    ["counterparty"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDebtParamCounterparty") },
+                    ["organization"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolActParamOrganization") },
+                    ["top"] = new JObject { ["type"] = "integer", ["minimum"] = 1, ["maximum"] = 200, ["description"] = Txt.S("ToolDebtParamTop") },
+                    ["base"] = baseProp,
+                }),
+                Handler = a => PerBase(bases(), (string)a["base"], b => Debt(b, kind, a), rows => MergeDebt(rows, kind)),
+            };
+        }
+
+        private static DateTime? ParseDate(JObject a, string name)
+        {
+            var s = ((string)a[name] ?? "").Trim();
+            if (s.Length == 0) return null;
+            if (!DateTime.TryParseExact(s, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d)) throw new AgentException(Txt.F("ActBadDate", s));
+            return d;
+        }
+
+        internal static JObject Debt(BaseRuntime b, DebtKind kind, JObject a)
+        {
+            var q = new Debts.Request
+            {
+                Kind = kind,
+                AsOf = ParseDate(a, "as_of_date") ?? DateTime.Today,
+                IssuedBefore = ParseDate(a, "issued_before"),
+                MinDays = Math.Max(0, (int?)a["min_days"] ?? 0),
+                MinAmount = Math.Max(0m, (decimal?)a["min_amount"] ?? 0m),
+                Counterparty = (string)a["counterparty"],
+                Organization = (string)a["organization"],
+                Top = Math.Min(200, Math.Max(1, (int?)a["top"] ?? 20)),
+            };
+            var r = Debts.Load(b, q);
+            return Debts.ToJson(b, q, r, Freshness.AsOf(b, StaleWorkdays));
+        }
+
+        private static JObject MergeDebt(List<JObject> rows, DebtKind kind)
+        {
+            var key = kind == DebtKind.Receivables ? "debtors" : "creditors";
+            var ok = rows.Where(r => r["error"] == null).ToList();
+            var errors = new JArray(rows.Where(r => r["error"] != null));
+            var res = new JObject { ["kind"] = kind == DebtKind.Receivables ? "receivables" : "payables", ["currency"] = "KZT", ["bases"] = new JArray(ok) };
+            if (errors.Count > 0) res["errors"] = errors;
+            return res;
         }
 
         private static JObject Schema(JObject props, params string[] required)

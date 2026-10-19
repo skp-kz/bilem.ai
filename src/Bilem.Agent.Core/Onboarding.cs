@@ -170,6 +170,7 @@ namespace Bilem.Agent.Core
                 Begin("user");
                 var userExists = (bool)userInfo["exists"];
                 var haveSecret = File.Exists(b.SecretFile);
+                var extraRoles = new List<string>();
                 if (userExists)
                 {
                     var have = ((JArray)userInfo["roles"]).Select(x => (string)x).ToList();
@@ -177,9 +178,12 @@ namespace Bilem.Agent.Core
                     var expected = profile.Roles.Concat(b.ExtraRoles ?? new List<string>()).ToList();
                     var missing = expected.Except(have).ToList();
                     var extra = have.Except(expected).ToList();
-                    Log.Write(missing.Count + extra.Count == 0 ? LogLevel.Ok : LogLevel.Warn, Txt.F("UserRolesNow", BilemUser, have.Count, string.Join(", ", have)));
+                    Log.Write(missing.Count == 0 ? LogLevel.Info : LogLevel.Warn, Txt.F("UserRolesNow", BilemUser, have.Count, string.Join(", ", have)));
                     if (missing.Count > 0) Log.Warn(Txt.F("UserRolesMissing", string.Join(", ", missing)));
-                    if (extra.Count > 0) Log.Warn(Txt.F("UserRolesExtra", string.Join(", ", extra)));
+                    // «Лишние» — только после подбора ролей для служебных объектов: на новом компьютере config.json пуст,
+                    // и роли, которые агент выдал bilem раньше, иначе выглядели бы чужими (сервер 19.10)
+                    extraRoles = extra;
+                    if (!apply && extra.Count > 0) Log.Warn(Txt.F("UserRolesExtra", string.Join(", ", extra)));
                 }
                 var newPassword = !userExists || !haveSecret || o.ResetPassword;
                 if (!apply)
@@ -206,6 +210,8 @@ namespace Bilem.Agent.Core
                     // Служебные объекты (e-mail контрагента, данные для доверенности) — роль чтения подбираем, если ролей профиля мало
                     var serviceRoles = ServiceRoles(client, conn, profile, wantRoles);
                     wantRoles = wantRoles.Concat(serviceRoles).Distinct().ToList();
+                    var reallyExtra = extraRoles.Except(serviceRoles).ToList();
+                    if (reallyExtra.Count > 0) Log.Warn(Txt.F("UserRolesExtra", string.Join(", ", reallyExtra)));
                     b.ExtraRoles = (b.ExtraRoles ?? new List<string>()).Concat(serviceRoles).Distinct().ToList();
                     var wantOData = (b.Read ?? profile.ODataObjects.ToList()).Concat(Profiles.ServiceODataObjects).Distinct().ToList();
                     var r2 = client.Run(conn,
