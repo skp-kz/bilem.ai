@@ -441,6 +441,35 @@ namespace Bilem.Agent
             root.Controls.SetChildIndex(upd, 0);
             ShowUpdateState();
 
+            // --- Защита настроек: сразу под «Обновлениями» (решение Славы 20.10)
+            var lockBox = new GroupBox { Text = Txt.S("UiLockGroup"), AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(10) };
+            boxes.Add(lockBox);
+            var lt = new TableLayoutPanel { ColumnCount = 1, AutoSize = true, Dock = DockStyle.Fill };
+            var lr = 0;
+            void LAdd(Control c) => lt.Controls.Add(c, 0, lr++);
+            var lockState = new Label { AutoSize = true, Margin = new Padding(0, 3, 0, 4) };
+            var lockSet = B("UiLockSet");
+            var lockClear = new LinkLabel { Text = Txt.S("UiLockClear"), AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
+            void ShowLock()
+            {
+                var on = SettingsLock.Enabled;
+                lockState.Text = Txt.S(on ? "UiLockOn" : "UiLockOff");
+                lockSet.Text = Txt.S(on ? "UiLockChange" : "UiLockSet");
+                lockClear.Visible = on;
+            }
+            lockSet.Click += (s, e) => { using (var f = new SetLockForm(SettingsLock.Enabled)) if (f.ShowDialog(this) == DialogResult.OK) Info(Txt.S("UiLockSaved")); ShowLock(); };
+            lockClear.LinkClicked += (s, e) =>
+            {
+                if (!SettingsGate.Pass(Txt.S("UiLockWhatClear"))) return;
+                SettingsLock.Clear(Txt.S("UiLockHowWindow"));
+                ShowLock();
+            };
+            LAdd(lockState); LAdd(lockSet); LAdd(lockClear); LAdd(Note(Txt.F("UiLockNote", "bilem-agent reset-settings-password")));
+            lockBox.Controls.Add(lt);
+            root.Controls.Add(lockBox);
+            root.Controls.SetChildIndex(lockBox, 1);
+            ShowLock();
+
             p.Controls.Add(root);
             return p;
         }

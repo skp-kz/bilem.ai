@@ -26,6 +26,8 @@ namespace Bilem.Agent
                 switch (action)
                 {
                     case "copy-url":
+                        // Адрес с токеном — ключ к данным 1С: под паролем настроек, если он задан
+                        if (!SettingsGate.Pass(Txt.S("UiLockWhatCopy"))) return 1;
                         var cfg = AgentConfig.Load();
                         Clipboard.SetDataObject(cfg.McpUrl(cfg.GetOrCreateToken()), true);
                         return 0;

@@ -57,6 +57,12 @@ namespace Bilem.Agent
                             cfg.Save();
                             return 0;
                         }
+                    case "reset-settings-password":
+                        // Забыли пароль настроек: снять его может администратор компьютера (запись в журнал — кто и когда)
+                        if (!Onboarding.IsAdmin()) { Log.Fail(Txt.S("NeedAdmin")); return 1; }
+                        SettingsLock.Clear(Txt.S("UiLockHowCli"));
+                        Log.Ok(Txt.S("LockResetDone"));
+                        return 0;
                     case "access": return AccessCmd(a);
                     case "print": return PrintCmd(a);
                     case "serve": return Serve();

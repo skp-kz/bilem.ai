@@ -86,6 +86,8 @@ namespace Bilem.Agent.Core
         public bool TrayHintShown { get; set; }
         /// <summary>Папка документов (PDF счетов, доверенностей, актов); пусто — C:\ProgramData\Bilem\Документы.</summary>
         public string DocumentsRoot { get; set; }
+        /// <summary>Пароль настроек — хеш PBKDF2 (SettingsLock); пусто — не спрашивается.</summary>
+        public string SettingsPassword { get; set; }
         /// <summary>
         /// Системная регистрация COM-коннектора до Bilem Agent, по разрядности ("32"/"64"): путь к comcntr.dll, "" — не было.
         /// Записывается, когда агент перерегистрирует коннектор (с согласия человека); возвращается при удалении последней базы

@@ -58,6 +58,7 @@
   sysinfo системная информация для техподдержки (без паролей, токенов и данных 1С)
   doctor диагностика компонентов: Windows, .NET, 1С, IIS, MCP, каждая база — что в порядке и что делать (ничего не меняет)
   restore-com — вернуть системную регистрацию COM-коннектора, которая была до Bilem Agent (при удалении агента)
+  reset-settings-password — снять пароль настроек (забыли пароль; нужны права администратора, запись в журнал)
   remove --slug «имя» [--drop-user --admin «логин» [--password «пароль»]]
         убрать базу: публикация, пул, пароль bilem; с --drop-user — и пользователь bilem в базе
   access --slug «имя» [--load] [--read-on|--read-off|--write-on|--write-off «Документ.X,Справочник.Y»] [--admin «логин» [--password «пароль»]]
@@ -212,6 +213,14 @@
   <data name="IpSecurityEnabled" xml:space="preserve"><value>Компонент IIS «Ограничения по IP» включён</value></data>
   <data name="LocalhostOnly" xml:space="preserve"><value>Доступ к публикации — только с 127.0.0.1 / ::1</value></data>
   <data name="LocalhostOnlyFailed" xml:space="preserve"><value>Не удалось ограничить доступ к публикации адресом 127.0.0.1.</value></data>
+  <data name="LockChanged" xml:space="preserve"><value>Пароль настроек изменён: {0}</value></data>
+  <data name="LockCleared" xml:space="preserve"><value>Пароль настроек снят {0}: {1}</value></data>
+  <data name="LockPaused" xml:space="preserve"><value>Пароль настроек: {1} неверных попыток подряд ({0}) — пауза минуту</value></data>
+  <data name="LockResetDone" xml:space="preserve"><value>Пароль настроек снят. Задать новый — «Настройки…» → «Сервис» → «Защита настроек».</value></data>
+  <data name="LockSet" xml:space="preserve"><value>Пароль настроек задан: {0}</value></data>
+  <data name="LockTooShort" xml:space="preserve"><value>Пароль настроек — не короче {0} символов.</value></data>
+  <data name="LockUnlocked" xml:space="preserve"><value>Пароль настроек верный ({0}): {1}</value></data>
+  <data name="LockWrong" xml:space="preserve"><value>Неверный пароль настроек ({0}): {1}</value></data>
   <data name="MailBadAddress" xml:space="preserve"><value>«{0}» — не похоже на e-mail.</value></data>
   <data name="MailChoiceNote" xml:space="preserve"><value>У контрагента в 1С {0} e-mail — письмо не отправлено. Спросите пользователя, на какой адрес отправить, и вызовите send_document снова с to.</value></data>
   <data name="MailDocAct" xml:space="preserve"><value>Акт сверки — {0} — {1} ({2})</value></data>
@@ -533,6 +542,32 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiKindFile" xml:space="preserve"><value>файловая</value></data>
   <data name="UiKindFileMissing" xml:space="preserve"><value>файловая — папки нет</value></data>
   <data name="UiKindServerSoon" xml:space="preserve"><value>серверная — скоро</value></data>
+  <data name="UiLockChange" xml:space="preserve"><value>Сменить пароль…</value></data>
+  <data name="UiLockChangeTitle" xml:space="preserve"><value>Сменить пароль настроек</value></data>
+  <data name="UiLockClear" xml:space="preserve"><value>Снять пароль</value></data>
+  <data name="UiLockCurrent" xml:space="preserve"><value>Текущий пароль</value></data>
+  <data name="UiLockGroup" xml:space="preserve"><value>Защита настроек</value></data>
+  <data name="UiLockHowCli" xml:space="preserve"><value>командой reset-settings-password</value></data>
+  <data name="UiLockHowWindow" xml:space="preserve"><value>в окне настроек</value></data>
+  <data name="UiLockMismatch" xml:space="preserve"><value>Пароли не совпадают.</value></data>
+  <data name="UiLockNew" xml:space="preserve"><value>Новый пароль</value></data>
+  <data name="UiLockNote" xml:space="preserve"><value>Дополнительный короткий пароль поверх прав администратора Windows — чтобы на сервере с несколькими администраторами никто лишний не менял настройки. Вход в настройки и неверные попытки пишутся в журнал с учётной записью Windows. Забыли пароль — администратор компьютера снимет его командой {0}.</value></data>
+  <data name="UiLockOff" xml:space="preserve"><value>Пароль не задан: в настройки может войти любой администратор этого компьютера.</value></data>
+  <data name="UiLockOn" xml:space="preserve"><value>Пароль задан: его спросят при входе в настройки и при копировании адреса MCP.</value></data>
+  <data name="UiLockPrompt" xml:space="preserve"><value>Введите пароль настроек Bilem Agent — {0}.</value></data>
+  <data name="UiLockRepeat" xml:space="preserve"><value>Повторите</value></data>
+  <data name="UiLockSaved" xml:space="preserve"><value>Пароль настроек сохранён.</value></data>
+  <data name="UiLockSet" xml:space="preserve"><value>Задать пароль…</value></data>
+  <data name="UiLockSetHint" xml:space="preserve"><value>Пароль спросят при входе в настройки Bilem Agent и при копировании адреса MCP. Не короче {0} символов.</value></data>
+  <data name="UiLockSetTitle" xml:space="preserve"><value>Задать пароль настроек</value></data>
+  <data name="UiLockTitle" xml:space="preserve"><value>Пароль настроек Bilem Agent</value></data>
+  <data name="UiLockWait" xml:space="preserve"><value>Слишком много неверных попыток — подождите {0} с.</value></data>
+  <data name="UiLockWhatChange" xml:space="preserve"><value>смена пароля настроек</value></data>
+  <data name="UiLockWhatClear" xml:space="preserve"><value>снятие пароля настроек</value></data>
+  <data name="UiLockWhatCopy" xml:space="preserve"><value>копирование адреса MCP</value></data>
+  <data name="UiLockWhatSettings" xml:space="preserve"><value>вход в настройки</value></data>
+  <data name="UiLockWrong" xml:space="preserve"><value>Неверный пароль.</value></data>
+  <data name="UiLockWrongCurrent" xml:space="preserve"><value>Неверный текущий пароль.</value></data>
   <data name="UiMcpAddress" xml:space="preserve"><value>Адрес MCP:</value></data>
   <data name="UiMcpRunning" xml:space="preserve"><value>MCP работает</value></data>
   <data name="UiMcpStart" xml:space="preserve"><value>Запустить MCP</value></data>

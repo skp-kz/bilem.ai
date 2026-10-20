@@ -93,6 +93,8 @@ namespace Bilem.Agent
                 }
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
+                // Пароль настроек (если задан) — до окна: без него настройки не открываются
+                if (!SettingsGate.Pass(Bilem.Agent.Core.Txt.S("UiLockWhatSettings"))) return 1;
                 Application.Run(create());
                 return 0;
             }
@@ -109,8 +111,9 @@ namespace Bilem.Agent
             try
             {
                 var p = Process.Start(new ProcessStartInfo(Application.ExecutablePath, arguments) { UseShellExecute = true, Verb = "runas" });
-                if (wait) p?.WaitForExit();
-                return true;
+                if (!wait || p == null) return true;
+                p.WaitForExit();
+                return p.ExitCode == 0;   // отмена пароля настроек или ошибка — не «готово»
             }
             catch (Win32Exception e) when (e.NativeErrorCode == 1223) { return false; }   // «Нет» в окне UAC
         }

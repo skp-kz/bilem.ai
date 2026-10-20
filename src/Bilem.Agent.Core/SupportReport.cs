@@ -23,6 +23,9 @@ namespace Bilem.Agent.Core
                 {
                     var cfg = JObject.Parse(File.ReadAllText(Paths.ConfigFile, Encoding.UTF8));
                     cfg.Remove("TokenProtected");
+                    // Хеш пароля настроек и зашифрованный пароль почты — тоже не наружу
+                    cfg.Remove("SettingsPassword");
+                    (cfg["Smtp"] as JObject)?.Remove("PasswordProtected");
                     Add(zip, "config.json", cfg.ToString());
                 }
                 if (Directory.Exists(Paths.StateDir))
