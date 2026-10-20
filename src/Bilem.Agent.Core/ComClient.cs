@@ -52,7 +52,7 @@ namespace Bilem.Agent.Core
     }
 
     /// <summary>Ошибка для человека: «что случилось → что делать».</summary>
-    public sealed class AgentException : Exception
+    public class AgentException : Exception
     {
         public string Hint { get; }
         /// <summary>Коротко — для подсказки значка в трее (63 символа).</summary>

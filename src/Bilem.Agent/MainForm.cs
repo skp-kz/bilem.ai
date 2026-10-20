@@ -210,7 +210,13 @@ namespace Bilem.Agent
         private TabPage ConnectTab()
         {
             var p = new TabPage(Txt.S("UiTabConnect"));
-            var t = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, Padding = new Padding(12), AutoScroll = true };
+            // Либо бесплатно, либо Bilem Cloud (часть L): блок 1 — локальный MCP, блок 2 — облако; включено облако — блок 1 серый
+            var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Padding = new Padding(10), AutoScroll = true };
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            _localBox = new GroupBox { Text = Txt.S("UiLocalMcpTitle"), Dock = DockStyle.Fill, AutoSize = true, Padding = new Padding(10) };
+            var t = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, AutoSize = true };
+            _localBox.Controls.Add(t);
+            root.Controls.Add(_localBox, 0, 0);
             t.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             t.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             t.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -242,6 +248,20 @@ namespace Bilem.Agent
             _mcpToggle.Click += (s, e) => ToggleMcp();
             tokenRow.Controls.Add(_mcpToggle);
             t.Controls.Add(tokenRow, 0, r); t.SetColumnSpan(tokenRow, 3); r++;
+            _localOff.Visible = false;
+            t.Controls.Add(_localOff, 0, r); t.SetColumnSpan(_localOff, 3); r++;
+            var docs = new LinkLabel { Text = Txt.S("UiLocalDocs"), AutoSize = true, Margin = new Padding(0, 4, 0, 0) };
+            docs.LinkClicked += (s, e) => Open("https://docs.bilem.ai/connect");
+            t.Controls.Add(docs, 0, r); t.SetColumnSpan(docs, 3); r++;
+
+            var cloudBox = new GroupBox { Text = Txt.S("UiCloudTitle"), Dock = DockStyle.Fill, AutoSize = true, Padding = new Padding(10), Margin = new Padding(3, 10, 3, 3) };
+            _cloud = new CloudPanel(() => this, _svc) { Location = new Point(10, 22) };
+            cloudBox.Resize += (s, e) => _cloud.FitWidth(cloudBox.ClientSize.Width - Px(24));
+            _cloud.ModeChanged += () => { ApplyCloudMode(); PollService(); };
+            cloudBox.Controls.Add(_cloud);
+            root.Controls.Add(cloudBox, 0, 1);
+            r = 0;
+            t = root;
 
             // «Данные на …»: выписка старше N рабочих дней — предупреждение в ответах с цифрами
             var staleRow = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 4, 0, 0) };
@@ -250,21 +270,22 @@ namespace Bilem.Agent
             stale.ValueChanged += (s, e) => { var c = AgentConfig.Load(); c.StaleWorkdays = (int)stale.Value; c.Save(); Bilem.Agent.Core.Mcp.Tools.StaleWorkdays = c.StaleWorkdays; };
             staleRow.Controls.Add(stale);
             staleRow.Controls.Add(new Label { Text = Txt.S("UiStaleDaysNote"), AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(4, 6, 0, 0) });
-            t.Controls.Add(staleRow, 0, r); t.SetColumnSpan(staleRow, 3); r++;
-
-            var cloud = new GroupBox { Text = Txt.S("UiCloudTitle"), Enabled = false, Dock = DockStyle.Fill, AutoSize = true, Padding = new Padding(10) };
-            var cloudFlow = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, FlowDirection = FlowDirection.TopDown };
-            cloudFlow.Controls.Add(CloudBadge.Create(this));
-            var cloudText = new Label { Text = Txt.S("UiCloudText"), AutoSize = true };
-            Wrap(cloudText, t, 60);
-            cloudFlow.Controls.Add(cloudText);
-            cloud.Controls.Add(cloudFlow);
-            t.Controls.Add(cloud, 0, r); t.SetColumnSpan(cloud, 3); r++;
-            var wait = new LinkLabel { Text = Txt.S("UiWaitlist"), AutoSize = true };
-            wait.LinkClicked += (s, e) => Open(WaitlistUrl);
-            t.Controls.Add(wait, 0, r); t.SetColumnSpan(wait, 3);
-            p.Controls.Add(t);
+            t.Controls.Add(staleRow, 0, 2);
+            p.Controls.Add(root);
             return p;
+        }
+
+        private GroupBox _localBox;
+        private CloudPanel _cloud;
+        private readonly Label _localOff = new Label { Text = Txt.S("UiLocalOffByCloud"), AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
+
+        /// <summary>Включён Bilem Cloud — блок локального MCP серый, кнопки недоступны (порт закрыт службой).</summary>
+        private void ApplyCloudMode()
+        {
+            var on = _cloud?.CloudOn == true;
+            if (_localBox == null) return;
+            foreach (Control c in _localBox.Controls[0].Controls) if (c != _localOff) c.Enabled = !on;
+            _localOff.Visible = on;
         }
 
         /// <summary>«Доступ»: дерево разделов 1С с галочками «Чтение / Запись», «Применить» (слой MCP — сразу, слой 1С — с паролем администратора).</summary>
@@ -857,8 +878,10 @@ namespace Bilem.Agent
                 // Строка состояния — по службе: работает / запускается / ошибка / служба не отвечает
                 var m = _svcStatus?["mcp"];
                 _stState.ForeColor = SystemColors.ControlText;
+                _cloud?.UpdateStatus(_svcStatus);
                 if (_updInstalling != null) _stState.Text = Txt.F("UiStateUpdating", _updInstalling);
                 else if (_svcStatus == null) _stState.Text = Txt.S("UiSvcNotRunning");
+                else if ((string)_svcStatus["mode"] == "cloud") _stState.Text = CloudStatusLine(_svcStatus, cfg.Bases.Count);
                 else if ((bool?)m?["running"] == true) _stState.Text = Txt.F("UiStateRunningSvc", cfg.Port, cfg.Bases.Count);
                 else if ((bool?)m?["starting"] == true) _stState.Text = Txt.F("UiStateStartingSvc", cfg.Port);
                 else _stState.Text = Txt.F("UiStateStartFailed", (string)m?["error"] ?? "—");
@@ -895,6 +918,17 @@ namespace Bilem.Agent
             else if (!_mcpStoppedByUser && !string.IsNullOrEmpty(_mcpError)) { _stState.Text = Txt.F("UiStateStartFailed", _mcpError); }
             else { _stState.Text = Txt.F("UiStateStopped", cfg.Port, cfg.Bases.Count); }
             _mcpToggle.Text = Txt.S(_host.Running ? "UiMcpStop" : "UiMcpStart");
+        }
+
+        /// <summary>Строка состояния в режиме облака: «Bilem Cloud · баз в облаке: 1 из 2» или что не так (часть L).</summary>
+        internal static string CloudStatusLine(Newtonsoft.Json.Linq.JObject svc, int total)
+        {
+            var st = svc?["cloud"] as Newtonsoft.Json.Linq.JObject;
+            var bases = (st?["bases"] as Newtonsoft.Json.Linq.JArray ?? new Newtonsoft.Json.Linq.JArray()).OfType<Newtonsoft.Json.Linq.JObject>();
+            var active = bases.Count(b => (string)b["state"] == "active");
+            if ((string)st?["state"] == "Working" && !bases.Any(b => (string)b["state"] == "paused"))
+                return Txt.F("UiStateCloud", active, total);
+            return "Bilem Cloud · " + CloudPanel.StateText(st);
         }
 
         /// <summary>Повторный запуск exe — не второй экземпляр, а показ уже работающего окна.</summary>
@@ -939,6 +973,8 @@ namespace Bilem.Agent
             RefreshAccess();
             _print?.Reload();
             _smtp?.Reload();
+            _cloud?.Reload();
+            ApplyCloudMode();
             UpdateHealth();
         }
 

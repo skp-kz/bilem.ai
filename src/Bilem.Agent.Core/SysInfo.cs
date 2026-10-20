@@ -39,6 +39,14 @@ namespace Bilem.Agent.Core
             try { cfg = AgentConfig.Load(); }
             catch (Exception e) { sb.AppendLine(Txt.F("SysInfoConfigBroken", e.Message)); return sb.ToString(); }
             sb.AppendLine(Txt.F("SysInfoMcp", cfg.Port, PortListening(cfg.Port) ? Txt.S("DiagMcpListening") : Txt.S("DiagMcpNotListening"), cfg.MaxRows));
+            // Bilem Cloud (часть L): режим, адрес облака, есть ли ключ (сам ключ — никогда), привязки баз и состояние канала у службы
+            var store = Cloud.CloudStore.Load();
+            var chan = Service.StatusPipe.Ask()?["cloud"];
+            sb.AppendLine(Txt.F("SysInfoCloud", cfg.Cloud?.Enabled == true ? Txt.S("Yes") : Txt.S("No"), cfg.Cloud?.EffectiveUrl,
+                store.HasKey ? Txt.S("Yes") : Txt.S("No"), (string)chan?["state"] ?? "—",
+                chan?["last_contact"]?.Type == Newtonsoft.Json.Linq.JTokenType.Date ? ((DateTime)chan["last_contact"]).ToString("dd.MM.yyyy HH:mm:ss") : "—"));
+            foreach (var b in store.Bindings)
+                sb.AppendLine(Txt.F("SysInfoCloudBase", b.Slug, b.OrgName ?? "—", b.RevokedInCabinet ? Txt.S("UiCloudBaseRevoked") : Txt.S("UiCloudBaseActive")));
             sb.AppendLine();
             sb.AppendLine(Txt.F("SysInfoBases", cfg.Bases.Count));
             foreach (var b in cfg.Bases)

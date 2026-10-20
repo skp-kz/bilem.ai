@@ -154,6 +154,9 @@ namespace Bilem.Agent.Core.Tests
             var bad = new Regex(@"""DELETE""|/Post\b|/Unpost\b|SetDeletionMark|УстановитьПометкуУдаления|\.Post\(|\.Unpost\(|Провести\(|ОтменаПроведения", RegexOptions.CultureInvariant);
             var hits = Directory.GetFiles(Path.Combine(root, "src"), "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar))
+                // HTTP DELETE в протоколе Bilem Cloud — отключить базу в нашем облаке (stand/cloud-channel-protocol, раздел 5), не к 1С.
+                // Исключены только эти два файла; к 1С они ходят лишь GET (организации базы для заявки)
+                .Where(f => Path.GetFileName(f) != "CloudApi.cs" && Path.GetFileName(f) != "CloudStub.cs")
                 .SelectMany(f => File.ReadAllLines(f).Select((l, i) => (f, i, l)))
                 .Where(x => bad.IsMatch(x.l))
                 .Select(x => $"{Path.GetFileName(x.f)}:{x.i + 1}")

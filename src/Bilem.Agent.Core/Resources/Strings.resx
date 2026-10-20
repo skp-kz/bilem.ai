@@ -75,6 +75,9 @@
   doctor диагностика компонентов: Windows, .NET, 1С, IIS, MCP, каждая база — что в порядке и что делать (ничего не меняет)
   restore-com — вернуть системную регистрацию COM-коннектора, которая была до Bilem Agent (при удалении агента)
   reset-settings-password — снять пароль настроек (забыли пароль; нужны права администратора, запись в журнал)
+  cloud status|on|off — Bilem Cloud: состояние, включить (локальный MCP выключится), выключить
+  cloud connect --slug «имя» [--code «код»] | cloud disconnect --slug «имя» — подключить базу к облаку кодом из кабинета / отключить
+  cloud set-url --url «адрес» — адрес облака (для стенда — заглушка: cloud stub [--port 18790])
   remove --slug «имя» [--drop-user --admin «логин» [--password «пароль»]]
         убрать базу: публикация, пул, пароль bilem; с --drop-user — и пользователь bilem в базе
   access --slug «имя» [--load] [--read-on|--read-off|--write-on|--write-off «Документ.X,Справочник.Y»] [--admin «логин» [--password «пароль»]]
@@ -521,7 +524,7 @@ Bilem не меняет ваш бухгалтерский учёт: читает
 • Раздел «Зарплата и кадры» — только тем, кому вы разрешили.
 • ChatGPT, телефон, голос, WhatsApp/Telegram — вход по учётной записи (OAuth), без токена в адресе.</value></data>
   <data name="UiCloudText" xml:space="preserve"><value>Вопросы к 1С из Telegram, WhatsApp и ChatGPT — через облако bilem.ai, без открытия базы наружу. Сейчас недоступно.</value></data>
-  <data name="UiCloudTitle" xml:space="preserve"><value>Облако bilem — скоро</value></data>
+  <data name="UiCloudTitle" xml:space="preserve"><value>MCP в облаке — Bilem Cloud</value></data>
   <data name="UiColConfig" xml:space="preserve"><value>Конфигурация</value></data>
   <data name="UiColEvent" xml:space="preserve"><value>Событие</value></data>
   <data name="UiColFolder" xml:space="preserve"><value>Папка</value></data>
@@ -918,4 +921,92 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="HintPlatformMachineWide" xml:space="preserve"><value>Переустановите 1С:Предприятие 8.3 «для всех пользователей» (в Program Files) и запустите подключение базы ещё раз.</value></data>
   <data name="DiagPlatformUnusable" xml:space="preserve"><value>Установка 1С, которая не подходит</value></data>
   <data name="SysInfoPlatformSurvey" xml:space="preserve"><value>Установка: {0}</value></data>
+  <data name="CloudBadUrl" xml:space="preserve"><value>Адрес облака «{0}» не подходит: нужен https (http — только для заглушки на этом компьютере, 127.0.0.1).</value></data>
+  <data name="CloudBaseNotConnected" xml:space="preserve"><value>База не подключена к Bilem Cloud на этом компьютере.</value></data>
+  <data name="CloudBasePaused" xml:space="preserve"><value>База на паузе в Bilem Cloud — проверьте кабинет.</value></data>
+  <data name="CloudCallRefusedLog" xml:space="preserve"><value>Bilem Cloud: вызов к базе {0}, которая не подключена к облаку на этом компьютере, — отказ</value></data>
+  <data name="CloudChannelStarting" xml:space="preserve"><value>Bilem Cloud: подключаюсь к {0}</value></data>
+  <data name="CloudChannelStopped" xml:space="preserve"><value>Bilem Cloud: канал закрыт</value></data>
+  <data name="CloudClosedLog" xml:space="preserve"><value>Bilem Cloud: облако закрыло соединение (код {0} {1}) — переподключусь</value></data>
+  <data name="CloudCodeExpired" xml:space="preserve"><value>Код устарел — нажмите «Открыть ещё раз» и введите новый код.</value></data>
+  <data name="CloudCodeInvalid" xml:space="preserve"><value>Код не подходит — проверьте и введите ещё раз.</value></data>
+  <data name="CloudCodeUsed" xml:space="preserve"><value>Код уже использован — получите новый в кабинете.</value></data>
+  <data name="CloudConnectedLog" xml:space="preserve"><value>Bilem Cloud: база {0} подключена к организации «{1}»</value></data>
+  <data name="CloudDeadline" xml:space="preserve"><value>Превышено время ответа — 1С не успела ответить. Попробуйте сузить запрос.</value></data>
+  <data name="CloudDisconnectedLog" xml:space="preserve"><value>Bilem Cloud: база {0} отключена от облака</value></data>
+  <data name="CloudDisconnectOffline" xml:space="preserve"><value>Облако не ответило — в агенте база отключена; в кабинете отключите её тоже ({0}).</value></data>
+  <data name="CloudError" xml:space="preserve"><value>Облако ответило ошибкой «{0}».</value></data>
+  <data name="CloudKeyRevoked" xml:space="preserve"><value>Ключ этого компьютера отозван в облаке — подключите базы заново.</value></data>
+  <data name="CloudKeyRevokedLog" xml:space="preserve"><value>Bilem Cloud: ключ компьютера отозван облаком — удалён; подключите базы заново</value></data>
+  <data name="CloudMessageTooBig" xml:space="preserve"><value>Слишком большое сообщение от облака.</value></data>
+  <data name="CloudModeOff" xml:space="preserve"><value>Bilem Cloud выключен — локальный MCP снова работает на этом компьютере</value></data>
+  <data name="CloudModeOn" xml:space="preserve"><value>Bilem Cloud включён — локальный MCP выключен, порт не слушается</value></data>
+  <data name="CloudNoConnection" xml:space="preserve"><value>Нет связи с облаком ({0}): {1}</value></data>
+  <data name="CloudNoConnectionLog" xml:space="preserve"><value>Bilem Cloud: нет связи с облаком — {0}; переподключаюсь сам</value></data>
+  <data name="CloudOrgsFailed" xml:space="preserve"><value>Bilem Cloud: организации базы {0} не прочитались ({1}) — заявка без них</value></data>
+  <data name="CloudReplacedLog" xml:space="preserve"><value>Bilem Cloud: с этим номером агента подключён другой компьютер (копия машины?) — повтор через 5 минут</value></data>
+  <data name="CloudRequestLog" xml:space="preserve"><value>Bilem Cloud: заявка на подключение базы {0} — открываю кабинет</value></data>
+  <data name="CloudResultTooBig" xml:space="preserve"><value>Ответ слишком большой (больше 8 МБ) — сузьте запрос.</value></data>
+  <data name="CloudRevokedInCabinetLog" xml:space="preserve"><value>Bilem Cloud: база {0} отключена в кабинете</value></data>
+  <data name="CloudStoreBroken" xml:space="preserve"><value>Bilem Cloud: файл подключений повреждён ({0}) — начинаю с чистого</value></data>
+  <data name="CloudTooManyAttempts" xml:space="preserve"><value>Слишком много попыток — начните подключение заново.</value></data>
+  <data name="CloudWorkingLog" xml:space="preserve"><value>Bilem Cloud: связь есть, баз в облаке: {0}</value></data>
+  <data name="HintCloudNetwork" xml:space="preserve"><value>Проверьте интернет и прокси на этом компьютере; агент переподключится сам.</value></data>
+  <data name="UiLocalMcpTitle" xml:space="preserve"><value>MCP на этом компьютере — бесплатно</value></data>
+  <data name="UiLocalOffByCloud" xml:space="preserve"><value>Выключен — включён MCP в облаке (Bilem Cloud). Порт на этом компьютере не слушается.</value></data>
+  <data name="UiLocalDocs" xml:space="preserve"><value>Как подключить ИИ — docs.bilem.ai/connect</value></data>
+  <data name="UiCloudOn" xml:space="preserve"><value>Включить</value></data>
+  <data name="UiCloudAbout" xml:space="preserve"><value>Вопросы к 1С из WhatsApp, Telegram, ChatGPT и claude.ai — через облако, без открытия базы наружу. Каждая база подключается к облаку отдельно, кодом из кабинета. Локальный MCP при этом выключится.</value></data>
+  <data name="UiCloudCabinet" xml:space="preserve"><value>Кабинет — app.bilem.ai</value></data>
+  <data name="UiCloudNeedService" xml:space="preserve"><value>Bilem Cloud работает через службу Bilem Agent — она не установлена (переустановите агент).</value></data>
+  <data name="UiCloudUrl" xml:space="preserve"><value>Облако:</value></data>
+  <data name="UiCloudUrlNote" xml:space="preserve"><value>только чтение</value></data>
+  <data name="UiCloudLogin" xml:space="preserve"><value>Логин:</value></data>
+  <data name="UiCloudLoginNote" xml:space="preserve"><value>e-mail, с которым входите в кабинет</value></data>
+  <data name="UiCloudColBase" xml:space="preserve"><value>База</value></data>
+  <data name="UiCloudColOrg" xml:space="preserve"><value>Организация в облаке</value></data>
+  <data name="UiCloudColState" xml:space="preserve"><value>Состояние</value></data>
+  <data name="UiCloudConnect" xml:space="preserve"><value>Подключить…</value></data>
+  <data name="UiCloudReconnect" xml:space="preserve"><value>Подключить заново…</value></data>
+  <data name="UiCloudDisconnect" xml:space="preserve"><value>Отключить</value></data>
+  <data name="UiCloudOrgUrl" xml:space="preserve"><value>Адрес:</value></data>
+  <data name="UiCloudOrgNote" xml:space="preserve"><value>Для ChatGPT и claude.ai: токена нет, вход через Google / Microsoft. WhatsApp и Telegram — в кабинете.</value></data>
+  <data name="UiCloudOnConfirm" xml:space="preserve"><value>Включить Bilem Cloud? Локальный MCP на этом компьютере будет выключен. Продолжить?</value></data>
+  <data name="UiCloudOffConfirm" xml:space="preserve"><value>Выключить Bilem Cloud? Облачный канал будет закрыт, локальный MCP включится. Подключения баз сохранятся — вернёте галочку, код вводить заново не нужно.</value></data>
+  <data name="UiCloudOnLog" xml:space="preserve"><value>Галочка Bilem Cloud включена</value></data>
+  <data name="UiCloudOffLog" xml:space="preserve"><value>Галочка Bilem Cloud снята</value></data>
+  <data name="UiCloudAgo" xml:space="preserve"><value> · связь: {0} с назад</value></data>
+  <data name="UiCloudStateWorking" xml:space="preserve"><value>Работает · баз в облаке: {0}</value></data>
+  <data name="UiCloudStatePaused" xml:space="preserve"><value>На паузе — проверьте кабинет</value></data>
+  <data name="UiCloudStateNoKey" xml:space="preserve"><value>Подключите первую базу — кнопка «Подключить…»</value></data>
+  <data name="UiCloudStateNoConnection" xml:space="preserve"><value>Нет связи с облаком (последняя связь: {0}) {1} — агент переподключится сам; «Сервис» → «Диагностика»</value></data>
+  <data name="UiCloudStateKeyRevoked" xml:space="preserve"><value>Ключ компьютера отозван в облаке — подключите базы заново</value></data>
+  <data name="UiCloudStateReplaced" xml:space="preserve"><value>С этим номером агента работает другой компьютер — повтор через 5 минут</value></data>
+  <data name="UiCloudStateConnecting" xml:space="preserve"><value>Подключаюсь к облаку…</value></data>
+  <data name="UiCloudBaseActive" xml:space="preserve"><value>в облаке</value></data>
+  <data name="UiCloudBasePaused" xml:space="preserve"><value>на паузе — проверьте кабинет</value></data>
+  <data name="UiCloudBaseRevoked" xml:space="preserve"><value>отключена в кабинете</value></data>
+  <data name="UiCloudBaseNone" xml:space="preserve"><value>не подключена</value></data>
+  <data name="UiCloudDisconnectConfirm" xml:space="preserve"><value>Отключить базу «{0}» от Bilem Cloud? Вопросы из облака к ней перестанут работать.</value></data>
+  <data name="UiCloudConnectTitle" xml:space="preserve"><value>Подключить базу «{0}» к Bilem Cloud</value></data>
+  <data name="UiCloudConnectBase" xml:space="preserve"><value>База: {0} · компьютер: {1}</value></data>
+  <data name="UiCloudConnectLogin" xml:space="preserve"><value>Логин: {0}</value></data>
+  <data name="UiCloudStep1" xml:space="preserve"><value>1. Открыли кабинет — войдите и подтвердите подключение.</value></data>
+  <data name="UiCloudReopen" xml:space="preserve"><value>Открыть ещё раз</value></data>
+  <data name="UiCloudStep2" xml:space="preserve"><value>2. Вставьте код из кабинета:</value></data>
+  <data name="UiCloudConnectGo" xml:space="preserve"><value>Подключить</value></data>
+  <data name="UiCloudRequesting" xml:space="preserve"><value>Создаю заявку в облаке…</value></data>
+  <data name="UiCloudOpened" xml:space="preserve"><value>Кабинет открыт в браузере. Код действует до {0}, один раз.</value></data>
+  <data name="UiCloudExchanging" xml:space="preserve"><value>Проверяю код…</value></data>
+  <data name="UiCloudConnectedMsg" xml:space="preserve"><value>База «{0}» подключена к Bilem Cloud (организация «{1}»).</value></data>
+  <data name="UiStateCloud" xml:space="preserve"><value>Bilem Cloud · баз в облаке: {0} из {1}</value></data>
+  <data name="SysInfoCloud" xml:space="preserve"><value>Bilem Cloud: включён — {0}; облако {1}; ключ компьютера — {2}; канал — {3}, последняя связь {4}</value></data>
+  <data name="SysInfoCloudBase" xml:space="preserve"><value>  - {0}: организация «{1}», {2}</value></data>
+  <data name="CliCloudStatus" xml:space="preserve"><value>Bilem Cloud: включён — {0}; облако {1}; ключ компьютера — {2}; {3}</value></data>
+  <data name="CliCloudLocalMode" xml:space="preserve"><value>служба в бесплатном режиме (локальный MCP)</value></data>
+  <data name="CliCloudUrlSet" xml:space="preserve"><value>Адрес облака: {0}</value></data>
+  <data name="CliCloudOpen" xml:space="preserve"><value>Откройте кабинет и подтвердите подключение: {0}</value></data>
+  <data name="CliCloudCode" xml:space="preserve"><value>Код из кабинета: </value></data>
+  <data name="CliCloudOrgUrl" xml:space="preserve"><value>Облачный адрес организации: {0}</value></data>
+  <data name="CliCloudStub" xml:space="preserve"><value>Заглушка Bilem Cloud: {0} (только этот компьютер). Ctrl+C — остановить. Агенту: bilem-agent cloud set-url --url {0}</value></data>
 </root>

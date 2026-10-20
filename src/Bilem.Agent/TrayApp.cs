@@ -200,6 +200,13 @@ namespace Bilem.Agent
             if (upd != null) _update.Text = Txt.F("UiTrayUpdate", upd);
             _restart.Enabled = st != null;
             _copy.Enabled = st != null;
+            var cloud = (string)st?["mode"] == "cloud";
+            if (cloud)
+            {
+                // Bilem Cloud: локальный MCP выключен — адрес с токеном не нужен; строка — состояние канала
+                _mcp.Text = MainForm.CloudStatusLine(st, bases.Count);
+                _copy.Enabled = false;
+            }
 
             _bases.BeginUpdate();
             _bases.Items.Clear();
@@ -229,13 +236,17 @@ namespace Bilem.Agent
             while (_journal.Items.Count > 500) _journal.Items.RemoveAt(_journal.Items.Count - 1);
 
             // Значок: цвет — по тем же правилам, что раньше (Core.Health)
+            var cst = (string)st?["cloud"]?["state"];
+            var cloudOk = cloud && cst == "Working";
+            var cloudErr = !cloud || cloudOk || cst == "Connecting" || cst == "NoKey" ? null : CloudPanel.StateText(st["cloud"] as JObject);
             var h = Health.Evaluate(new HealthInput
             {
-                McpRunning = mcpRunning,
-                McpError = !running ? Txt.S("UiTraySvcStoppedShort") : st == null ? Txt.S("UiTraySvcNoAnswerShort") : (mcpRunning || starting ? null : mcpError),
+                // В режиме облака «MCP работает» = канал на связи; нет связи / ключ отозван — красный
+                McpRunning = cloud ? cloudOk : mcpRunning,
+                McpError = !running ? Txt.S("UiTraySvcStoppedShort") : st == null ? Txt.S("UiTraySvcNoAnswerShort") : cloud ? cloudErr : (mcpRunning || starting ? null : mcpError),
                 BaseCount = bases.Count,
                 BaseErrors = bases.ToDictionary(b => (string)b["slug"], b => (string)b["error"]),
-                BusySince = starting ? DateTime.Now : (DateTime?)null,
+                BusySince = (cloud ? !cloudOk && cloudErr == null : starting) ? DateTime.Now : (DateTime?)null,
                 Now = DateTime.Now,
             });
             if (_shownHealth != h.Color) { _tray.Icon = Icons[h.Color]; _shownHealth = h.Color; }

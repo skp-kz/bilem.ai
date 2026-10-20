@@ -21,7 +21,14 @@ namespace Bilem.Agent.Core.Mcp
 
         public static string Version => Updates.SemVer.Current.ToString();
 
-        public void Start()
+        /// <summary>Локальный MCP: HTTP на 127.0.0.1:порт (бесплатный режим).</summary>
+        public void Start() => Start(true);
+
+        /// <summary>
+        /// withHttp = false — только набор инструментов, без порта: режим Bilem Cloud (часть L), вызовы приходят по каналу облака
+        /// (Protocol.Handle под McpCaller с CloudBase). Локальный порт при этом не слушается.
+        /// </summary>
+        public void Start(bool withHttp)
         {
             var cfg = AgentConfig.Load();
             Port = cfg.Port;
@@ -32,8 +39,12 @@ namespace Bilem.Agent.Core.Mcp
             // Почта — в списке инструментов, только когда SMTP-клиент включён (тумблер на вкладке «SMTP» / в трее)
             proto.Visible = t => t.Name != "send_document" || _smtpOn;
             _proto = proto;
-            _http = new McpHttpServer(cfg.Port, () => _token, proto);
-            _http.Start();
+            if (withHttp)
+            {
+                _http = new McpHttpServer(cfg.Port, () => _token, proto);
+                _http.Start();
+            }
+            _core = true;
             _signature = Signature();
             // config.json изменился (окно, командная строка) — перечитать; сменился набор инструментов — уведомить клиентов
             _watch = new System.Threading.Timer(_ => Watch(), null, 2000, 2000);
@@ -46,8 +57,19 @@ namespace Bilem.Agent.Core.Mcp
         {
             try { if (System.IO.File.GetLastWriteTimeUtc(Paths.ConfigFile) != _cfgStamp) Reload(); }
             catch (Exception e) { Log.Warn(e.Message); }
+            // Вызов из облака — только его база, что бы ни было в аргументах (правило протокола: проверяет агент)
+            var only = McpCaller.Current?.CloudBase;
+            if (only != null) return _bases.Where(b => string.Equals(b.Config.Slug, only, StringComparison.OrdinalIgnoreCase)).ToList();
             return _bases;
         }
+
+        /// <summary>Набор инструментов (и для канала облака).</summary>
+        public McpProtocol Protocol => _proto;
+        /// <summary>Инструменты подняты (с портом или без) — для режима Bilem Cloud.</summary>
+        public bool CoreRunning => _core;
+        /// <summary>Сменился набор инструментов или «Доступ» — канал облака пересылает список баз.</summary>
+        public event Action ListChanged;
+        private volatile bool _core;
 
         /// <summary>Перечитать базы и токен (после добавления/удаления базы или смены токена).</summary>
         public void Reload(AgentConfig cfg = null)
@@ -89,12 +111,13 @@ namespace Bilem.Agent.Core.Mcp
                 if (sig == _signature) return;
                 _signature = sig;
                 _http?.Notify(McpProtocol.ListChangedNotification);
-                Log.Info(Txt.F("McpListChanged", _http?.StreamCount ?? 0));
+                if (_http != null) Log.Info(Txt.F("McpListChanged", _http.StreamCount));
+                ListChanged?.Invoke();
             }
             catch (Exception e) { Log.Warn(e.Message); }
         }
 
-        public void Stop() { _watch?.Dispose(); _watch = null; _http?.Stop(); _http = null; }
+        public void Stop() { _watch?.Dispose(); _watch = null; _http?.Stop(); _http = null; _core = false; }
         public void Dispose() => Stop();
     }
 }

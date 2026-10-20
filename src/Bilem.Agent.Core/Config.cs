@@ -61,6 +61,17 @@ namespace Bilem.Agent.Core
         [JsonIgnore] public string DisplayName => string.IsNullOrEmpty(Synonym) ? Configuration : Synonym;
     }
 
+    /// <summary>Режим Bilem Cloud: галочка на вкладке MCP, адрес облака (для стенда — заглушка на 127.0.0.1), подсказка логина.</summary>
+    public sealed class CloudSettings
+    {
+        public const string DefaultUrl = "https://mcp.bilem.ai";
+        public bool Enabled { get; set; }
+        public string Url { get; set; } = DefaultUrl;
+        /// <summary>E-mail для нового подключения (подсказка кабинету); у каждой базы свой — в привязке.</summary>
+        public string LoginHint { get; set; }
+        [JsonIgnore] public string EffectiveUrl => string.IsNullOrWhiteSpace(Url) ? DefaultUrl : Url.Trim().TrimEnd('/');
+    }
+
     public sealed class ComRegistration
     {
         /// <summary>Что было зарегистрировано до агента: путь к comcntr.dll или "" (ничего).</summary>
@@ -93,6 +104,8 @@ namespace Bilem.Agent.Core
         /// <summary>Веб-сервер для новых баз (часть J): auto (по умолчанию) / iis / apache — «Сервис» → «Веб-сервер», для поддержки.</summary>
         public string WebServerMode { get; set; }
         // Порт и разрядность своего Apache — не здесь, а в его httpd.conf (ApachePublisher.Port / Bits)
+        /// <summary>Bilem Cloud (часть L): включён — локальный MCP выключен; ключ и привязки баз — в cloud.json.</summary>
+        public CloudSettings Cloud { get; set; } = new CloudSettings();
         /// <summary>
         /// Системная регистрация COM-коннектора до Bilem Agent, по разрядности ("32"/"64"): путь к comcntr.dll, "" — не было.
         /// Записывается, когда агент перерегистрирует коннектор (с согласия человека); возвращается при удалении последней базы

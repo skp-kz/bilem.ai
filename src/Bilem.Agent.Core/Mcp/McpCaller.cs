@@ -18,6 +18,11 @@ namespace Bilem.Agent.Core.Mcp
         public string Session { get; set; }
         /// <summary>Сессия, выданная этим запросом (initialize) — сервер вернёт её заголовком Mcp-Session-Id.</summary>
         public string NewSession { get; set; }
+        /// <summary>Вызов из Bilem Cloud (часть L): база этого вызова — инструменты видят только её.</summary>
+        public string CloudBase { get; set; }
+        /// <summary>Канал облака (whatsapp, telegram, chatgpt, claude…) и кто спросил — для журнала и аудита.</summary>
+        public string CloudChannel { get; set; }
+        public string CloudUser { get; set; }
 
         private static readonly AsyncLocal<McpCaller> Cur = new AsyncLocal<McpCaller>();
         private static readonly Dictionary<string, string> Sessions = new Dictionary<string, string>();
@@ -58,6 +63,7 @@ namespace Bilem.Agent.Core.Mcp
             var net = Remote ?? "?";
             var ts = TailscaleLogin ?? TailscaleName;
             if (!string.IsNullOrEmpty(ts)) net += ", Tailscale: " + ts;
+            if (!string.IsNullOrEmpty(CloudChannel)) net += ", Bilem Cloud: " + CloudChannel + (string.IsNullOrEmpty(CloudUser) ? "" : " " + CloudUser);
             return $"{who} ({net})";
         }
 

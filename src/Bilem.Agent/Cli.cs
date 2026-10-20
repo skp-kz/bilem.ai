@@ -11,6 +11,85 @@ namespace Bilem.Agent
     /// <summary>CLI — то же, что кнопки окна. Код возврата: 0 — успех, 1 — любая проверка не прошла.</summary>
     internal static class Cli
     {
+        /// <summary>
+        /// Bilem Cloud (часть L): status | on | off | connect --slug | disconnect --slug | set-url «адрес» | stub [--port] (заглушка облака для приёмки).
+        /// Ключ компьютера в выводе не показывается никогда.
+        /// </summary>
+        private static int CloudCmd(string sub, Dictionary<string, string> a)
+        {
+            switch (sub)
+            {
+                case "status":
+                    {
+                        var cfg = AgentConfig.Load();
+                        var store = Bilem.Agent.Core.Cloud.CloudStore.Load();
+                        var st = Bilem.Agent.Core.Service.StatusPipe.Ask();
+                        Console.WriteLine(Txt.F("CliCloudStatus", cfg.Cloud.Enabled ? Txt.S("Yes") : Txt.S("No"), cfg.Cloud.EffectiveUrl,
+                            store.HasKey ? Txt.S("Yes") : Txt.S("No"), st == null ? Txt.S("UiSvcNotRunning") : (string)st["mode"] == "cloud" ? MainForm.CloudStatusLine(st, cfg.Bases.Count) : Txt.S("CliCloudLocalMode")));
+                        foreach (var b in cfg.Bases)
+                        {
+                            var bind = store.Binding(b.Slug);
+                            Console.WriteLine("  " + b.Slug + ": " + (bind == null ? Txt.S("UiCloudBaseNone") : (bind.OrgName ?? "—") + " · " + Txt.S(bind.RevokedInCabinet ? "UiCloudBaseRevoked" : "UiCloudBaseActive") + (string.IsNullOrEmpty(bind.OrgUrl) ? "" : " · " + bind.OrgUrl)));
+                        }
+                        return 0;
+                    }
+                case "on":
+                case "off":
+                    {
+                        var cfg = AgentConfig.Load();
+                        cfg.Cloud.Enabled = sub == "on";
+                        cfg.Save();
+                        Log.Ok(Txt.S(sub == "on" ? "UiCloudOnLog" : "UiCloudOffLog"));
+                        return 0;
+                    }
+                case "set-url":
+                    {
+                        // Для стенда и поддержки: заглушка на 127.0.0.1 или боевой адрес; без значения — по умолчанию
+                        var url = Get(a, "url") ?? Bilem.Agent.Core.CloudSettings.DefaultUrl;
+                        Bilem.Agent.Core.Cloud.CloudApi.CheckUrl(url);
+                        var cfg = AgentConfig.Load();
+                        cfg.Cloud.Url = url;
+                        cfg.Save();
+                        Log.Ok(Txt.F("CliCloudUrlSet", url));
+                        return 0;
+                    }
+                case "connect":
+                    {
+                        var slug = Require(a, "slug");
+                        var req = Bilem.Agent.Core.Cloud.CloudConnect.Begin(slug);
+                        Console.WriteLine(Txt.F("CliCloudOpen", req.ConnectUrl));
+                        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(req.ConnectUrl) { UseShellExecute = true }); } catch { }
+                        var code = Get(a, "code");
+                        if (code == null) { Console.Write(Txt.S("CliCloudCode")); code = Console.ReadLine(); }
+                        var b = Bilem.Agent.Core.Cloud.CloudConnect.Finish(slug, req, code);
+                        if (!string.IsNullOrEmpty(b.OrgUrl)) Console.WriteLine(Txt.F("CliCloudOrgUrl", b.OrgUrl));
+                        return 0;
+                    }
+                case "disconnect":
+                    Bilem.Agent.Core.Cloud.CloudConnect.Disconnect(Require(a, "slug"));
+                    return 0;
+                case "stub":
+                    {
+                        var port = int.TryParse(Get(a, "port"), out var p) ? p : 18790;
+                        using (var stub = new Bilem.Agent.Core.Cloud.CloudStub(port))
+                        {
+                            stub.Logged += s => Console.WriteLine(DateTime.Now.ToString("HH:mm:ss") + " " + s);
+                            stub.Start();
+                            Console.WriteLine(Txt.F("CliCloudStub", stub.Url));
+                            using (var quit = new ManualResetEvent(false))
+                            {
+                                Console.CancelKeyPress += (s, e) => { e.Cancel = true; quit.Set(); };
+                                quit.WaitOne();
+                            }
+                        }
+                        return 0;
+                    }
+                default:
+                    Log.Fail(Txt.F("CliUnknownCommand", "cloud " + sub));
+                    return 1;
+            }
+        }
+
         public static int Run(string[] args)
         {
             Console.OutputEncoding = new UTF8Encoding(false);
@@ -69,6 +148,7 @@ namespace Bilem.Agent
                         SettingsLock.Clear(Txt.S("UiLockHowCli"));
                         Log.Ok(Txt.S("LockResetDone"));
                         return 0;
+                    case "cloud": return CloudCmd(args.Length > 1 ? args[1].ToLowerInvariant() : "status", Parse(args.Skip(2).ToArray()));
                     case "access": return AccessCmd(a);
                     case "print": return PrintCmd(a);
                     case "serve": return Serve();

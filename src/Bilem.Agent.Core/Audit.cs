@@ -49,6 +49,8 @@ namespace Bilem.Agent.Core
             var who = new JObject { ["client"] = caller?.Client, ["remote"] = caller?.Remote };
             if (!string.IsNullOrEmpty(caller?.TailscaleLogin)) who["tailscale_login"] = caller.TailscaleLogin;
             if (!string.IsNullOrEmpty(caller?.TailscaleName)) who["tailscale_name"] = caller.TailscaleName;
+            // Вызов из Bilem Cloud: канал (whatsapp, telegram, chatgpt…) и кто спросил — как прислало облако (часть L)
+            if (!string.IsNullOrEmpty(caller?.CloudChannel)) { who["cloud_channel"] = caller.CloudChannel; who["cloud_user"] = caller.CloudUser; }
             if (caller == null) who["client"] = "bilem-agent";
             o["requested_by"] = who;
             if (to != null) o["mail"] = new JObject { ["to"] = to, ["bcc"] = bcc, ["smtp"] = smtp };
