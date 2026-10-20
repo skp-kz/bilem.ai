@@ -124,12 +124,15 @@ namespace Bilem.Agent.Core
 
                 // 2. Платформа и COM-коннектор
                 Begin("platform");
-                var found = Platform.Find();
-                if (found.Count == 0) { End(StepStatus.Fail); return Fail(Txt.S("NoPlatform"), Txt.S("HintInstallPlatform")); }
-                foreach (var f in found) Log.Info(Txt.F("PlatformFound", f));
+                // Все установки — в журнал, с причиной, если не годится (часть K): учебная, без COM, не 8.3, для пользователя
+                var survey = Platform.Survey();
+                foreach (var s in survey) Log.Info(s.Line());
+                var found = survey.Where(s => s.Usable).Select(s => s.ToPlatform()).ToList();
+                if (found.Count == 0) { End(StepStatus.Fail); return Fail(Platform.Explain(survey), Platform.ExplainHint(survey)); }
                 var plat = Platform.Choose(found, o.PlatformVersion);
                 if (plat == null) { End(StepStatus.Fail); return Fail(Txt.F("PlatformNotFound", o.PlatformVersion), Txt.S("HintInstallPlatform")); }
-                Log.Ok(Txt.F("PlatformChosen", plat, plat.Bin));
+                Log.Ok(Txt.F("PlatformChosen", plat, Platform.MaskProfile(plat.Bin)));
+                if (plat.PerUser) Log.Warn(Txt.S("PlatformPerUser"));
                 var com = Platform.ComProblem(plat);
                 if (com.Length > 0)
                 {

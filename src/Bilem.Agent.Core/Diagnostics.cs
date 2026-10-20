@@ -55,13 +55,16 @@ namespace Bilem.Agent.Core
 
             // --- 1С
             var g1c = Txt.S("DiagGroup1C");
-            var found = Platform.Find();
-            if (found.Count == 0) Add(g1c, Txt.S("DiagPlatform"), CheckStatus.Fail, Txt.S("NoPlatform"), Txt.S("HintInstallPlatform"));
+            var survey = Platform.Survey();
+            var found = survey.Where(s => s.Usable).Select(s => s.ToPlatform()).ToList();
+            if (found.Count == 0) Add(g1c, Txt.S("DiagPlatform"), CheckStatus.Fail, Platform.Explain(survey), Platform.ExplainHint(survey));
+            // Не годные (учебная, без COM, не 8.3) — справочно, чтобы было видно, что 1С на машине есть
+            foreach (var s in survey.Where(s => !s.Usable)) Add(g1c, Txt.S("DiagPlatformUnusable"), CheckStatus.Info, s.Line());
             bool HasWeb(Platform1C x) => File.Exists(Path.Combine(x.Bin, "wsisapi.dll")) && File.Exists(x.Webinst);
             var anyWeb = found.Any(HasWeb);
             foreach (var p in found.OrderByDescending(x => x.Version).ThenByDescending(x => x.Bits))
             {
-                Add(g1c, Txt.F("DiagPlatformItem", p), CheckStatus.Ok, p.Bin);
+                Add(g1c, Txt.F("DiagPlatformItem", p), CheckStatus.Ok, Platform.MaskProfile(p.Bin));
                 var com = Safe(() => Platform.ComProblem(p));
                 // Коннектор регистрируется при подключении базы (с согласия, если зарегистрирован другой): здесь справочно
                 Add(g1c, Txt.F("DiagCom", p), com.Length == 0 ? CheckStatus.Ok : CheckStatus.Info, com.Length == 0 ? Txt.S("ComOk") : com + ". " + Txt.S("HintComAuto"));

@@ -4,6 +4,8 @@ using Xunit;
 namespace Bilem.Agent.Core.Tests
 {
     /// <summary>Пароль настроек: хеш PBKDF2 с солью, проверка, пауза после 5 неверных попыток, снятие.</summary>
+    // Не параллельно с остальными: они тоже сохраняют config.json и могут вернуть пароль после Clear (потерянная запись)
+    [Collection("config-exclusive")]
     public class SettingsLockTests
     {
         [Fact]
@@ -43,4 +45,10 @@ namespace Bilem.Agent.Core.Tests
             Assert.True(SettingsLock.TryUnlock("что угодно", "тест"));          // пароля нет — вход свободный
         }
     }
+}
+
+namespace Bilem.Agent.Core.Tests
+{
+    [CollectionDefinition("config-exclusive", DisableParallelization = true)]
+    public class ConfigExclusive { }
 }

@@ -20,8 +20,11 @@ namespace Bilem.Agent.Core
             sb.AppendLine(Txt.F("SysInfoWindows", Environment.OSVersion.Version, Environment.Is64BitOperatingSystem ? 64 : 32));
             var rel = Diagnostics.NetRelease();
             sb.AppendLine(Txt.F("SysInfoNet", rel > 0 ? Diagnostics.NetName(rel) : Txt.S("DiagNetMissing"), rel));
-            var found = Platform.Find();
-            if (found.Count == 0) sb.AppendLine(Txt.F("SysInfoPlatform", Txt.S("NoPlatform")));
+            var survey = Platform.Survey();
+            var found = survey.Where(s => s.Usable).Select(s => s.ToPlatform()).ToList();
+            if (found.Count == 0) sb.AppendLine(Txt.F("SysInfoPlatform", Platform.Explain(survey)));
+            // Все установки 1С, годные и нет (часть K): версия, разрядность, полная/учебная, COM, веб-модули, путь без имени пользователя
+            foreach (var s in survey) sb.AppendLine(Txt.F("SysInfoPlatformSurvey", s.Line()));
             foreach (var p in found.OrderByDescending(x => x.Version).ThenByDescending(x => x.Bits))
             {
                 string com;

@@ -902,4 +902,20 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="WebinstResult" xml:space="preserve"><value>webinst: код {0}; {1}</value></data>
   <data name="WhatToDo" xml:space="preserve"><value>Что делать:</value></data>
   <data name="Yes" xml:space="preserve"><value>есть</value></data>
+  <data name="PlatformSurveyLine" xml:space="preserve"><value>1С:Предприятие {0} ({1}-бит), {2}; COM-коннектор: {3}; модули веб-сервера: {4}; {5}</value></data>
+  <data name="PlatformKindFull" xml:space="preserve"><value>полная</value></data>
+  <data name="PlatformKindTraining" xml:space="preserve"><value>учебная</value></data>
+  <data name="PlatformSearchError" xml:space="preserve"><value>Не удалось просмотреть {0}: {1}</value></data>
+  <data name="PlatformTraining" xml:space="preserve"><value>Найдена учебная версия 1С:Предприятие {0} ({1}). Bilem с ней не работает: в учебной версии нет COM-соединения. Нужна полная платформа 1С:Предприятие 8.3.</value></data>
+  <data name="PlatformNoCom" xml:space="preserve"><value>Найдена 1С:Предприятие {0} ({1}), но без COM-коннектора.</value></data>
+  <data name="PlatformNot83" xml:space="preserve"><value>Найдена 1С:Предприятие {0} ({1}). Bilem пока работает только с платформой 8.3.</value></data>
+  <data name="PlatformSearched" xml:space="preserve"><value>Искали в: {0}.</value></data>
+  <data name="HintPlatformAddCom" xml:space="preserve"><value>Запустите установку этой платформы → «Изменить» → отметьте компоненты «1С:Предприятие» и «Модули расширения веб-сервера».</value></data>
+  <data name="HintPlatformFull83" xml:space="preserve"><value>Установите полную платформу 1С:Предприятие 8.3 с компонентой «Модули расширения веб-сервера».</value></data>
+  <data name="PlatformPerUser" xml:space="preserve"><value>1С установлена «для текущего пользователя» (в его профиле) — веб-серверу будет выдано чтение папки платформы. Надёжнее установить 1С для всех пользователей.</value></data>
+  <data name="PlatformPerUserGranted" xml:space="preserve"><value>{0}: чтение папки платформы {1} (1С установлена для пользователя)</value></data>
+  <data name="PlatformPerUserGrantFailed" xml:space="preserve"><value>Не удалось выдать веб-серверу чтение папки платформы {0}: {1}</value></data>
+  <data name="HintPlatformMachineWide" xml:space="preserve"><value>Переустановите 1С:Предприятие 8.3 «для всех пользователей» (в Program Files) и запустите подключение базы ещё раз.</value></data>
+  <data name="DiagPlatformUnusable" xml:space="preserve"><value>Установка 1С, которая не подходит</value></data>
+  <data name="SysInfoPlatformSurvey" xml:space="preserve"><value>Установка: {0}</value></data>
 </root>

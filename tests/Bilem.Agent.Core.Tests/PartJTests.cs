@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Bilem.Agent.Core.Web;
 using Xunit;
 
@@ -82,7 +83,7 @@ namespace Bilem.Agent.Core.Tests
             var h = ApachePublisher.Harden(conf, p);
             Assert.Contains("Require ip 127.0.0.1 ::1", h);
             Assert.DoesNotContain("Require all granted", h);
-            Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(h, "_1cws_module").Count);
+            Assert.Single(System.Text.RegularExpressions.Regex.Matches(h, "_1cws_module").Cast<System.Text.RegularExpressions.Match>());
 
             var other = conf + "LoadModule _1cws_module \"C:/Program Files (x86)/1cv8/8.3.24.1000/bin/wsap24.dll\"\r\n";
             Assert.Throws<AgentException>(() => ApachePublisher.Harden(other, p));   // две версии платформы в одном Apache

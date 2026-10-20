@@ -134,6 +134,7 @@ namespace Bilem.Agent.Core.Web
             Grant(dir, "(OI)(CI)RX");
             Proc.Run(Path.Combine(Paths.NativeSystem32, "icacls.exe"), $"{Proc.Quote(s.BasePath)} /grant \"{Account}:(OI)(CI)M\" /T /Q");
             Log.Ok(Txt.F("ApacheFolderRights", s.BasePath, Account));
+            Platform.GrantRead(s.Platform, Account);
             ApplyOrRollback(Bits == 0 ? s.Platform.Bits : Bits, backup);
             Log.Ok(Txt.F("ApachePublished", s.Publication, Port));
         }

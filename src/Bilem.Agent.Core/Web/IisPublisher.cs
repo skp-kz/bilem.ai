@@ -53,6 +53,7 @@ namespace Bilem.Agent.Core.Web
             Log.Ok(Txt.F("AnonymousAsPool", s.Pool));
             Iis.GrantPool(s.BasePath, s.Pool);
             Log.Ok(Txt.F("FolderRights", s.BasePath, s.Pool));
+            Platform.GrantRead(s.Platform, "IIS_IUSRS");   // 1С «для пользователя»: пулы читают модуль 1С из профиля
             if (!Iis.LocalhostOnly(s.Publication)) Iis.RestrictToLocalhost(s.Publication);
             if (!Iis.LocalhostOnly(s.Publication)) throw new AgentException(Txt.S("LocalhostOnlyFailed"), Txt.S("HintIisManual"));
             Log.Ok(Txt.S("LocalhostOnly"));
