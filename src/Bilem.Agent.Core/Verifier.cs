@@ -16,6 +16,9 @@ namespace Bilem.Agent.Core
         public int ReadTotal { get; set; }
         public bool WriteDenied { get; set; }
         public int Sets { get; set; }
+        /// <summary>Код ответа на $metadata (0 — обрыв) и падение веб-сервера из журнала событий — для переключения на Apache (J5).</summary>
+        public int MetadataCode { get; set; } = 200;
+        public string Crash { get; set; }
     }
 
     /// <summary>
@@ -31,11 +34,15 @@ namespace Bilem.Agent.Core
 
             var started = DateTime.Now;
             var meta = od.Send("GET", b.OData + "/$metadata");
+            r.MetadataCode = meta.Code;
             if (meta.Code != 200)
             {
                 Log.Fail(Txt.F("VerifyMetadataFailed", meta.Code, ODataClient.ErrorText(meta.Body)));
+                // Лицензия 1С не видна учётке веб-сервера (J6) — понятная причина вместо общего «HTTP 500»
+                if ((meta.Body ?? "").IndexOf("лиценз", StringComparison.OrdinalIgnoreCase) >= 0) Log.Fail(Txt.S("J6License"));
                 // Обрыв соединения или 5xx — часто это упавший рабочий процесс IIS: причина в журнале событий Windows
                 var crash = meta.Code == 0 || meta.Code >= 500 ? Crashes.IisExplain(started) : null;
+                r.Crash = crash;
                 if (crash != null) { Log.Fail(crash); Log.Fail(Txt.S("WhatToDo") + " " + Txt.S("HintIisCrash")); }
                 else Log.Fail(Txt.S("WhatToDo") + " " + HintForCode(meta.Code));
                 r.Failures++;
@@ -102,9 +109,12 @@ namespace Bilem.Agent.Core
             var ips = MachineAddresses();
             foreach (var ip in ips)
             {
-                var ext = od.Send("GET", b.OData.Replace("127.0.0.1", ip) + "/$metadata");
+                var ext = od.Send("GET", b.OData.Replace("127.0.0.1", ip) + "/$metadata", timeoutMs: 10000);
                 var shown = MaskIp(ip);
-                if (ext.Code == 403) Log.Ok(Txt.F("VerifyExternal403", shown)); else { Log.Fail(Txt.F("VerifyExternalCode", shown, ext.Code)); r.Failures++; }
+                // IIS отвечает 403 (ограничения по IP); свой Apache по адресу машины вообще не слушает — соединение не устанавливается
+                if (ext.Code == 403) Log.Ok(Txt.F("VerifyExternal403", shown));
+                else if (ext.Code == 0 && Web.WebServerKind.Of(b) == Web.WebServerKind.Apache) Log.Ok(Txt.F("VerifyExternalClosed", shown));
+                else { Log.Fail(Txt.F("VerifyExternalCode", shown, ext.Code)); r.Failures++; }
             }
             if (ips.Count == 0) Log.Warn(Txt.S("VerifyNoExternalIp"));
             return r;

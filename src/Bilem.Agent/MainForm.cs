@@ -403,6 +403,17 @@ namespace Bilem.Agent
             issue.Click += (s, e) => Open(IssuesUrl);
             Add(issue); Add(Note(Txt.S("UiReportIssueNote")));
 
+            // Веб-сервер для новых баз (часть J): «Авто» — по таблице без вопросов; IIS / Apache — вручную, для поддержки
+            var webRow = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Margin = new Padding(0, 10, 0, 0) };
+            webRow.Controls.Add(new Label { Text = Txt.S("UiWebMode"), AutoSize = true, Margin = new Padding(0, 6, 6, 0) });
+            var webMode = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = Px(160) };
+            var modes = new[] { Bilem.Agent.Core.Web.WebChoice.ModeAuto, Bilem.Agent.Core.Web.WebServerKind.Iis, Bilem.Agent.Core.Web.WebServerKind.Apache };
+            webMode.Items.AddRange(new object[] { Txt.S("UiWebModeAuto"), "IIS", Txt.S("WebNameApache") });
+            webMode.SelectedIndex = Math.Max(0, Array.IndexOf(modes, (AgentConfig.Load().WebServerMode ?? modes[0]).ToLowerInvariant()));
+            webMode.SelectedIndexChanged += (s, e) => { var c = AgentConfig.Load(); c.WebServerMode = webMode.SelectedIndex == 0 ? null : modes[webMode.SelectedIndex]; c.Save(); };
+            webRow.Controls.Add(webMode);
+            Add(webRow); Add(Note(Txt.S("UiWebModeNote")));
+
             var paid = new Label { Text = Txt.S("UiPaidSupportSoon"), AutoSize = true, ForeColor = SystemColors.GrayText, Font = new Font(Font.FontFamily, Font.Size * 0.9f), Margin = new Padding(0, 8, 0, 0) };
             notes.Add(paid); Add(paid);
             support.Controls.Add(t);

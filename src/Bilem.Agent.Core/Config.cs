@@ -20,6 +20,8 @@ namespace Bilem.Agent.Core
         public int PlatformBits { get; set; }
         public string Publication { get; set; }
         public string Pool { get; set; }
+        /// <summary>Веб-сервер публикации (часть J): iis (по умолчанию, и у баз, подключённых раньше) или apache — свой BilemApache.</summary>
+        public string WebServer { get; set; }
         public string OData { get; set; }
         public string User { get; set; } = "bilem";
         public string SecretFile { get; set; }
@@ -88,6 +90,9 @@ namespace Bilem.Agent.Core
         public string DocumentsRoot { get; set; }
         /// <summary>Пароль настроек — хеш PBKDF2 (SettingsLock); пусто — не спрашивается.</summary>
         public string SettingsPassword { get; set; }
+        /// <summary>Веб-сервер для новых баз (часть J): auto (по умолчанию) / iis / apache — «Сервис» → «Веб-сервер», для поддержки.</summary>
+        public string WebServerMode { get; set; }
+        // Порт и разрядность своего Apache — не здесь, а в его httpd.conf (ApachePublisher.Port / Bits)
         /// <summary>
         /// Системная регистрация COM-коннектора до Bilem Agent, по разрядности ("32"/"64"): путь к comcntr.dll, "" — не было.
         /// Записывается, когда агент перерегистрирует коннектор (с согласия человека); возвращается при удалении последней базы

@@ -28,6 +28,10 @@ namespace Bilem.Agent.Core
                     (cfg["Smtp"] as JObject)?.Remove("PasswordProtected");
                     Add(zip, "config.json", cfg.ToString());
                 }
+                // Свой Apache (часть J): наш httpd.conf — секретов в нём нет (строка соединения — только путь к базе)
+                if (File.Exists(Web.ApachePublisher.ConfFile)) Add(zip, "apache/httpd.conf", File.ReadAllText(Web.ApachePublisher.ConfFile, Encoding.UTF8));
+                var apacheErr = Path.Combine(Web.ApachePublisher.LogsDir, "error.log");
+                if (File.Exists(apacheErr)) Add(zip, "apache/error.log", ReadShared(apacheErr));
                 if (Directory.Exists(Paths.StateDir))
                     foreach (var f in Directory.GetFiles(Paths.StateDir, "*.json"))
                         Add(zip, "state/" + Path.GetFileName(f), File.ReadAllText(f, Encoding.UTF8));

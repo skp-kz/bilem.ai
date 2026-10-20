@@ -46,7 +46,7 @@ namespace Bilem.Agent.Core
                 rel > 0 ? Txt.F("DiagNetRelease", NetName(rel), rel) : Txt.S("DiagNetMissing"), Txt.S("HintNet48"));
             if (WinInfo.IsDomainController()) Add(gSys, Txt.S("DiagDc"), CheckStatus.Warn, Txt.S("Yes"), Txt.S("HintDc"));
             // Падения за сутки: IIS (модуль 1С), помощники COM, агент — из журнала событий Windows
-            foreach (var g in Crashes.Since(DateTime.Now.AddDays(-1), "w3wp.exe", "bilem-com64.exe", "bilem-com32.exe", "bilem-agent.exe").GroupBy(x => x.App + " / " + x.Module))
+            foreach (var g in Crashes.Since(DateTime.Now.AddDays(-1), "w3wp.exe", "httpd.exe", "bilem-com64.exe", "bilem-com32.exe", "bilem-agent.exe", "bilem-agent-svc.exe").GroupBy(x => x.App + " / " + x.Module))
             {
                 var last = g.Last();
                 Add(gSys, Txt.F("DiagCrash", last.App), CheckStatus.Warn,
@@ -118,7 +118,16 @@ namespace Bilem.Agent.Core
             string pwd = null;
             try { pwd = Secrets.ReadSecretFile(b.SecretFile); Add(Txt.S("DiagSecret"), CheckStatus.Ok, Txt.S("DiagSecretOk")); }
             catch (Exception e) { Add(Txt.S("DiagSecret"), CheckStatus.Fail, e.Message, Txt.S("HintResetPassword")); }
-            if (Iis.Installed)
+            if (Web.WebServerKind.Of(b) == Web.WebServerKind.Apache)
+            {
+                // Свой Apache (часть J): служба и порт на 127.0.0.1
+                var st = (string)null;
+                try { using (var sc = new System.ServiceProcess.ServiceController(Web.ApachePublisher.ServiceName)) st = sc.Status.ToString(); } catch { }
+                Add(Txt.S("DiagApacheService"), st == "Running" ? CheckStatus.Ok : CheckStatus.Fail, st ?? Txt.S("DiagNotFound"), Txt.S("HintRerunSetup"));
+                var port = Web.ApachePublisher.Port;
+                Add(Txt.S("DiagApachePort"), PortListening(port) ? CheckStatus.Ok : CheckStatus.Fail, "127.0.0.1:" + port, Txt.S("HintRerunSetup"));
+            }
+            else if (Iis.Installed)
             {
                 var app = Iis.AppExists(b.Publication);
                 Add(Txt.S("DiagPublication"), app ? CheckStatus.Ok : CheckStatus.Fail, b.Publication, Txt.S("Hint404"));

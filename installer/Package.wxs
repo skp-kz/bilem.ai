@@ -38,6 +38,11 @@
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="Bilem Agent">
         <Directory Id="REDISTFOLDER" Name="redist" />
+        <!-- Часть J: свой Apache — программы по разрядности платформы 1С; конфиг и журналы — в C:\ProgramData\Bilem\apache -->
+        <Directory Id="APACHEDIR" Name="apache">
+          <Directory Id="APACHE64" Name="x64" />
+          <Directory Id="APACHE86" Name="x86" />
+        </Directory>
       </Directory>
     </StandardDirectory>
     <StandardDirectory Id="ProgramMenuFolder" />
@@ -77,7 +82,7 @@
 
     <!-- Удаление агента (не обновление): вернуть системную регистрацию COM-коннектора 1С, которая была до него.
          Сбой не мешает удалению (Return="ignore"): без .NET или без записи о прежней регистрации команда ничего не делает. -->
-    <CustomAction Id="RestoreCom" Directory="INSTALLFOLDER" ExeCommand="&quot;[INSTALLFOLDER]bilem-agent.com&quot; restore-com"
+    <CustomAction Id="RestoreCom" Directory="INSTALLFOLDER" ExeCommand="&quot;[INSTALLFOLDER]bilem-agent.com&quot; uninstall-cleanup"
                   Execute="deferred" Impersonate="no" Return="ignore" />
     <InstallExecuteSequence>
       <Custom Action="RestoreCom" Before="RemoveFiles" Condition="REMOVE ~= &quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
@@ -109,7 +114,19 @@
                      Value="&quot;[INSTALLFOLDER]bilem-agent.exe&quot; --tray" KeyPath="yes" />
     </Component>
 
+    <!-- Apache 2.4 (Apache Lounge, лицензия Apache 2.0 — LICENSE.txt и NOTICE.txt рядом) и Visual C++ 2015–2022 для него.
+         Ставятся файлами; службу BilemApache и VC++ агент включает сам, только если для базы выбран Apache (часть J) -->
+    <ComponentGroup Id="ApacheFiles">
+      <Files Directory="APACHE64" Include="$(var.Redist)\apache\x64\**" />
+      <Files Directory="APACHE86" Include="$(var.Redist)\apache\x86\**" />
+      <Component Id="VcRedist" Directory="REDISTFOLDER" Guid="9E2B5C71-3A84-4D6F-B1C9-5F7E2A8D4C36">
+        <File Id="VcRedist64" Source="$(var.Redist)\vc_redist.x64.exe" KeyPath="yes" />
+        <File Id="VcRedist86" Source="$(var.Redist)\vc_redist.x86.exe" />
+      </Component>
+    </ComponentGroup>
+
     <Feature Id="Main" Title="Bilem Agent">
+      <ComponentGroupRef Id="ApacheFiles" />
       <ComponentRef Id="ServiceExe" />
       <ComponentRef Id="ServiceStart" />
       <ComponentRef Id="TrayAutostart" />

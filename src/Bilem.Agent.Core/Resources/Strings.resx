@@ -27,6 +27,22 @@
   <data name="ActNoCounterparty" xml:space="preserve"><value>Контрагент «{0}» не найден в 1С.</value></data>
   <data name="ActNoOrganization" xml:space="preserve"><value>Организация «{0}» не найдена в 1С.</value></data>
   <data name="AnonymousAsPool" xml:space="preserve"><value>Анонимный вход публикации — от имени пула {0}</value></data>
+  <data name="ApacheBitsMismatch" xml:space="preserve"><value>Свой Apache уже работает с {0}-разрядной платформой 1С, а этой базе нужна {1}-разрядная.</value></data>
+  <data name="ApacheConfBad" xml:space="preserve"><value>Конфиг своего Apache не прошёл проверку (httpd -t) — вернул прежний: {0}</value></data>
+  <data name="ApacheFolderRights" xml:space="preserve"><value>Учётке своего Apache ({1}) выдано чтение и запись на папку базы {0} (снимается при удалении базы)</value></data>
+  <data name="ApacheMissing" xml:space="preserve"><value>Нет файлов своего Apache ({0}).</value></data>
+  <data name="ApacheModuleConflict" xml:space="preserve"><value>В своём Apache уже загружен модуль 1С другой платформы ({0}) — Apache держит модуль 1С только одной версии.</value></data>
+  <data name="ApacheNoModule" xml:space="preserve"><value>У платформы 1С {0} нет модуля для Apache 2.4 (wsap24.dll).</value></data>
+  <data name="ApacheNoPort" xml:space="preserve"><value>Нет свободного порта на 127.0.0.1 в диапазоне {0}–{1}.</value></data>
+  <data name="ApacheNoVcRedist" xml:space="preserve"><value>Нет установщика Visual C++ ({0}).</value></data>
+  <data name="ApachePublished" xml:space="preserve"><value>Публикация {0} — на своём Apache, http://127.0.0.1:{1}</value></data>
+  <data name="ApacheServiceFailed" xml:space="preserve"><value>Не удалось зарегистрировать службу BilemApache (код {0}): {1}</value></data>
+  <data name="ApacheServiceInstalled" xml:space="preserve"><value>Свой Apache: служба {0}, 127.0.0.1:{1}, {2}-бит</value></data>
+  <data name="ApacheServiceRemoved" xml:space="preserve"><value>Свой Apache убран: служба {0}, конфиг и журналы</value></data>
+  <data name="ApacheStartFailed" xml:space="preserve"><value>Служба BilemApache не запустилась: {0}. Журнал Apache: {1}</value></data>
+  <data name="ApacheVcFailed" xml:space="preserve"><value>Visual C++ не установился (код {0}).</value></data>
+  <data name="ApacheVcInstalled" xml:space="preserve"><value>Visual C++ 2015–2022 установлен</value></data>
+  <data name="ApacheVcInstalling" xml:space="preserve"><value>Visual C++ 2015–2022 не найден — ставлю из комплекта Bilem Agent…</value></data>
   <data name="AsOfNoStatements" xml:space="preserve"><value>По счёту {0} проведённых выписок в 1С нет — остаток может быть неточен.</value></data>
   <data name="AsOfSay" xml:space="preserve"><value>Данные 1С на {0:dd.MM.yyyy}</value></data>
   <data name="AsOfSayBanks" xml:space="preserve"><value>(выписка {0})</value></data>
@@ -50,7 +66,7 @@
 Без аргументов — окно. Команды:
   diag  --base «папка» [--admin «логин» [--password «пароль»]] [--slug «имя»]
         диагностика и план, ничего не меняет
-  setup --base «папка» --admin «логин» [--password «пароль»] [--slug «имя»] [--enable-iis] [--allow-dc] [--allow-com-register] [--reset-password]
+  setup --base «папка» --admin «логин» [--password «пароль»] [--slug «имя»] [--enable-iis] [--allow-dc] [--allow-com-register] [--reset-password] [--web auto|iis|apache]
         подключить базу: пользователь bilem (только чтение), состав OData, публикация только для этой машины, проверки
   verify [--slug «имя»] [--admin «логин» [--password «пароль»]]
         проверки: чтение, запрет записи, 401 без пароля, 403 по адресам машины (с --admin — и роли bilem)
@@ -116,6 +132,8 @@
   <data name="DebtStaleReceivables" xml:space="preserve"><value>Выписки загружены не по всем счетам — должник мог уже заплатить.</value></data>
   <data name="DiagAdmin" xml:space="preserve"><value>Права администратора Windows</value></data>
   <data name="DiagAnonymousPool" xml:space="preserve"><value>Вход публикации от имени пула</value></data>
+  <data name="DiagApachePort" xml:space="preserve"><value>Свой Apache слушает</value></data>
+  <data name="DiagApacheService" xml:space="preserve"><value>Служба своего Apache (BilemApache)</value></data>
   <data name="DiagBaseFolder" xml:space="preserve"><value>Папка базы (1Cv8.1CD)</value></data>
   <data name="DiagBases" xml:space="preserve"><value>Подключённые базы</value></data>
   <data name="DiagCom" xml:space="preserve"><value>COM-коннектор {0}</value></data>
@@ -175,6 +193,7 @@
   <data name="HintAccessNoRole" xml:space="preserve"><value>Снимите галочку для этого объекта или пришлите журнал в поддержку — подберём роль для вашей конфигурации.</value></data>
   <data name="HintAccessOff" xml:space="preserve"><value>Включите чтение на вкладке «Доступ» Bilem Agent.</value></data>
   <data name="HintAdminLogin" xml:space="preserve"><value>Проверьте логин и пароль администратора 1С.</value></data>
+  <data name="HintApacheBits" xml:space="preserve"><value>Подключите базу на той же разрядности платформы 1С, что и остальные базы на Apache, или пришлите отчёт для поддержки.</value></data>
   <data name="HintBaseBusy" xml:space="preserve"><value>База занята в монопольном режиме (открыт конфигуратор?). Закройте и повторите.</value></data>
   <data name="HintBaseFolder" xml:space="preserve"><value>Укажите папку, где лежит файл 1Cv8.1CD (файловая база). Серверные базы — в следующей версии.</value></data>
   <data name="HintBaseMoved" xml:space="preserve"><value>Базу перенесли или удалили: уберите её из Bilem Agent и подключите заново.</value></data>
@@ -211,6 +230,13 @@
   <data name="IisEnabled" xml:space="preserve"><value>IIS включён</value></data>
   <data name="IisInstalled" xml:space="preserve"><value>IIS установлен</value></data>
   <data name="IpSecurityEnabled" xml:space="preserve"><value>Компонент IIS «Ограничения по IP» включён</value></data>
+  <data name="J6BaseInProfile" xml:space="preserve"><value>База лежит в профиле пользователя (C:\Users\…): служебная учётка веб-сервера без прав её не видит — права на папку базы выдаю.</value></data>
+  <data name="J6DcApache" xml:space="preserve"><value>Это контроллер домена: IIS без вашего согласия не ставлю — публикую на своём Apache (только 127.0.0.1).</value></data>
+  <data name="J6DismApache" xml:space="preserve"><value>IIS не включился ({0}) — публикую на своём Apache.</value></data>
+  <data name="J6Iis503" xml:space="preserve"><value>Пул IIS остановлен после падений (503) — переключаюсь на свой Apache автоматически.</value></data>
+  <data name="J6IisCrash" xml:space="preserve"><value>IIS на этой машине падает при работе модуля 1С — переключаюсь на свой Apache автоматически.</value></data>
+  <data name="J6License" xml:space="preserve"><value>Лицензия 1С не видна службе веб-сервера. Переактивируйте её для компьютера (C:\ProgramData\1C\licenses), а не для пользователя.</value></data>
+  <data name="J6Switched" xml:space="preserve"><value>Публикация IIS убрана, база опубликована на своём Apache — проверяю заново.</value></data>
   <data name="LocalhostOnly" xml:space="preserve"><value>Доступ к публикации — только с 127.0.0.1 / ::1</value></data>
   <data name="LocalhostOnlyFailed" xml:space="preserve"><value>Не удалось ограничить доступ к публикации адресом 127.0.0.1.</value></data>
   <data name="LockChanged" xml:space="preserve"><value>Пароль настроек изменён: {0}</value></data>
@@ -270,11 +296,13 @@
   <data name="PlanIpSecurity" xml:space="preserve"><value>Компонента IIS «Ограничения по IP» нет — включу её (нужен флаг --enable-iis).</value></data>
   <data name="PlanOData" xml:space="preserve"><value>Добавлю в состав OData недостающие объекты из {0} (деньги, продажи, покупки, склад, расчёты).</value></data>
   <data name="PlanPublish" xml:space="preserve"><value>Опубликую {0} в {1}: OData, пул {2} ({3}-бит), вход от имени пула, права на базу только пулу, доступ только с 127.0.0.1.</value></data>
+  <data name="PlanPublishWeb" xml:space="preserve"><value>Опубликую {0} на {1} (платформа {2}-бит), доступ только с 127.0.0.1</value></data>
   <data name="PlanReady" xml:space="preserve"><value>План готов. Чтобы применить — команда setup (в окне — «Подключить»).</value></data>
   <data name="PlanRegisterCom" xml:space="preserve"><value>COM-коннектор: {0} — зарегистрирую {1}</value></data>
   <data name="PlanUserCreate" xml:space="preserve"><value>Создам пользователя {0} с ролями «только чтение»: {1}</value></data>
   <data name="PlanUserPassword" xml:space="preserve"><value>Новый случайный пароль bilem → DPAPI {0}</value></data>
   <data name="PlanUserUpdate" xml:space="preserve"><value>Обновлю пользователя {0}, роли: {1}</value></data>
+  <data name="PlanWebServer" xml:space="preserve"><value>Веб-сервер: {0}</value></data>
   <data name="PlatformChosen" xml:space="preserve"><value>Берём платформу {0}: {1}</value></data>
   <data name="PlatformFound" xml:space="preserve"><value>Найдена платформа {0}</value></data>
   <data name="PlatformNotFound" xml:space="preserve"><value>Платформа {0} не найдена.</value></data>
@@ -336,9 +364,10 @@
   <data name="Step_access_odata" xml:space="preserve"><value>Состав OData</value></data>
   <data name="Step_access_roles" xml:space="preserve"><value>Роли пользователя bilem</value></data>
   <data name="Step_admin" xml:space="preserve"><value>Права администратора Windows</value></data>
+  <data name="Step_apache_fallback" xml:space="preserve"><value>Переход на свой Apache</value></data>
   <data name="Step_base" xml:space="preserve"><value>База</value></data>
   <data name="Step_connect" xml:space="preserve"><value>Вход в базу и конфигурация</value></data>
-  <data name="Step_iis" xml:space="preserve"><value>Веб-сервер IIS</value></data>
+  <data name="Step_iis" xml:space="preserve"><value>Веб-сервер</value></data>
   <data name="Step_odata" xml:space="preserve"><value>Состав OData</value></data>
   <data name="Step_platform" xml:space="preserve"><value>Платформа 1С и COM-коннектор</value></data>
   <data name="Step_print_details" xml:space="preserve"><value>Реквизиты для печатных форм из 1С</value></data>
@@ -804,6 +833,9 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiVerifyTitle" xml:space="preserve"><value>Проверка базы «{0}»</value></data>
   <data name="UiVersion" xml:space="preserve"><value>Версия {0}</value></data>
   <data name="UiWaitlist" xml:space="preserve"><value>Лист ожидания облачного режима — bilem.ai</value></data>
+  <data name="UiWebMode" xml:space="preserve"><value>Веб-сервер для новых баз:</value></data>
+  <data name="UiWebModeAuto" xml:space="preserve"><value>Авто</value></data>
+  <data name="UiWebModeNote" xml:space="preserve"><value>«Авто» — Bilem сам выбирает: IIS, а если модуль 1С в IIS на этой машине падает — свой Apache (только 127.0.0.1). Вручную — для поддержки; уже подключённые базы остаются на своём веб-сервере.</value></data>
   <data name="UiWriteAllowedN" xml:space="preserve"><value>Запись разрешена: {0} — проверено {1:dd.MM.yyyy HH:mm}</value></data>
   <data name="UiWriteDenied" xml:space="preserve"><value>Запись запрещена — проверено {0:dd.MM.yyyy HH:mm}</value></data>
   <data name="UiWriteNotChecked" xml:space="preserve"><value>Запрет записи ещё не проверялся — нажмите «Проверить» на вкладке «Базы 1С».</value></data>
@@ -837,6 +869,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UserUpdated" xml:space="preserve"><value>Пользователь {0} обновлён, роли: {1}</value></data>
   <data name="VerifyBase" xml:space="preserve"><value>Проверка базы «{0}» ({1})</value></data>
   <data name="VerifyExternal403" xml:space="preserve"><value>  по адресу машины {0}: HTTP 403</value></data>
+  <data name="VerifyExternalClosed" xml:space="preserve"><value>  по адресу машины {0}: не слушает (только 127.0.0.1)</value></data>
   <data name="VerifyExternalCode" xml:space="preserve"><value>  по адресу машины {0}: HTTP {1}, ожидалось 403</value></data>
   <data name="VerifyMetadataFailed" xml:space="preserve"><value>Проверка OData не прошла: $metadata HTTP {0} {1}</value></data>
   <data name="VerifyMetadataOk" xml:space="preserve"><value>$metadata: HTTP 200, наборов: {0}</value></data>
@@ -856,6 +889,15 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="VerifyReadSummary" xml:space="preserve"><value>Чтение: {0} из {1} наборов — HTTP 200, видно всё, что есть в базе (с записями: {2})</value></data>
   <data name="VerifySetMissing" xml:space="preserve"><value>  {0} — нет в $metadata</value></data>
   <data name="VrdOData" xml:space="preserve"><value>default.vrd: OData включён, пул сессий</value></data>
+  <data name="WebDetectApacheOff" xml:space="preserve"><value>Apache: нет</value></data>
+  <data name="WebDetectForeignApache" xml:space="preserve"><value>Apache: чужой ({0}) — не трогаем</value></data>
+  <data name="WebDetectIisOff" xml:space="preserve"><value>IIS: нет</value></data>
+  <data name="WebDetectIisOn" xml:space="preserve"><value>IIS: есть, служба W3SVC работает</value></data>
+  <data name="WebDetectIisStopped" xml:space="preserve"><value>IIS: есть, служба W3SVC не запущена</value></data>
+  <data name="WebDetectLine" xml:space="preserve"><value>{0}; {1}; платформа 1С {2}</value></data>
+  <data name="WebDetectOurApache" xml:space="preserve"><value>свой Apache (Bilem): есть</value></data>
+  <data name="WebNameApache" xml:space="preserve"><value>Apache (Bilem)</value></data>
+  <data name="WebNameIis" xml:space="preserve"><value>IIS</value></data>
   <data name="WebinstNoVrd" xml:space="preserve"><value>webinst не создал default.vrd.</value></data>
   <data name="WebinstResult" xml:space="preserve"><value>webinst: код {0}; {1}</value></data>
   <data name="WhatToDo" xml:space="preserve"><value>Что делать:</value></data>

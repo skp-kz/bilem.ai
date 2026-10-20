@@ -45,6 +45,12 @@ namespace Bilem.Agent
                             if (drop && admin == null) { Log.Fail(Txt.S("CliDropNeedsAdmin")); return 1; }
                             return new Onboarding().Remove(slug, drop, admin, drop ? Password(a) : null) ? 0 : 1;
                         }
+                    case "uninstall-cleanup":
+                        {
+                            // Удаление агента (MSI): свой Apache (служба, конфиг) и прежняя регистрация COM
+                            try { Bilem.Agent.Core.Web.ApachePublisher.RemoveAll(); } catch (Exception e) { Log.Warn(e.Message); }
+                            goto case "restore-com";
+                        }
                     case "restore-com":
                         {
                             // Удаление агента (MSI): вернуть системную регистрацию COM-коннектора, которая была до него
@@ -112,6 +118,7 @@ namespace Bilem.Agent
                 EnableIis = a.ContainsKey("enable-iis"),
                 AllowDomainController = a.ContainsKey("allow-dc"),
                 AllowComRegister = a.ContainsKey("allow-com-register"),
+                WebServer = Get(a, "web"),
                 ResetPassword = a.ContainsKey("reset-password"),
                 PlatformVersion = Get(a, "platform"),
             };

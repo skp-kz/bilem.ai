@@ -22,6 +22,8 @@ namespace Bilem.Agent.Core
         public bool AllowDomainController { get; set; }
         /// <summary>Человек разрешил сменить системную регистрацию COM-коннектора с другой платформы на выбранную.</summary>
         public bool AllowComRegister { get; set; }
+        /// <summary>Веб-сервер явно: iis / apache; пусто — по настройке «Сервис» → «Веб-сервер» (по умолчанию «Авто»).</summary>
+        public string WebServer { get; set; }
     }
 
     public enum StepStatus { Pending, Running, Ok, Warn, Fail, Skipped }
@@ -266,80 +268,77 @@ namespace Bilem.Agent.Core
                     End(StepStatus.Ok, b.ODataObjects.Count.ToString());
                 }
 
-                // 6. IIS
+                // 6. Веб-сервер (часть J): разведка машины, выбор без вопросов — IIS рядом с чужим, иначе свой Apache
                 Begin("iis");
+                var det = Web.WebDetect.Run(plat);
+                Log.Info(det.Line());
+                var mode = !string.IsNullOrEmpty(o.WebServer) ? o.WebServer : (cfg.WebServerMode ?? Web.WebChoice.ModeAuto);
+                var auto = string.Equals(mode, Web.WebChoice.ModeAuto, StringComparison.OrdinalIgnoreCase);
+                // Уже подключённая база остаётся на своём веб-сервере (J8), если сервер не задан явно
+                var kind = existing != null && string.IsNullOrEmpty(o.WebServer) ? Web.WebServerKind.Of(existing) : Web.WebChoice.Decide(det, mode);
                 var dc = WinInfo.IsDomainController();
                 if (dc) Log.Warn(Txt.S("DcWarning"));
-                if (!Iis.Installed)
+                if (kind == Web.WebServerKind.Iis && !Iis.Installed && dc && apply && !o.AllowDomainController)
                 {
-                    if (dc && apply && o.EnableIis && !o.AllowDomainController) { End(StepStatus.Fail); return Fail(Txt.S("DcNoIis"), Txt.S("HintDc")); }
-                    if (!apply || !o.EnableIis)
-                    {
-                        Log.Plan(Txt.S("PlanEnableIis"));
-                        if (apply) { End(StepStatus.Fail); return Fail(Txt.S("NoIis"), Txt.S("HintEnableIis")); }
-                    }
-                    else
-                    {
-                        var d = Iis.EnableFeatures(Iis.WebServerFeatures);
-                        if (d.ExitCode != 0 && d.ExitCode != 3010) { End(StepStatus.Fail); return Fail(Txt.F("DismFailed", d.ExitCode, d.Combined), Txt.S("HintIisManual")); }
-                        if (d.ExitCode == 3010) Log.Warn(Txt.S("RebootRequired"));
-                        if (!Iis.Installed) { End(StepStatus.Fail); return Fail(Txt.S("NoIis"), Txt.S("HintIisManual")); }
-                        Log.Ok(Txt.S("IisEnabled"));
-                    }
+                    // IIS на контроллер домена без согласия не ставим: в «Авто» — свой Apache, иначе — как раньше, отказ
+                    if (!auto) { End(StepStatus.Fail); return Fail(Txt.S("DcNoIis"), Txt.S("HintDc")); }
+                    Log.Warn(Txt.S("J6DcApache"));
+                    kind = Web.WebServerKind.Apache;
                 }
-                else Log.Ok(Txt.S("IisInstalled"));
-                if (Iis.Installed && !Iis.IpSecurityInstalled)
-                {
-                    if (!apply) Log.Plan(Txt.S("PlanIpSecurity"));
-                    else if (o.EnableIis)
-                    {
-                        var d = Iis.EnableFeatures("IIS-IPSecurity");
-                        if (d.ExitCode != 0 && d.ExitCode != 3010) { End(StepStatus.Fail); return Fail(Txt.F("DismFailed", d.ExitCode, d.Combined), Txt.S("HintIisManual")); }
-                        Log.Ok(Txt.S("IpSecurityEnabled"));
-                    }
-                    // Без «Ограничений по IP» публикация была бы открыта наружу — не публикуем
-                    else { End(StepStatus.Fail); return Fail(Txt.S("NoIpSecurity"), Txt.S("HintEnableIis")); }
-                }
-                End(apply || Iis.Installed ? StepStatus.Ok : StepStatus.Skipped);
-
-                // 7. Публикация (только 127.0.0.1), свой пул на базу
-                Begin("publish");
-                var dir = Path.Combine(Iis.WwwRoot, pub);
-                var vrd = Path.Combine(dir, "default.vrd");
                 if (!apply)
                 {
-                    Log.Plan(Txt.F("PlanPublish", pub, dir, pool, plat.Bits));
+                    Log.Plan(Txt.F("PlanWebServer", WebName(kind)));
+                    End(StepStatus.Skipped);
+                    Begin("publish");
+                    Log.Plan(Txt.F("PlanPublishWeb", pub, WebName(kind), plat.Bits));
                     End(StepStatus.Skipped);
                     return PlanDone();
                 }
-                if (!Iis.AppExists(pub) || !File.Exists(vrd))
+                var web = Publisher(kind);
+                try { web.EnsureInstalled(plat, o.EnableIis || kind == Web.WebServerKind.Apache); }
+                catch (AgentException e) when (kind == Web.WebServerKind.Iis && auto)
                 {
-                    var w = Iis.Publish(plat, pub, dir, basePath);
-                    Log.Info(Txt.F("WebinstResult", w.ExitCode, w.Combined));
-                    if (!File.Exists(vrd)) { End(StepStatus.Fail); return Fail(Txt.S("WebinstNoVrd"), Txt.S("HintWebinst")); }
+                    // dism не включил IIS (нет источника компонентов, политика) — свой Apache (J6)
+                    Log.Warn(Txt.F("J6DismApache", e.Message));
+                    kind = Web.WebServerKind.Apache;
+                    web = Publisher(kind);
+                    web.EnsureInstalled(plat, true);
                 }
-                else Log.Ok(Txt.F("PublicationExists", pub));
-                if (!Iis.ODataEnabled(vrd)) Iis.EnableOData(vrd);
-                Iis.EnableOData(vrd); // пул сессий — всегда в нужном виде
-                Log.Ok(Txt.S("VrdOData"));
-                Iis.EnsurePool(pool, plat.Bits);
-                if (!string.Equals(Iis.AppPoolOf(pub), pool, StringComparison.OrdinalIgnoreCase)) Iis.SetAppPool(pub, pool);
-                Log.Ok(Txt.F("PoolReady", pool, plat.Bits));
-                if (!Iis.AnonymousIsPool(pub)) Iis.AnonymousAsPool(pub);
-                Log.Ok(Txt.F("AnonymousAsPool", pool));
-                Iis.GrantPool(basePath, pool);
-                Log.Ok(Txt.F("FolderRights", basePath, pool));
-                if (!Iis.LocalhostOnly(pub)) Iis.RestrictToLocalhost(pub);
-                if (!Iis.LocalhostOnly(pub)) { End(StepStatus.Fail); return Fail(Txt.S("LocalhostOnlyFailed"), Txt.S("HintIisManual")); }
-                Log.Ok(Txt.S("LocalhostOnly"));
-                Iis.Recycle(pool);
+                End(StepStatus.Ok, WebName(kind));
+
+                // 7. Публикация (только 127.0.0.1)
+                Begin("publish");
+                var spec = new Web.PublishSpec { Slug = slug, Publication = pub, Pool = pool, BasePath = basePath, Platform = plat };
+                // Веб-сервер базы сменили явно (поддержка: --web / «Сервис» → «Веб-сервер») — прежнюю публикацию убираем
+                if (existing != null && Web.WebServerKind.Of(existing) != kind) Publisher(Web.WebServerKind.Of(existing)).Unpublish(existing);
+                // База в профиле пользователя (Документы) — служебная учётка веб-сервера её не видит без прав: предупреждаем, права выдаём (J6)
+                if (basePath.IndexOf("\\Users\\", StringComparison.OrdinalIgnoreCase) >= 0) Log.Warn(Txt.S("J6BaseInProfile"));
+                web.Publish(spec);
+                b.WebServer = kind;
+                b.OData = web.BaseUrl(spec);
                 b.SetupAt = DateTime.Now;
                 cfg.Upsert(b);
                 cfg.Save();
-                End(StepStatus.Ok, pub);
+                End(StepStatus.Ok, pub + " · " + WebName(kind));
 
-                // 8. Проверки
-                return VerifyStep(cfg, b);
+                // 8. Проверки; IIS упал на модуле 1С — сам откат на свой Apache и проверка заново (J3, J5)
+                var ok = VerifyStep(cfg, b, out var vr);
+                // BILEM_SIMULATE=iis_crash — ветка отката проверяется и на машине, где IIS работает
+                var reason = ok && !Web.WebSim.On("iis_crash") ? null : Web.WebChoice.FallbackReason(kind, mode, vr?.MetadataCode ?? -1, vr?.Crash);
+                if (reason == null) return ok;
+                Begin("apache_fallback");
+                Log.Warn(Txt.S(reason));
+                web.Unpublish(b);
+                var ap = Publisher(Web.WebServerKind.Apache);
+                ap.EnsureInstalled(plat, true);
+                ap.Publish(spec);
+                b.WebServer = Web.WebServerKind.Apache;
+                b.OData = ap.BaseUrl(spec);
+                cfg.Upsert(b);
+                cfg.Save();
+                Log.Ok(Txt.S("J6Switched"));
+                End(StepStatus.Ok, WebName(Web.WebServerKind.Apache));
+                return VerifyStep(cfg, b, out _);
             }
             catch (AgentException e)
             {
@@ -353,13 +352,17 @@ namespace Bilem.Agent.Core
             }
         }
 
-        private bool VerifyStep(AgentConfig cfg, BaseConfig b)
+        private bool VerifyStep(AgentConfig cfg, BaseConfig b) => VerifyStep(cfg, b, out _);
+
+        private bool VerifyStep(AgentConfig cfg, BaseConfig b, out VerifyResult result)
         {
+            result = null;
             Begin("verify");
             Health.Resume(b.Slug);
             var pwd = File.Exists(b.SecretFile) ? Secrets.ReadSecretFile(b.SecretFile) : null;
             if (pwd == null) { End(StepStatus.Fail); return Fail(Txt.F("NoSecret", b.SecretFile), Txt.S("HintResetPassword")); }
             var vr = Verifier.Run(b, pwd);
+            result = vr;
             var now = DateTime.Now;
             b.VerifiedAt = now;
             b.LastCheckOk = vr.Ok;
@@ -583,12 +586,7 @@ namespace Bilem.Agent.Core
                     new ComClient(plat).Run(ComClient.FileConnection(b.Path, adminUser, adminPassword), new ComOp { Op = "dropUser", User = BilemUser, FullName = BilemFullName });
                     Log.Ok(Txt.F("UserDropped", BilemUser));
                 }
-                Iis.DeleteApp(b.Publication);
-                Iis.DeletePool(b.Pool);
-                var dir = Path.Combine(Iis.WwwRoot, b.Publication);
-                if (Directory.Exists(dir)) Directory.Delete(dir, true);
-                Iis.RevokePool(b.Path, b.Pool);
-                Log.Ok(Txt.F("FolderRightsRevoked", b.Path, b.Pool));
+                Publisher(Web.WebServerKind.Of(b)).Unpublish(b);
                 if (File.Exists(b.SecretFile)) File.Delete(b.SecretFile);
                 if (File.Exists(Paths.StateFile(slug))) File.Delete(Paths.StateFile(slug));
                 cfg.Bases.Remove(b);
@@ -610,6 +608,11 @@ namespace Bilem.Agent.Core
         }
 
         // ---------------- Вспомогательное ----------------
+
+        internal static Web.IWebServerPublisher Publisher(string kind) =>
+            kind == Web.WebServerKind.Apache ? (Web.IWebServerPublisher)new Web.ApachePublisher() : new Web.IisPublisher();
+
+        internal static string WebName(string kind) => Txt.S(kind == Web.WebServerKind.Apache ? "WebNameApache" : "WebNameIis");
 
         private void ReportPrevious(string slug)
         {

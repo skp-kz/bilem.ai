@@ -47,6 +47,44 @@ if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'O=Micr
     throw "ndp48-web.exe: подпись Microsoft не подтверждена ($($sig.Status))"
 }
 
+# --- Часть J: свой Apache (когда модуль 1С не работает в IIS) и Visual C++ 2015–2022 для него — внутрь MSI.
+# Apache — копия сборки Apache Lounge в служебном релизе build-deps нашего репо (Apache Lounge убирает старые версии),
+# хеш закреплён и совпадает с опубликованным на apachelounge.com. VC++ — с официального адреса Microsoft, проверяется подпись.
+$apacheZips = @{
+    x64 = @{ Name = 'httpd-2.4.66-251206-Win64-VS17.zip'; Sha256 = '2CD1F349B6705E43E784E876A233EEB1A859FA6B8ABC693A91F87B35A368F7F9' }
+    x86 = @{ Name = 'httpd-2.4.66-251206-win32-vs17.zip'; Sha256 = '798B6BD7A4FCBB66AE3436B86BBC2E29F3E6165B970D471C1589DD782FFF2B12' }
+}
+foreach ($arch in 'x64', 'x86') {
+    $dest = Join-Path $root "installer/redist/apache/$arch"
+    if (Test-Path (Join-Path $dest 'bin/httpd.exe')) { continue }
+    $z = $apacheZips[$arch]
+    $zip = Join-Path $env:TEMP $z.Name
+    Invoke-WebRequest -Uri "https://github.com/skp-kz/bilem.ai/releases/download/build-deps/$($z.Name)" -OutFile $zip -UseBasicParsing
+    $hash = (Get-FileHash $zip -Algorithm SHA256).Hash
+    if ($hash -ne $z.Sha256) { Remove-Item $zip -Force; throw "$($z.Name): SHA-256 $hash не совпадает с закреплённым" }
+    $tmp = Join-Path $env:TEMP "bilem-apache-$arch"
+    if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
+    Expand-Archive $zip $tmp
+    $src = Join-Path $tmp 'Apache24'
+    New-Item -ItemType Directory -Force (Join-Path $dest 'conf') | Out-Null
+    # Только то, что нужно для работы: программы, модули, типы файлов, лицензия. Свой httpd.conf пишет агент (C:\ProgramData\Bilem\apache)
+    Copy-Item (Join-Path $src 'bin') $dest -Recurse
+    Copy-Item (Join-Path $src 'modules') $dest -Recurse
+    Copy-Item (Join-Path $src 'conf/mime.types') (Join-Path $dest 'conf')
+    foreach ($f in 'LICENSE.txt', 'NOTICE.txt', 'ABOUT_APACHE.txt') { if (Test-Path (Join-Path $src $f)) { Copy-Item (Join-Path $src $f) $dest } }
+    Remove-Item $tmp -Recurse -Force
+    Remove-Item $zip -Force
+}
+foreach ($arch in 'x64', 'x86') {
+    $vc = Join-Path $root "installer/redist/vc_redist.$arch.exe"
+    if (-not (Test-Path $vc)) { Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.$arch.exe" -OutFile $vc -UseBasicParsing }
+    $s = Get-AuthenticodeSignature $vc
+    if ($s.Status -ne 'Valid' -or $s.SignerCertificate.Subject -notmatch 'O=Microsoft Corporation') {
+        Remove-Item $vc -Force
+        throw "vc_redist.$arch.exe: подпись Microsoft не подтверждена ($($s.Status))"
+    }
+}
+
 dotnet build installer/Bilem.Agent.Installer.wixproj -c Release "-p:SemVer=$semver" "-p:MsiVersion=$fileVersion"
 if ($LASTEXITCODE -ne 0) { throw "MSI не собрался" }
 
