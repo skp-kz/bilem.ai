@@ -205,6 +205,18 @@ namespace Bilem.Agent.Core.Tests
         }
 
         [Fact]
+        public void StaleKey_ForgottenOnConnect_NewKeyIssued()
+        {
+            // Ключ, которого облако не знает (отозван, другое облако): заявка — без него, обмен выдаёт новый
+            CloudStore.Update(s => { s.EnsureAgentId(); s.SetKey("stale-key"); });
+            var b = Connect("alpha");
+            Assert.NotNull(b);
+            var key = CloudStore.Load().Key();
+            Assert.False(string.IsNullOrEmpty(key));
+            Assert.NotEqual("stale-key", key);
+        }
+
+        [Fact]
         public void Url_HttpsOrLocalOnly_AndStatusHasNoKey()
         {
             Assert.Throws<AgentException>(() => CloudApi.CheckUrl("http://mcp.bilem.ai"));

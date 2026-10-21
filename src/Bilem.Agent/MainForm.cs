@@ -216,7 +216,10 @@ namespace Bilem.Agent
             _localBox = new GroupBox { Text = Txt.S("UiLocalMcpTitle"), Dock = DockStyle.Fill, AutoSize = true, Padding = new Padding(10) };
             var t = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, AutoSize = true };
             _localBox.Controls.Add(t);
+            _localTable = t;
             root.Controls.Add(_localBox, 0, 0);
+            // Правка Славы 21.10: сверху бесплатно, снизу платно — плашки в заголовках блоков
+            Badge(_localBox, Txt.S("UiBadgeFree"), Color.FromArgb(31, 157, 85));
             t.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             t.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             t.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -228,19 +231,13 @@ namespace Bilem.Agent
             t.Controls.Add(_url, 1, r);
             t.Controls.Add(copy, 2, r); r++;
             t.Controls.Add(_showToken, 1, r); r++;
+            var mit = new Label { Text = Txt.S("UiLocalMit"), AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(0, 2, 0, 2) };
+            t.Controls.Add(mit, 1, r); r++;
             var disclaimer = new Label { Text = Txt.S("UiTokenDisclaimer"), AutoSize = true, ForeColor = Color.DarkGoldenrod, Padding = new Padding(0, 4, 0, 8) };
             Wrap(disclaimer, t, 30);
             t.Controls.Add(disclaimer, 0, r); t.SetColumnSpan(disclaimer, 3); r++;
 
-            // Кнопки — в две строки: подключение к клиентам; токен и MCP
-            var clients = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0) };
-            foreach (var (key, client) in new[] { ("UiConnectClaudeCode", "claude-code"), ("UiConnectClaudeDesktop", "claude-desktop"), ("UiConnectCursor", "cursor") })
-            {
-                var b = new Button { Text = Txt.S(key), AutoSize = true };
-                b.Click += (s, e) => ConnectClient(client);
-                clients.Controls.Add(b);
-            }
-            t.Controls.Add(clients, 0, r); t.SetColumnSpan(clients, 3); r++;
+            // Кнопок «Подключить к Claude Code / Desktop / Cursor» нет — инструкции в документации (ссылка ниже; решение Славы 21.10)
             var tokenRow = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0) };
             var rotate = new Button { Text = Txt.S("UiRotateToken"), AutoSize = true };
             rotate.Click += (s, e) => RotateToken();
@@ -259,6 +256,7 @@ namespace Bilem.Agent
             cloudBox.Resize += (s, e) => _cloud.FitWidth(cloudBox.ClientSize.Width - Px(24));
             _cloud.ModeChanged += () => { ApplyCloudMode(); PollService(); };
             cloudBox.Controls.Add(_cloud);
+            Badge(cloudBox, Txt.S("UiBadgeCommercial"), Color.FromArgb(184, 134, 11));
             root.Controls.Add(cloudBox, 0, 1);
             r = 0;
             t = root;
@@ -275,7 +273,20 @@ namespace Bilem.Agent
             return p;
         }
 
+        /// <summary>Плашка справа в заголовке блока: «Бесплатно» (зелёная) / «Коммерческая лицензия» (охра).</summary>
+        private void Badge(GroupBox box, string text, Color back)
+        {
+            var b = new Label { Text = text, AutoSize = true, BackColor = back, ForeColor = Color.White, Padding = new Padding(6, 1, 6, 1) };
+            box.Controls.Add(b);
+            b.BringToFront();
+            void Place() => b.Location = new Point(box.Width - b.Width - Px(12), 0);
+            box.Resize += (s, e) => Place();
+            b.SizeChanged += (s, e) => Place();
+            Place();
+        }
+
         private GroupBox _localBox;
+        private TableLayoutPanel _localTable;
         private CloudPanel _cloud;
         private readonly Label _localOff = new Label { Text = Txt.S("UiLocalOffByCloud"), AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
 
@@ -283,8 +294,9 @@ namespace Bilem.Agent
         private void ApplyCloudMode()
         {
             var on = _cloud?.CloudOn == true;
-            if (_localBox == null) return;
-            foreach (Control c in _localBox.Controls[0].Controls) if (c != _localOff) c.Enabled = !on;
+            if (_localTable == null) return;
+            // Таблица блока — по ссылке, не Controls[0]: плашка «Бесплатно» поднята наверх и стоит первой
+            foreach (Control c in _localTable.Controls) if (c != _localOff) c.Enabled = !on;
             _localOff.Visible = on;
         }
 
@@ -928,7 +940,7 @@ namespace Bilem.Agent
             var active = bases.Count(b => (string)b["state"] == "active");
             if ((string)st?["state"] == "Working" && !bases.Any(b => (string)b["state"] == "paused"))
                 return Txt.F("UiStateCloud", active, total);
-            return "Bilem Cloud · " + CloudPanel.StateText(st);
+            return Txt.S("UiStateCloudPrefix") + CloudPanel.StateText(st);
         }
 
         /// <summary>Повторный запуск exe — не второй экземпляр, а показ уже работающего окна.</summary>

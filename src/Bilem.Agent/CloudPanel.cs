@@ -20,6 +20,8 @@ namespace Bilem.Agent
         public const string CabinetUrl = "https://app.bilem.ai";
 
         private readonly ToggleSwitch _on = new ToggleSwitch { Text = Txt.S("UiCloudOn"), Margin = new Padding(0, 2, 0, 4) };
+        /// <summary>Правка Славы 21.10: «Платно, по подписке…» — первой строкой, всегда (цен и тарифа в агенте нет).</summary>
+        private readonly Label _paid = new Label { Text = Txt.S("UiCloudPaid"), AutoSize = true, Margin = new Padding(0, 2, 0, 2) };
         private readonly Label _about = new Label { Text = Txt.S("UiCloudAbout"), AutoSize = true, Margin = new Padding(0, 2, 0, 4) };
         private readonly LinkLabel _cabinet = new LinkLabel { Text = Txt.S("UiCloudCabinet"), AutoSize = true, Margin = new Padding(0, 0, 0, 4) };
         private readonly Label _noService = new Label { Text = Txt.S("UiCloudNeedService"), AutoSize = true, ForeColor = SystemColors.GrayText, Visible = false };
@@ -49,6 +51,7 @@ namespace Bilem.Agent
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
             var root = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Location = new Point(0, 0), Margin = new Padding(0) };
             root.Controls.Add(_on);
+            root.Controls.Add(_paid);
             root.Controls.Add(_noService);
             root.Controls.Add(_about);
             _cabinet.LinkClicked += (s, e) => Open(CabinetUrl);
@@ -82,7 +85,7 @@ namespace Bilem.Agent
         public void FitWidth(int w)
         {
             w = Math.Max(LogicalToDeviceUnits(360), w);
-            foreach (var l in new[] { _about, _noService, _orgNote, _state }) l.MaximumSize = new Size(w - LogicalToDeviceUnits(6), 0);
+            foreach (var l in new[] { _paid, _about, _noService, _orgNote, _state }) l.MaximumSize = new Size(w - LogicalToDeviceUnits(6), 0);
             _bases.Width = w - LogicalToDeviceUnits(6);
             _orgUrl.Width = Math.Min(LogicalToDeviceUnits(420), w - LogicalToDeviceUnits(200));
         }

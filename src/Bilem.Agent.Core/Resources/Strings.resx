@@ -749,8 +749,8 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiSmtpWho" xml:space="preserve"><value>Кому можно отправлять</value></data>
   <data name="UiStaleDays" xml:space="preserve"><value>Выписка устарела через</value></data>
   <data name="UiStaleDaysNote" xml:space="preserve"><value>рабочих дня — ИИ предупредит, что остаток и должники могут быть неточны</value></data>
-  <data name="UiStateRunning" xml:space="preserve"><value>MCP работает · порт {0} · баз: {1}</value></data>
-  <data name="UiStateRunningSvc" xml:space="preserve"><value>MCP работает в службе · порт {0} · баз: {1}</value></data>
+  <data name="UiStateRunning" xml:space="preserve"><value>MCP · бесплатно · порт {0} · баз: {1}</value></data>
+  <data name="UiStateRunningSvc" xml:space="preserve"><value>MCP · бесплатно · порт {0} · баз: {1}</value></data>
   <data name="UiStateStartFailed" xml:space="preserve"><value>Ошибка запуска MCP: {0} — нажмите «Запустить» на вкладке «MCP»</value></data>
   <data name="UiStateStarting" xml:space="preserve"><value>MCP запускается… ждём, пока освободится порт {0} ({1} из {2} с)</value></data>
   <data name="UiStateStartingSvc" xml:space="preserve"><value>MCP запускается… служба ждёт, пока освободится порт {0}</value></data>
@@ -952,7 +952,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="CloudTooManyAttempts" xml:space="preserve"><value>Слишком много попыток — начните подключение заново.</value></data>
   <data name="CloudWorkingLog" xml:space="preserve"><value>Bilem Cloud: связь есть, баз в облаке: {0}</value></data>
   <data name="HintCloudNetwork" xml:space="preserve"><value>Проверьте интернет и прокси на этом компьютере; агент переподключится сам.</value></data>
-  <data name="UiLocalMcpTitle" xml:space="preserve"><value>MCP на этом компьютере — бесплатно</value></data>
+  <data name="UiLocalMcpTitle" xml:space="preserve"><value>MCP на этом компьютере</value></data>
   <data name="UiLocalOffByCloud" xml:space="preserve"><value>Выключен — включён MCP в облаке (Bilem Cloud). Порт на этом компьютере не слушается.</value></data>
   <data name="UiLocalDocs" xml:space="preserve"><value>Как подключить ИИ — docs.bilem.ai/connect</value></data>
   <data name="UiCloudOn" xml:space="preserve"><value>Включить</value></data>
@@ -971,7 +971,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiCloudDisconnect" xml:space="preserve"><value>Отключить</value></data>
   <data name="UiCloudOrgUrl" xml:space="preserve"><value>Адрес:</value></data>
   <data name="UiCloudOrgNote" xml:space="preserve"><value>Для ChatGPT и claude.ai: токена нет, вход через Google / Microsoft. WhatsApp и Telegram — в кабинете.</value></data>
-  <data name="UiCloudOnConfirm" xml:space="preserve"><value>Включить Bilem Cloud? Локальный MCP на этом компьютере будет выключен. Продолжить?</value></data>
+  <data name="UiCloudOnConfirm" xml:space="preserve"><value>Включить Bilem Cloud (коммерческая лицензия)? Локальный бесплатный MCP на этом компьютере будет выключен. Продолжить?</value></data>
   <data name="UiCloudOffConfirm" xml:space="preserve"><value>Выключить Bilem Cloud? Облачный канал будет закрыт, локальный MCP включится. Подключения баз сохранятся — вернёте галочку, код вводить заново не нужно.</value></data>
   <data name="UiCloudOnLog" xml:space="preserve"><value>Галочка Bilem Cloud включена</value></data>
   <data name="UiCloudOffLog" xml:space="preserve"><value>Галочка Bilem Cloud снята</value></data>
@@ -999,7 +999,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiCloudOpened" xml:space="preserve"><value>Кабинет открыт в браузере. Код действует до {0}, один раз.</value></data>
   <data name="UiCloudExchanging" xml:space="preserve"><value>Проверяю код…</value></data>
   <data name="UiCloudConnectedMsg" xml:space="preserve"><value>База «{0}» подключена к Bilem Cloud (организация «{1}»).</value></data>
-  <data name="UiStateCloud" xml:space="preserve"><value>Bilem Cloud · баз в облаке: {0} из {1}</value></data>
+  <data name="UiStateCloud" xml:space="preserve"><value>Bilem Cloud · коммерческая лицензия · баз в облаке: {0} из {1}</value></data>
   <data name="SysInfoCloud" xml:space="preserve"><value>Bilem Cloud: включён — {0}; облако {1}; ключ компьютера — {2}; канал — {3}, последняя связь {4}</value></data>
   <data name="SysInfoCloudBase" xml:space="preserve"><value>  - {0}: организация «{1}», {2}</value></data>
   <data name="CliCloudStatus" xml:space="preserve"><value>Bilem Cloud: включён — {0}; облако {1}; ключ компьютера — {2}; {3}</value></data>
@@ -1009,4 +1009,9 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="CliCloudCode" xml:space="preserve"><value>Код из кабинета: </value></data>
   <data name="CliCloudOrgUrl" xml:space="preserve"><value>Облачный адрес организации: {0}</value></data>
   <data name="CliCloudStub" xml:space="preserve"><value>Заглушка Bilem Cloud: {0} (только этот компьютер). Ctrl+C — остановить. Агенту: bilem-agent cloud set-url --url {0}</value></data>
+  <data name="UiBadgeFree" xml:space="preserve"><value>Бесплатно</value></data>
+  <data name="UiBadgeCommercial" xml:space="preserve"><value>Коммерческая лицензия</value></data>
+  <data name="UiLocalMit" xml:space="preserve"><value>Открытый код (MIT), без ограничений</value></data>
+  <data name="UiCloudPaid" xml:space="preserve"><value>Платно, по подписке. Условия и оплата — в кабинете app.bilem.ai.</value></data>
+  <data name="UiStateCloudPrefix" xml:space="preserve"><value>Bilem Cloud · коммерческая лицензия · </value></data>
 </root>

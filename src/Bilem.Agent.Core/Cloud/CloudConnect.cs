@@ -18,7 +18,16 @@ namespace Bilem.Agent.Core.Cloud
             var cfg = AgentConfig.Load();
             var b = cfg.Find(slug) ?? throw new AgentException(Txt.F("NoSuchBase", slug), Txt.S("HintList"));
             var store = CloudStore.Update(s => { s.EnsureAgentId(); s.EnsureBaseId(b.Slug); });
-            var req = CloudApi.CreateRequest(cfg, store, b, Organizations(b));
+            var orgs = Organizations(b);
+            ConnectRequest req;
+            try { req = CloudApi.CreateRequest(cfg, store, b, orgs); }
+            catch (CloudException e) when (e.Code == "key_revoked")
+            {
+                // Ключ отозван облаком — забыть его и подать заявку без ключа: обмен кода выдаст новый (иначе «Подключить…» не работал бы никогда)
+                Log.Warn(Txt.S("CloudKeyRevokedLog"));
+                store = CloudStore.Update(s => s.SetKey(null));
+                req = CloudApi.CreateRequest(cfg, store, b, orgs);
+            }
             Log.Info(Txt.F("CloudRequestLog", b.Slug));
             return req;
         }
