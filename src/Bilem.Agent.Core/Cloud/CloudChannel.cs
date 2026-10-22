@@ -40,6 +40,7 @@ namespace Bilem.Agent.Core.Cloud
         private ClientWebSocket _ws;
         private string _sentBases = "";
         private DateTime _lastPong;
+        private volatile bool _welcomed;
 
         public CloudState State { get; private set; } = CloudState.Off;
         public DateTime? LastContact { get; private set; }
@@ -96,10 +97,10 @@ namespace Bilem.Agent.Core.Cloud
                 }
                 if (State == CloudState.KeyRevoked) State = CloudState.Connecting;
                 int? pause = null;
+                _welcomed = false;
                 try
                 {
                     pause = await Session(store, key, ct).ConfigureAwait(false);
-                    attempt = 0;
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested) { return; }
                 catch (Exception e)
@@ -109,6 +110,8 @@ namespace Bilem.Agent.Core.Cloud
                     State = CloudState.NoConnection;
                 }
                 if (State == CloudState.KeyRevoked) continue;
+                // Сессия дошла до welcome — связь была: после обрыва (деплой облака, сеть) переподключаемся сразу, без накопленной паузы
+                if (_welcomed) attempt = 0;
                 var wait = pause ?? (attempt < Backoff.Length ? Backoff[attempt] : BackoffLongSec);
                 attempt++;
                 await Delay(wait + Jitter(wait), ct).ConfigureAwait(false);
@@ -304,6 +307,7 @@ namespace Bilem.Agent.Core.Cloud
                     ApplyStates(msg["bases"] as JArray);
                     if (State != CloudState.Working) Log.Ok(Txt.F("CloudWorkingLog", ActiveCount()));
                     State = CloudState.Working;
+                    _welcomed = true;
                     LastError = null;
                     break;
                 case "base_state":

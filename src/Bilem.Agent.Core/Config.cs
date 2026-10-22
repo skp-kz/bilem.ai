@@ -122,7 +122,12 @@ namespace Bilem.Agent.Core
         {
             var f = Paths.ConfigFile;
             if (!File.Exists(f)) return new AgentConfig();
-            return JsonConvert.DeserializeObject<AgentConfig>(File.ReadAllText(f, Encoding.UTF8), Js) ?? new AgentConfig();
+            // Окно и служба пишут файл через File.Replace — на этот миг чтение может упасть; повторяем
+            for (var i = 0; ; i++)
+            {
+                try { return JsonConvert.DeserializeObject<AgentConfig>(File.ReadAllText(f, Encoding.UTF8), Js) ?? new AgentConfig(); }
+                catch (IOException) when (i < 10 && File.Exists(f)) { System.Threading.Thread.Sleep(50); }
+            }
         }
 
         public void Save()

@@ -205,6 +205,22 @@ namespace Bilem.Agent.Core.Tests
         }
 
         [Fact]
+        public void Drop_AfterWorking_ReconnectsWithoutLongPause()
+        {
+            // Облако рвёт рабочее соединение (деплой Worker'а) — раз за разом; длинная пауза (BackoffLongSec) не должна копиться
+            CloudChannel.Backoff = new[] { 0 };
+            Cloud(true);
+            Connect("alpha");
+            Until(() => _server.Cloud.State == CloudState.Working, "канал открыт");
+            for (var i = 0; i < 3; i++)
+            {
+                var hellos = _stub.Hellos;
+                _stub.Drop();
+                Until(() => _stub.Hellos > hellos && _stub.AgentConnected && _server.Cloud.State == CloudState.Working, "переподключение после обрыва №" + (i + 1), 15000);
+            }
+        }
+
+        [Fact]
         public void StaleKey_ForgottenOnConnect_NewKeyIssued()
         {
             // Ключ, которого облако не знает (отозван, другое облако): заявка — без него, обмен выдаёт новый
