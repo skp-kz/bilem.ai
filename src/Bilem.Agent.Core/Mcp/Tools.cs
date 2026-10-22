@@ -51,9 +51,6 @@ namespace Bilem.Agent.Core.Mcp
     {
         public const int DefaultMaxRows = 200;
 
-        /// <summary>Выписка старше стольких рабочих дней — предупреждение о давности (вкладка «MCP»).</summary>
-        public static int StaleWorkdays { get; set; } = 3;
-
         public static List<McpTool> Create(Func<IReadOnlyList<BaseRuntime>> bases, int maxRows = DefaultMaxRows)
         {
             var tools = CreateRaw(bases);
@@ -266,7 +263,7 @@ namespace Bilem.Agent.Core.Mcp
                 Top = Math.Min(200, Math.Max(1, (int?)a["top"] ?? 20)),
             };
             var r = Debts.Load(b, q);
-            return Debts.ToJson(b, q, r, Freshness.AsOf(b, StaleWorkdays));
+            return Debts.ToJson(b, q, r, Freshness.AsOf(b));
         }
 
         private static JObject MergeDebt(List<JObject> rows, DebtKind kind)
@@ -608,7 +605,7 @@ namespace Bilem.Agent.Core.Mcp
                 ["currency"] = "KZT",
                 ["counterparty_half"] = (b.Config.Print?.ActMirror ?? false) ? "mirror" : "empty",
                 ["note"] = Txt.S("ToolActNote"),
-                ["as_of"] = Freshness.AsOf(b, StaleWorkdays),
+                ["as_of"] = Freshness.AsOf(b),
             }.Also(o =>
             {
                 if (o["contracts"]?.Type == JTokenType.Null) o.Remove("contracts");
@@ -749,7 +746,7 @@ namespace Bilem.Agent.Core.Mcp
                 });
             }
             // «Данные на …» — дата последней выписки по каждому счёту и последнего документа; модель обязана её назвать
-            return new JObject { ["base"] = b.Config.Slug, ["date"] = date, ["currency"] = "KZT", ["organizations"] = list, ["as_of"] = Freshness.AsOf(b, StaleWorkdays) };
+            return new JObject { ["base"] = b.Config.Slug, ["date"] = date, ["currency"] = "KZT", ["organizations"] = list, ["as_of"] = Freshness.AsOf(b) };
         }
 
         private static JObject MergeCash(List<JObject> rows, string date)

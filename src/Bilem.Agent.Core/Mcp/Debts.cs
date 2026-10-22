@@ -423,9 +423,6 @@ namespace Bilem.Agent.Core.Mcp
             if (q.MinDays > 0) res["min_days"] = q.MinDays;
             if (q.IssuedBefore.HasValue) res["issued_before"] = D(q.IssuedBefore.Value);
             if (r.All.Count > r.Shown.Count) res["more"] = Txt.F("ToolTruncated", r.Shown.Count, r.All.Count);
-            // Давность выписок — первым предупреждением: должник мог уже заплатить, а выписка не загружена
-            var warn = (asOf?["warnings"] as JArray)?.Select(w => (string)w).Where(w => w != null).ToList() ?? new List<string>();
-            if (warn.Count > 0) res["warning"] = Txt.S(rec ? "DebtStaleReceivables" : "DebtStalePayables") + " " + string.Join(" ", warn);
             return res;
         }
     }

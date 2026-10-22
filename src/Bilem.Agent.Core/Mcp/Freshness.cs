@@ -27,25 +27,24 @@ namespace Bilem.Agent.Core.Mcp
             "Document_ПоступлениеТоваровУслуг", "Document_ЧекККМ", "Document_ОтчетОРозничныхПродажах",
         }).ToArray();
 
-        public sealed class Account { public string Key; public string Org; public string Bank; public string Iik; public DateTime? Last; public bool Stale; }
+        public sealed class Account { public string Key; public string Org; public string Bank; public string Iik; public DateTime? Last; }
 
         public sealed class Info
         {
             public List<Account> Accounts = new List<Account>();
             public DateTime? LastDocument;
             public DateTime? ClosedMonth;
-            public List<string> Warnings = new List<string>();
         }
 
         private static readonly Dictionary<string, (DateTime At, Info Value)> Cache = new Dictionary<string, (DateTime, Info)>();
 
         /// <summary>Блок as_of для ответа инструмента; кэш — минута на базу.</summary>
-        public static JObject AsOf(BaseRuntime b, int staleWorkdays)
+        public static JObject AsOf(BaseRuntime b)
         {
             Info info;
             lock (Cache)
                 if (Cache.TryGetValue(b.Config.Slug, out var c) && DateTime.UtcNow - c.At < TimeSpan.FromMinutes(1)) return ToJson(c.Value);
-            info = Load(b, staleWorkdays, DateTime.Today);
+            info = Load(b, DateTime.Today);
             lock (Cache) Cache[b.Config.Slug] = (DateTime.UtcNow, info);
             return ToJson(info);
         }
@@ -59,11 +58,10 @@ namespace Bilem.Agent.Core.Mcp
                 ["last_document"] = D(i.LastDocument),
                 ["bank_statements"] = new JArray(i.Accounts.Select(a => new JObject
                 {
-                    ["account"] = Label(a), ["organization"] = a.Org, ["last_statement"] = D(a.Last), ["stale"] = a.Stale,
+                    ["account"] = Label(a), ["organization"] = a.Org, ["last_statement"] = D(a.Last),
                 })),
             };
             o["closed_month"] = i.ClosedMonth.HasValue ? (JToken)i.ClosedMonth.Value.ToString("yyyy-MM", ci) : JValue.CreateNull();
-            if (i.Warnings.Count > 0) o["warnings"] = new JArray(i.Warnings);
             o["say"] = Say(i);
             return o;
         }
@@ -84,7 +82,7 @@ namespace Bilem.Agent.Core.Mcp
             return parts.Count == 0 ? main : main + " " + Txt.F("AsOfSayBanks", string.Join(", ", parts));
         }
 
-        internal static Info Load(BaseRuntime b, int staleWorkdays, DateTime today)
+        internal static Info Load(BaseRuntime b, DateTime today)
         {
             var od = b.OData;
             var info = new Info();
@@ -137,26 +135,8 @@ namespace Bilem.Agent.Core.Mcp
             var cm = Safe(() => od.Rows("Document_ЗакрытиеМесяца", new Dictionary<string, string> { ["$select"] = "Date", ["$filter"] = "Posted eq true", ["$orderby"] = "Date desc", ["$top"] = "1" })).FirstOrDefault();
             if (cm != null) { var d = (DateTime)cm["Date"]; info.ClosedMonth = new DateTime(d.Year, d.Month, 1); }
 
-            // Давность выписок: старше N рабочих дней — предупреждение (без счёта — тоже)
-            foreach (var a in info.Accounts)
-            {
-                if (!a.Last.HasValue) { a.Stale = true; info.Warnings.Add(Txt.F("AsOfNoStatements", Label(a))); continue; }
-                if (WorkdaysBetween(a.Last.Value, today) > staleWorkdays)
-                {
-                    a.Stale = true;
-                    info.Warnings.Add(Txt.F("AsOfStale", Label(a), a.Last.Value));
-                }
-            }
+            // Предупреждения «выписка устарела» убраны (Слава 22.10): агент только называет даты, «по состоянию на …» — в скилле
             return info;
-        }
-
-        /// <summary>Рабочие дни (пн–пт) после from до to включительно.</summary>
-        internal static int WorkdaysBetween(DateTime from, DateTime to)
-        {
-            var n = 0;
-            for (var d = from.Date.AddDays(1); d <= to.Date; d = d.AddDays(1))
-                if (d.DayOfWeek != DayOfWeek.Saturday && d.DayOfWeek != DayOfWeek.Sunday) n++;
-            return n;
         }
 
         /// <summary>Чего нет в составе OData или выключено на «Доступе» — пропускаем, свежесть не ломает ответ.</summary>

@@ -34,7 +34,6 @@ namespace Bilem.Agent.Core.Mcp
             Port = cfg.Port;
             _token = cfg.GetOrCreateToken();
             Reload(cfg);
-            Tools.StaleWorkdays = cfg.StaleWorkdays;
             var proto = new McpProtocol(Tools.Create(Current, cfg.MaxRows), Version);
             // Почта — в списке инструментов, только когда SMTP-клиент включён (тумблер на вкладке «SMTP» / в трее)
             proto.Visible = t => t.Name != "send_document" || _smtpOn;
@@ -76,7 +75,6 @@ namespace Bilem.Agent.Core.Mcp
         {
             try { _cfgStamp = System.IO.File.GetLastWriteTimeUtc(Paths.ConfigFile); } catch { }
             cfg = cfg ?? AgentConfig.Load();
-            Tools.StaleWorkdays = cfg.StaleWorkdays;
             var list = new List<BaseRuntime>();
             foreach (var b in cfg.Bases)
             {

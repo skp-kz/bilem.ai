@@ -43,11 +43,9 @@
   <data name="ApacheVcFailed" xml:space="preserve"><value>Visual C++ не установился (код {0}).</value></data>
   <data name="ApacheVcInstalled" xml:space="preserve"><value>Visual C++ 2015–2022 установлен</value></data>
   <data name="ApacheVcInstalling" xml:space="preserve"><value>Visual C++ 2015–2022 не найден — ставлю из комплекта Bilem Agent…</value></data>
-  <data name="AsOfNoStatements" xml:space="preserve"><value>По счёту {0} проведённых выписок в 1С нет — остаток может быть неточен.</value></data>
   <data name="AsOfSay" xml:space="preserve"><value>Данные 1С на {0:dd.MM.yyyy}</value></data>
   <data name="AsOfSayBanks" xml:space="preserve"><value>(выписка {0})</value></data>
   <data name="AsOfSayUnknown" xml:space="preserve"><value>Дата данных 1С не определена</value></data>
-  <data name="AsOfStale" xml:space="preserve"><value>Выписки по {0} не загружены с {1:dd.MM.yyyy} — остаток и должники могут быть неточны.</value></data>
   <data name="AuditLinePrint" xml:space="preserve"><value>{0} — напечатано, запросил {1}</value></data>
   <data name="AuditLineSend" xml:space="preserve"><value>{0} — отправлено на {1}, запросил {2}</value></data>
   <data name="AuditLineSendFailed" xml:space="preserve"><value>{0} — не отправлено на {1} ({3}), запросил {2}</value></data>
@@ -131,8 +129,6 @@
   <data name="DebtNoAccount" xml:space="preserve"><value>В плане счетов нет счёта {0} — посчитать задолженность нельзя.</value></data>
   <data name="DebtNotePayables" xml:space="preserve"><value>Долг = сальдо 3310 по контрагенту и договору минус аванс выданный 1710; возраст — от самых старых неоплаченных поступлений (FIFO). Документы — самые старые неоплаченные, до 10 на контрагента.</value></data>
   <data name="DebtNoteReceivables" xml:space="preserve"><value>Долг = сальдо 1210 по контрагенту и договору минус аванс 3510; возраст — от самых старых непогашенных реализаций (FIFO). Документы — самые старые непогашенные, до 10 на контрагента.</value></data>
-  <data name="DebtStalePayables" xml:space="preserve"><value>Выписки загружены не по всем счетам — мы могли уже заплатить.</value></data>
-  <data name="DebtStaleReceivables" xml:space="preserve"><value>Выписки загружены не по всем счетам — должник мог уже заплатить.</value></data>
   <data name="DiagAdmin" xml:space="preserve"><value>Права администратора Windows</value></data>
   <data name="DiagAnonymousPool" xml:space="preserve"><value>Вход публикации от имени пула</value></data>
   <data name="DiagApachePort" xml:space="preserve"><value>Свой Apache слушает</value></data>
@@ -273,7 +269,7 @@
   <data name="MailTestSubject" xml:space="preserve"><value>Bilem Agent — проверка почты</value></data>
   <data name="McpBaseSkipped" xml:space="preserve"><value>MCP: база «{0}» пропущена — {1}</value></data>
   <data name="McpBases" xml:space="preserve"><value>MCP: баз подключено {0} ({1})</value></data>
-  <data name="McpInstructions" xml:space="preserve"><value>Bilem отвечает только по данным 1С, а учёт в 1С отстаёт от жизни: выписки разносят раз в несколько дней. Когда ответ инструмента содержит as_of, ОБЯЗАТЕЛЬНО назовите дату данных — например «Данные 1С на 15.10 (выписка Kaspi — 15.10, Halyk — 12.10)» (готовая фраза — в as_of.say) — и передайте предупреждения из as_of.warnings. Не пишите «по данным банка» и ничего не досчитывайте. Почта (send_document) уходит сразу: перед отправкой предложите пользователю показать документ — вызовите print_* и покажите PDF; отправляйте, когда пользователь согласен или явно просит отправить сразу.</value></data>
+  <data name="McpInstructions" xml:space="preserve"><value>Bilem отвечает только по данным 1С, а учёт в 1С отстаёт от жизни: выписки разносят раз в несколько дней. Когда ответ инструмента содержит as_of, ОБЯЗАТЕЛЬНО назовите дату данных — например «Данные 1С на 15.10 (выписка Kaspi — 15.10, Halyk — 12.10)» (готовая фраза — в as_of.say). Не пишите «по данным банка» и ничего не досчитывайте. Почта (send_document) уходит сразу: перед отправкой предложите пользователю показать документ — вызовите print_* и покажите PDF; отправляйте, когда пользователь согласен или явно просит отправить сразу.</value></data>
   <data name="McpInternalError" xml:space="preserve"><value>MCP: внутренняя ошибка {0}: {1}</value></data>
   <data name="McpListChanged" xml:space="preserve"><value>Набор инструментов MCP изменился — уведомление клиентам (открытых потоков: {0})</value></data>
   <data name="McpPortBusy" xml:space="preserve"><value>Не удалось занять порт MCP {0}: {1}</value></data>
@@ -413,7 +409,7 @@
   <data name="ToolCashDescExtra" xml:space="preserve"><value> В ответе — as_of: дата последней проведённой банковской выписки по каждому счёту, последний проведённый документ и предупреждения о давности; дату данных обязательно назовите пользователю (as_of.say).</value></data>
   <data name="ToolCashParamDate" xml:space="preserve"><value>Дата ГГГГ-ММ-ДД, остаток на конец этого дня. По умолчанию — сегодня.</value></data>
   <data name="ToolCashTitle" xml:space="preserve"><value>Остаток денег</value></data>
-  <data name="ToolDebtDescCommon" xml:space="preserve"><value> Возраст долга — FIFO: оплаты закрывают самые старые документы (aging_method). Итог (osv.balance) совпадает с оборотно-сальдовой ведомостью по счёту на ту же дату. Только данные 1С: назови дату из as_of и, если выписки устарели, предупреди, что контрагент мог уже заплатить.</value></data>
+  <data name="ToolDebtDescCommon" xml:space="preserve"><value> Возраст долга — FIFO: оплаты закрывают самые старые документы (aging_method). Итог (osv.balance) совпадает с оборотно-сальдовой ведомостью по счёту на ту же дату. Только данные 1С: назови дату из as_of.</value></data>
   <data name="ToolDebtParamAsOf" xml:space="preserve"><value>Дата долга, YYYY-MM-DD; по умолчанию — сегодня.</value></data>
   <data name="ToolDebtParamCounterparty" xml:space="preserve"><value>Один контрагент: БИН или часть названия.</value></data>
   <data name="ToolDebtParamIssuedBefore" xml:space="preserve"><value>Только долг по документам, выставленным раньше этой даты (YYYY-MM-DD). «Не оплатили с прошлого месяца» — первое число текущего месяца.</value></data>
@@ -747,8 +743,6 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiSmtpTrustedNote" xml:space="preserve"><value>Доверенности уходят только на эти адреса (руководитель, бухгалтер). Счета и акты сверки — на любой e-mail: адрес назовёт ИИ, иначе — e-mail контрагента из 1С.</value></data>
   <data name="UiSmtpVars" xml:space="preserve"><value>Подстановки: {номер} {дата} {сумма} {организация} {покупатель} {приписка} {подпись}</value></data>
   <data name="UiSmtpWho" xml:space="preserve"><value>Кому можно отправлять</value></data>
-  <data name="UiStaleDays" xml:space="preserve"><value>Выписка устарела через</value></data>
-  <data name="UiStaleDaysNote" xml:space="preserve"><value>рабочих дня — ИИ предупредит, что остаток и должники могут быть неточны</value></data>
   <data name="UiStateRunning" xml:space="preserve"><value>MCP · бесплатно · порт {0} · баз: {1}</value></data>
   <data name="UiStateRunningSvc" xml:space="preserve"><value>MCP · бесплатно · порт {0} · баз: {1}</value></data>
   <data name="UiStateStartFailed" xml:space="preserve"><value>Ошибка запуска MCP: {0} — нажмите «Запустить» на вкладке «MCP»</value></data>

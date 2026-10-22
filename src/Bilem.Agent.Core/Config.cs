@@ -86,8 +86,6 @@ namespace Bilem.Agent.Core
         public int Port { get; set; } = 8796;
         /// <summary>Защитный максимум строк в ответе любого инструмента MCP; больше — обрезается с пометкой.</summary>
         public int MaxRows { get; set; } = 200;
-        /// <summary>Выписка по счёту старше стольких рабочих дней — предупреждение «остаток и должники могут быть неточны».</summary>
-        public int StaleWorkdays { get; set; } = 3;
         /// <summary>«Сервис» → «Обновления»: получать бета-версии (пререлизы GitHub).</summary>
         public bool UpdateBeta { get; set; }
         /// <summary>Токен MCP, DPAPI LocalMachine.</summary>

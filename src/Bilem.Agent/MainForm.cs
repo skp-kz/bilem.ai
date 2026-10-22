@@ -219,7 +219,7 @@ namespace Bilem.Agent
             _localTable = t;
             root.Controls.Add(_localBox, 0, 0);
             // Правка Славы 21.10: сверху бесплатно, снизу платно — плашки в заголовках блоков
-            Badge(_localBox, Txt.S("UiBadgeFree"), Color.FromArgb(31, 157, 85));
+            Badge(_localBox, Txt.S("UiBadgeFree"));
             t.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             t.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             t.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -256,27 +256,17 @@ namespace Bilem.Agent
             cloudBox.Resize += (s, e) => _cloud.FitWidth(cloudBox.ClientSize.Width - Px(24));
             _cloud.ModeChanged += () => { ApplyCloudMode(); PollService(); };
             cloudBox.Controls.Add(_cloud);
-            Badge(cloudBox, Txt.S("UiBadgeCommercial"), Color.FromArgb(184, 134, 11));
+            Badge(cloudBox, Txt.S("UiBadgeCommercial"));
             root.Controls.Add(cloudBox, 0, 1);
-            r = 0;
-            t = root;
-
-            // «Данные на …»: выписка старше N рабочих дней — предупреждение в ответах с цифрами
-            var staleRow = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 4, 0, 0) };
-            staleRow.Controls.Add(new Label { Text = Txt.S("UiStaleDays"), AutoSize = true, Margin = new Padding(0, 6, 4, 0) });
-            var stale = new NumericUpDown { Minimum = 1, Maximum = 30, Width = 50, Value = Math.Max(1, Math.Min(30, AgentConfig.Load().StaleWorkdays)) };
-            stale.ValueChanged += (s, e) => { var c = AgentConfig.Load(); c.StaleWorkdays = (int)stale.Value; c.Save(); Bilem.Agent.Core.Mcp.Tools.StaleWorkdays = c.StaleWorkdays; };
-            staleRow.Controls.Add(stale);
-            staleRow.Controls.Add(new Label { Text = Txt.S("UiStaleDaysNote"), AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(4, 6, 0, 0) });
-            t.Controls.Add(staleRow, 0, 2);
+            // «Выписка устарела через N дней» убрано (Слава 22.10): «по состоянию на …» — в скилле, агент отдаёт только даты
             p.Controls.Add(root);
             return p;
         }
 
-        /// <summary>Плашка справа в заголовке блока: «Бесплатно» (зелёная) / «Коммерческая лицензия» (охра).</summary>
-        private void Badge(GroupBox box, string text, Color back)
+        /// <summary>Подпись справа в заголовке блока: «Бесплатно» / «Коммерческая лицензия» — обычным текстом, без цвета (Слава 22.10).</summary>
+        private void Badge(GroupBox box, string text)
         {
-            var b = new Label { Text = text, AutoSize = true, BackColor = back, ForeColor = Color.White, Padding = new Padding(6, 1, 6, 1) };
+            var b = new Label { Text = text, AutoSize = true, Padding = new Padding(6, 0, 6, 0) };
             box.Controls.Add(b);
             b.BringToFront();
             void Place() => b.Location = new Point(box.Width - b.Width - Px(12), 0);
