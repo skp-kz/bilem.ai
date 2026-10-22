@@ -2,6 +2,28 @@
 
 Формат — [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/). Раздел версии — заметки к релизу на GitHub.
 
+## [0.3.0] — 2026-10-22
+
+**Public Beta.** Первая публичная бета Bilem Agent — та же сборка, что 0.3.0-beta.17, выпущена обычным релизом. *First public beta of Bilem Agent — the same build as 0.3.0-beta.17, published as a regular release.*
+
+**Что умеет**
+- Подключает базы 1С (Бухгалтерия для Казахстана и др.) к ИИ — ChatGPT, Claude, Cursor — через MCP: только чтение под отдельным пользователем `bilem`, публикация OData только для этого компьютера, «Доступ» по разделам, персональные данные закрыты.
+- Бесплатно и с открытым кодом (MIT) — локальный MCP на этом компьютере; по подписке — Bilem Cloud (ChatGPT и claude.ai без своего сервера, кабинет app.bilem.ai).
+- Остатки денег, «кто нам должен» и «кому должны мы», печатные формы (счёт на оплату, доверенность Д-1, акт сверки) в PDF и отправка по почте, журнал аудита.
+- Служба Windows: MCP работает сам после перезагрузки; окно в трее без прав администратора; обновления кнопкой с проверкой подписи.
+
+**Это бета.** Возможны ошибки и изменения; перед работой на боевой базе проверьте на копии. Вопросы и ошибки — [bilem.ai/en/support](https://bilem.ai/en/support).
+
+**What it does**
+- Connects 1C databases to AI assistants (ChatGPT, Claude, Cursor) over MCP: read-only `bilem` user, OData published for this computer only, per-section access, personal data closed.
+- Free and open source (MIT) as a local MCP server; Bilem Cloud by subscription (ChatGPT and claude.ai without your own server, dashboard at app.bilem.ai).
+- Cash balances, receivables and payables, print forms (invoice, power of attorney, reconciliation statement) as PDF and by e-mail, audit log.
+- Windows service: MCP keeps running after reboot; tray window without admin rights; one-click signed updates.
+
+**This is a beta.** Expect bugs and changes; try it on a copy before a production database. Questions and bug reports — [bilem.ai/en/support](https://bilem.ai/en/support).
+
+Установка — `BilemAgent-0.3.0.msi`, поверх беты обновляется. Проверка: `SHA256SUMS` и подпись `SHA256SUMS.sig` (Ed25519). *Install `BilemAgent-0.3.0.msi`; it upgrades over any beta.*
+
 ## [0.3.0-beta.17] — 2026-10-22
 
 - **Bilem Cloud: после обрыва канала агент переподключается сразу**, а не через 5 минут. Раньше счётчик неудачных попыток не сбрасывался, если рабочее соединение обрывалось (например, при обновлении облака). Попытки копились ещё со времени, когда облако было недоступно, и каждый следующий обрыв давал паузу 5 минут. Всё это время ChatGPT и Claude видели «нет связи» и не видели инструментов 1С. Теперь соединение, дошедшее до `welcome`, сбрасывает паузы: первая попытка — через 1–2 с.
