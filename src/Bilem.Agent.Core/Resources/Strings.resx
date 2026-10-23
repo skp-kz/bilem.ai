@@ -954,8 +954,6 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiCloudCabinet" xml:space="preserve"><value>Кабинет — app.bilem.ai</value></data>
   <data name="UiCloudNeedService" xml:space="preserve"><value>Bilem Cloud работает через службу Bilem Agent — она не установлена (переустановите агент).</value></data>
   <data name="UiCloudUrl" xml:space="preserve"><value>Облако:</value></data>
-  <data name="UiCloudLogin" xml:space="preserve"><value>Логин:</value></data>
-  <data name="UiCloudLoginNote" xml:space="preserve"><value>e-mail, с которым входите в кабинет</value></data>
   <data name="UiCloudColBase" xml:space="preserve"><value>База</value></data>
   <data name="UiCloudColOrg" xml:space="preserve"><value>Организация в облаке</value></data>
   <data name="UiCloudColState" xml:space="preserve"><value>Состояние</value></data>
@@ -983,13 +981,16 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiCloudDisconnectConfirm" xml:space="preserve"><value>Отключить базу «{0}» от Bilem Cloud? Вопросы из облака к ней перестанут работать.</value></data>
   <data name="UiCloudConnectTitle" xml:space="preserve"><value>Подключить базу «{0}» к Bilem Cloud</value></data>
   <data name="UiCloudConnectBase" xml:space="preserve"><value>База: {0} · компьютер: {1}</value></data>
-  <data name="UiCloudConnectLogin" xml:space="preserve"><value>Логин: {0}</value></data>
-  <data name="UiCloudStep1" xml:space="preserve"><value>1. Открыли кабинет — войдите и подтвердите подключение.</value></data>
-  <data name="UiCloudReopen" xml:space="preserve"><value>Открыть ещё раз</value></data>
-  <data name="UiCloudStep2" xml:space="preserve"><value>2. Вставьте код из кабинета:</value></data>
+  <data name="UiCloudReqCode" xml:space="preserve"><value>Код заявки:</value></data>
+  <data name="UiCloudReqValid" xml:space="preserve"><value>Действует 10 минут (до {0}), один раз.</value></data>
+  <data name="UiCloudReqExpired" xml:space="preserve"><value>Код заявки истёк — получите новый.</value></data>
+  <data name="UiCloudReqHint" xml:space="preserve"><value>Введите код в кабинете Bilem (app.bilem.ai → 1С-Базы → «Подключить базу по коду»).</value></data>
+  <data name="UiCloudOpenBrowser" xml:space="preserve"><value>Открыть в браузере</value></data>
+  <data name="UiCloudNewCode" xml:space="preserve"><value>Получить новый код</value></data>
+  <data name="UiCloudReqCopied" xml:space="preserve"><value>Скопировано</value></data>
+  <data name="UiCloudStep2" xml:space="preserve"><value>Код из кабинета (XXXX-XXXX):</value></data>
   <data name="UiCloudConnectGo" xml:space="preserve"><value>Подключить</value></data>
   <data name="UiCloudRequesting" xml:space="preserve"><value>Создаю заявку в облаке…</value></data>
-  <data name="UiCloudOpened" xml:space="preserve"><value>Кабинет открыт в браузере. Код действует до {0}, один раз.</value></data>
   <data name="UiCloudExchanging" xml:space="preserve"><value>Проверяю код…</value></data>
   <data name="UiCloudConnectedMsg" xml:space="preserve"><value>База «{0}» подключена к Bilem Cloud (организация «{1}»).</value></data>
   <data name="UiStateCloud" xml:space="preserve"><value>Bilem Cloud · коммерческая лицензия · баз в облаке: {0} из {1}</value></data>

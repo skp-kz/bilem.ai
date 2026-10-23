@@ -61,14 +61,12 @@ namespace Bilem.Agent.Core
         [JsonIgnore] public string DisplayName => string.IsNullOrEmpty(Synonym) ? Configuration : Synonym;
     }
 
-    /// <summary>Режим Bilem Cloud: галочка на вкладке MCP, адрес облака (для стенда — заглушка на 127.0.0.1), подсказка логина.</summary>
+    /// <summary>Режим Bilem Cloud: галочка на вкладке MCP, адрес облака (для стенда — заглушка на 127.0.0.1).</summary>
     public sealed class CloudSettings
     {
         public const string DefaultUrl = "https://mcp.bilem.ai";
         public bool Enabled { get; set; }
         public string Url { get; set; } = DefaultUrl;
-        /// <summary>E-mail для нового подключения (подсказка кабинету); у каждой базы свой — в привязке.</summary>
-        public string LoginHint { get; set; }
         [JsonIgnore] public string EffectiveUrl => string.IsNullOrWhiteSpace(Url) ? DefaultUrl : Url.Trim().TrimEnd('/');
     }
 
