@@ -16,20 +16,13 @@ namespace Bilem.Agent.Core.Cloud
         public CloudException(string code, int http, string message, string hint = null) : base(message, hint) { Code = code; Http = http; Short = code; }
     }
 
-    public sealed class ConnectRequest
-    {
-        public string RequestId, ConnectUrl;
-        public DateTime ExpiresAt;
-        public string BaseId;
-    }
-
-    public sealed class ExchangeResult
+    public sealed class ConnectResult
     {
         public string BaseId, OrgId, OrgName, OrgUrl, Login, AgentKey;
     }
 
     /// <summary>
-    /// HTTP-часть протокола канала (stand/cloud-channel-protocol): заявка на подключение базы, обмен кода, отключение базы.
+    /// HTTP-часть протокола канала (stand/cloud-channel-protocol): подключение базы кодом из кабинета (решение 0017), отключение базы.
     /// Только https; http — только к 127.0.0.1 (заглушка облака на стенде и в тестах). Прокси — системный.
     /// </summary>
     public static class CloudApi
@@ -54,12 +47,16 @@ namespace Bilem.Agent.Core.Cloud
             return b.Uri;
         }
 
-        /// <summary>1. Заявка: агент → облако. Организации — наименование и БИН/ИИН (решение Славы 20.10).</summary>
-        public static ConnectRequest CreateRequest(AgentConfig cfg, CloudStore store, BaseConfig b, JArray organizations)
+        /// <summary>
+        /// Подключение базы кодом из кабинета (решение 0017, stand #77): код + сведения о базе → привязка к кабинету и ключ компьютера,
+        /// если его ещё не было. Организации — наименование и БИН/ИИН (решение Славы 20.10). Дефисы, пробелы и регистр кода не важны.
+        /// </summary>
+        public static ConnectResult Connect(AgentConfig cfg, CloudStore store, BaseConfig b, JArray organizations, string code)
         {
             var baseId = store.BaseIds.TryGetValue(b.Slug, out var id) ? id : null;
             var body = new JObject
             {
+                ["code"] = NormalizeCode(code),
                 ["agent_id"] = store.AgentId,
                 ["agent_version"] = Mcp.McpHost.Version,
                 ["machine"] = Environment.MachineName,
@@ -71,25 +68,11 @@ namespace Bilem.Agent.Core.Cloud
                     ["organizations"] = organizations ?? new JArray(),
                 },
             };
-            var r = Send(cfg, "POST", ApiPath + "/connect-requests", body, store.Key());
-            return new ConnectRequest
-            {
-                RequestId = (string)r["request_id"],
-                ConnectUrl = (string)r["connect_url"],
-                ExpiresAt = (DateTime?)r["expires_at"] ?? DateTime.Now.AddMinutes(10),
-                BaseId = baseId,
-            };
-        }
-
-        /// <summary>3. Обмен кода: дефисы, пробелы и регистр не важны.</summary>
-        public static ExchangeResult Exchange(AgentConfig cfg, CloudStore store, string requestId, string code)
-        {
-            var r = Send(cfg, "POST", ApiPath + "/connect-requests/" + Uri.EscapeDataString(requestId) + "/exchange",
-                new JObject { ["agent_id"] = store.AgentId, ["code"] = NormalizeCode(code) }, store.Key());
-            return new ExchangeResult
+            var r = Send(cfg, "POST", ApiPath + "/connect", body, store.Key());
+            return new ConnectResult
             {
                 BaseId = (string)r["base_id"],
-                OrgId = (string)r["org"]?["id"],
+                OrgId = (string)r["org"]?["id"] ?? (string)r["org"]?["slug"],
                 OrgName = (string)r["org"]?["name"],
                 OrgUrl = (string)r["org"]?["mcp_url"],
                 Login = (string)r["login"],
@@ -152,6 +135,9 @@ namespace Bilem.Agent.Core.Cloud
                 case "code_expired": return Txt.S("CloudCodeExpired");
                 case "code_used": return Txt.S("CloudCodeUsed");
                 case "too_many_attempts": return Txt.S("CloudTooManyAttempts");
+                // Лимит и конфликт облако объясняет точнее (тариф, какой компьютер) — его текст, наш — если пусто
+                case "limit": return string.IsNullOrWhiteSpace(cloudText) ? Txt.S("CloudLimit") : cloudText;
+                case "base_conflict": return string.IsNullOrWhiteSpace(cloudText) ? Txt.S("CloudBaseConflict") : cloudText;
                 case "key_revoked": return Txt.S("CloudKeyRevoked");
                 default: return string.IsNullOrWhiteSpace(cloudText) ? Txt.F("CloudError", code) : cloudText;
             }

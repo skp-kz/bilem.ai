@@ -88,9 +88,8 @@ namespace Bilem.Agent.Core.Tests
 
         private CloudBinding Connect(string slug)
         {
-            var req = CloudConnect.Begin(slug);
-            Assert.StartsWith(_stub.Url + "/connect?r=", req.ConnectUrl);
-            return CloudConnect.Finish(slug, req, _stub.CodeOf(req.RequestId).Insert(4, "-").ToLowerInvariant());
+            // Решение 0017: код рождается в «кабинете», агент вводит его — дефисы и регистр не важны
+            return CloudConnect.Connect(slug, _stub.IssueCode().Insert(4, "-").ToLowerInvariant());
         }
 
         private static JObject ListBases() => new JObject
@@ -155,22 +154,45 @@ namespace Bilem.Agent.Core.Tests
         [Fact]
         public void Codes_Invalid_Expired_Used_TooMany()
         {
-            var req = CloudConnect.Begin("alpha");
-            var ex = Assert.Throws<CloudException>(() => CloudConnect.Finish("alpha", req, "ZZZZ-ZZZZ"));
+            var ex = Assert.Throws<CloudException>(() => CloudConnect.Connect("alpha", "ZZZZ-ZZZZ"));
             Assert.Equal("code_invalid", ex.Code);
-            CloudConnect.Finish("alpha", req, _stub.CodeOf(req.RequestId));
-            ex = Assert.Throws<CloudException>(() => CloudConnect.Finish("alpha", req, _stub.CodeOf(req.RequestId)));
+            Assert.Equal(Txt.S("CloudCodeInvalid"), ex.Message);
+            Assert.Null(CloudStore.Load().Binding("alpha"));
+            var code = _stub.IssueCode();
+            CloudConnect.Connect("alpha", code);
+            ex = Assert.Throws<CloudException>(() => CloudConnect.Connect("beta", code));
             Assert.Equal("code_used", ex.Code);
 
-            var old = CloudConnect.Begin("beta");
-            _stub.Expire(old.RequestId);
-            ex = Assert.Throws<CloudException>(() => CloudConnect.Finish("beta", old, _stub.CodeOf(old.RequestId)));
+            var old = _stub.IssueCode();
+            _stub.Expire(old);
+            ex = Assert.Throws<CloudException>(() => CloudConnect.Connect("beta", old));
             Assert.Equal("code_expired", ex.Code);
 
-            var many = CloudConnect.Begin("beta");
-            for (var i = 0; i < 4; i++) Assert.Equal("code_invalid", Assert.Throws<CloudException>(() => CloudConnect.Finish("beta", many, "WRONG000")).Code);
-            Assert.Equal("too_many_attempts", Assert.Throws<CloudException>(() => CloudConnect.Finish("beta", many, "WRONG000")).Code);
-            Assert.Equal("too_many_attempts", Assert.Throws<CloudException>(() => CloudConnect.Finish("beta", many, _stub.CodeOf(many.RequestId))).Code);
+            // 5 неверных кодов с компьютера (один уже был) — дальше отказ даже с верным кодом
+            for (var i = 0; i < 4; i++) Assert.Equal("code_invalid", Assert.Throws<CloudException>(() => CloudConnect.Connect("beta", "WRONG000")).Code);
+            Assert.Equal("too_many_attempts", Assert.Throws<CloudException>(() => CloudConnect.Connect("beta", _stub.IssueCode())).Code);
+            Assert.Null(CloudStore.Load().Binding("beta"));
+        }
+
+        [Fact]
+        public void Limit_SameBaseAgainFree_OtherComputerConflict()
+        {
+            _stub.MaxBases = 1;
+            var a = Connect("alpha");
+            var ex = Assert.Throws<CloudException>(() => Connect("beta"));
+            Assert.Equal("limit", ex.Code);
+            Assert.Equal(402, ex.Http);
+            Assert.Null(CloudStore.Load().Binding("beta"));
+
+            // Та же база ещё раз (тот же base_id) — лимит не тратит
+            var again = Connect("alpha");
+            Assert.Equal(a.BaseId, again.BaseId);
+
+            // Другой компьютер (другой agent_id, без ключа) с тем же base_id — base_conflict
+            CloudStore.Update(s => { s.AgentId = Guid.NewGuid().ToString(); s.SetKey(null); });
+            ex = Assert.Throws<CloudException>(() => Connect("alpha"));
+            Assert.Equal("base_conflict", ex.Code);
+            Assert.Equal(409, ex.Http);
         }
 
         [Fact]
@@ -223,7 +245,7 @@ namespace Bilem.Agent.Core.Tests
         [Fact]
         public void StaleKey_ForgottenOnConnect_NewKeyIssued()
         {
-            // Ключ, которого облако не знает (отозван, другое облако): заявка — без него, обмен выдаёт новый
+            // Ключ, которого облако не знает (отозван, другое облако): key_revoked → агент забывает его и повторяет connect без ключа, облако выдаёт новый
             CloudStore.Update(s => { s.EnsureAgentId(); s.SetKey("stale-key"); });
             var b = Connect("alpha");
             Assert.NotNull(b);

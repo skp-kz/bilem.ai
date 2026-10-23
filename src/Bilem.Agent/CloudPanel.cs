@@ -242,23 +242,15 @@ namespace Bilem.Agent
     }
 
     /// <summary>
-    /// «Подключить…» базу к облаку (часть L; Слава, 23.10 — stand #75): заявка → окно с кодом заявки (`request_id`), его вводят в кабинете
-    /// («1С-Базы → Подключить базу по коду») → код подтверждения из кабинета → привязка. Браузер сам не открывается — только кнопкой.
-    /// Оба кода — 10 минут, один раз; код подтверждения — 8 символов.
+    /// «Подключить…» базу к облаку (решение 0017, stand #75/#77): одно поле «Код из кабинета» (XXXX-XXXX) → «Подключить».
+    /// Код рождается в кабинете (1С-Базы → Подключить базу), 10 минут, один раз; браузер на сервере не нужен.
     /// </summary>
     internal sealed class CloudConnectForm : BilemForm
     {
         private readonly string _slug;
-        private readonly TextBox _reqCode = new TextBox { ReadOnly = true, Width = 260, Font = new Font(FontFamily.GenericMonospace, 11f), TabStop = false };
-        private readonly Button _copy = new Button { Text = Txt.S("UiCopy"), AutoSize = true, Enabled = false };
-        private readonly Label _valid = new Label { AutoSize = true, Margin = new Padding(0, 4, 0, 0) };
-        private readonly Button _browser = new Button { Text = Txt.S("UiCloudOpenBrowser"), AutoSize = true, Enabled = false };
-        private readonly Button _renew = new Button { Text = Txt.S("UiCloudNewCode"), AutoSize = true, Visible = false };
-        private readonly TextBox _code = new TextBox { Width = 140, CharacterCasing = CharacterCasing.Upper, MaxLength = 12 };
+        private readonly TextBox _code = new TextBox { Width = 160, CharacterCasing = CharacterCasing.Upper, MaxLength = 12, Font = new Font(FontFamily.GenericMonospace, 11f) };
         private readonly Label _msg = new Label { AutoSize = true, Margin = new Padding(0, 8, 0, 0), MaximumSize = new Size(460, 0) };
         private readonly Button _ok = new Button { Text = Txt.S("UiCloudConnectGo"), AutoSize = true, Enabled = false };
-        private readonly Timer _expiry = new Timer { Interval = 1000 };
-        private ConnectRequest _req;
         private bool _busy;
 
         public CloudConnectForm(string slug)
@@ -272,26 +264,13 @@ namespace Bilem.Agent
             StartPosition = FormStartPosition.CenterParent;
             var f = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, Padding = new Padding(14), WrapContents = false };
             f.Controls.Add(new Label { Text = Txt.F("UiCloudConnectBase", slug, Environment.MachineName), AutoSize = true });
-            var reqRow = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(0, 10, 0, 0) };
-            reqRow.Controls.Add(new Label { Text = Txt.S("UiCloudReqCode"), AutoSize = true, Margin = new Padding(0, 6, 6, 0) });
-            reqRow.Controls.Add(_reqCode);
-            _copy.Click += (s, e) => CopyCode();
-            reqRow.Controls.Add(_copy);
-            f.Controls.Add(reqRow);
-            f.Controls.Add(_valid);
-            f.Controls.Add(new Label { Text = Txt.S("UiCloudReqHint"), AutoSize = true, MaximumSize = new Size(460, 0), Margin = new Padding(0, 4, 0, 0) });
-            var links = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
-            _browser.Click += (s, e) => { if (_req != null) Open(_req.ConnectUrl); };
-            _renew.Click += (s, e) => Begin();
-            links.Controls.Add(_browser);
-            links.Controls.Add(_renew);
-            f.Controls.Add(links);
-            var step2 = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(0, 10, 0, 0) };
-            step2.Controls.Add(new Label { Text = Txt.S("UiCloudStep2"), AutoSize = true, Margin = new Padding(0, 6, 6, 0) });
-            step2.Controls.Add(_code);
-            _ok.Click += (s, e) => Finish();
-            step2.Controls.Add(_ok);
-            f.Controls.Add(step2);
+            var row = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(0, 10, 0, 0) };
+            row.Controls.Add(new Label { Text = Txt.S("UiCloudStep2"), AutoSize = true, Margin = new Padding(0, 7, 6, 0) });
+            row.Controls.Add(_code);
+            _ok.Click += (s, e) => Connect();
+            row.Controls.Add(_ok);
+            f.Controls.Add(row);
+            f.Controls.Add(new Label { Text = Txt.S("UiCloudCodeHint"), AutoSize = true, MaximumSize = new Size(460, 0), ForeColor = SystemColors.GrayText, Margin = new Padding(0, 4, 0, 0) });
             f.Controls.Add(_msg);
             var cancel = new Button { Text = Txt.S("UiCancel"), AutoSize = true, DialogResult = DialogResult.Cancel, Margin = new Padding(0, 10, 0, 0) };
             f.Controls.Add(cancel);
@@ -299,81 +278,35 @@ namespace Bilem.Agent
             AcceptButton = _ok;
             Controls.Add(f);
             _code.TextChanged += (s, e) => Buttons();
-            _expiry.Tick += (s, e) => { if (_req != null && Expired(_req)) Expire(Txt.S("UiCloudReqExpired")); };
-            Shown += (s, e) => Begin();
-            FormClosed += (s, e) => _expiry.Dispose();
+            Shown += (s, e) => _code.Focus();
         }
-
-        /// <summary>Срок заявки — в местном времени (облако присылает UTC с «Z», заглушка — местное).</summary>
-        private static DateTime Local(DateTime t) => t.Kind == DateTimeKind.Utc ? t.ToLocalTime() : t;
-        private static bool Expired(ConnectRequest r) => DateTime.Now > Local(r.ExpiresAt);
 
         private void Buttons()
         {
             UseWaitCursor = _busy;
-            _ok.Enabled = !_busy && _req != null && CloudApi.NormalizeCode(_code.Text).Length == 8;
-            _copy.Enabled = _browser.Enabled = !_busy && _req != null;
-            _renew.Enabled = !_busy;
+            _code.ReadOnly = _busy;
+            _ok.Enabled = !_busy && CloudApi.NormalizeCode(_code.Text).Length == 8;
         }
 
         private void Busy(bool on) { _busy = on; Buttons(); }
 
-        /// <summary>Заявка истекла или погашена: код заявки больше не годится — «Получить новый код».</summary>
-        private void Expire(string msg)
+        private void Connect()
         {
-            _expiry.Stop();
-            _req = null;
-            _reqCode.Text = "";
-            _valid.Text = "";
-            _renew.Visible = true;
-            _msg.Text = msg;
-            Buttons();
-        }
-
-        private void Begin()
-        {
-            _msg.Text = Txt.S("UiCloudRequesting");
-            _renew.Visible = false;
-            Busy(true);
-            Task.Run(() => CloudConnect.Begin(_slug)).ContinueWith(t => BeginInvoke((Action)(() =>
-            {
-                Busy(false);
-                if (t.Exception != null) { Expire((t.Exception.InnerException ?? t.Exception).Message); return; }
-                _req = t.Result;
-                _reqCode.Text = _req.RequestId;
-                _valid.Text = Txt.F("UiCloudReqValid", Local(_req.ExpiresAt).ToString("HH:mm"));
-                _msg.Text = "";
-                _expiry.Start();
-                Buttons();
-                _copy.Focus();
-            })));
-        }
-
-        private void CopyCode()
-        {
-            if (_req == null) return;
-            try { Clipboard.SetText(_req.RequestId); _msg.Text = Txt.S("UiCloudReqCopied"); } catch { }
-        }
-
-        private static void Open(string url) { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true }); } catch { } }
-
-        private void Finish()
-        {
-            if (_req == null) return;
+            if (!_ok.Enabled) return;
             var code = _code.Text;
             Busy(true);
             _msg.Text = Txt.S("UiCloudExchanging");
-            Task.Run(() => CloudConnect.Finish(_slug, _req, code)).ContinueWith(t => BeginInvoke((Action)(() =>
+            Task.Run(() => CloudConnect.Connect(_slug, code)).ContinueWith(t => BeginInvoke((Action)(() =>
             {
                 Busy(false);
                 if (t.Exception != null)
                 {
                     var e = t.Exception.InnerException ?? t.Exception;
-                    if (e is CloudException ce && (ce.Code == "code_expired" || ce.Code == "too_many_attempts" || ce.Code == "code_used")) Expire(e.Message);
-                    else _msg.Text = e.Message;
+                    _msg.Text = e.Message;
+                    _code.SelectAll();
+                    _code.Focus();
                     return;
                 }
-                _expiry.Stop();
                 MessageBox.Show(this, Txt.F("UiCloudConnectedMsg", _slug, t.Result.OrgName ?? "—"), "Bilem Cloud", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 DialogResult = DialogResult.OK;
                 Close();

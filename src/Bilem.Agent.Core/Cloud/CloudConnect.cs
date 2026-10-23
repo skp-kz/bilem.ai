@@ -7,42 +7,28 @@ using Newtonsoft.Json.Linq;
 namespace Bilem.Agent.Core.Cloud
 {
     /// <summary>
-    /// Подключение базы к Bilem Cloud кодом (часть L, протокол разделы 1–3) и отключение (раздел 5) — для окна и командной строки.
-    /// Ключ компьютера сохраняется только зашифрованным в cloud.json; служба подхватывает его сама и открывает канал.
+    /// Подключение базы к Bilem Cloud одним кодом из кабинета (решение 0017, `POST /agent/v1/connect`) и отключение (раздел 5) —
+    /// для окна и командной строки. Ключ компьютера сохраняется только зашифрованным в cloud.json; служба подхватывает его сама и открывает канал.
     /// </summary>
     public static class CloudConnect
     {
-        /// <summary>Шаг 1: заявка в облаке. Возвращает адрес кабинета — его открывают в браузере.</summary>
-        public static ConnectRequest Begin(string slug)
+        /// <summary>Код из кабинета → привязка базы (и ключ компьютера, если его ещё не было).</summary>
+        public static CloudBinding Connect(string slug, string code)
         {
             var cfg = AgentConfig.Load();
             var b = cfg.Find(slug) ?? throw new AgentException(Txt.F("NoSuchBase", slug), Txt.S("HintList"));
+            slug = b.Slug;
             var store = CloudStore.Update(s => { s.EnsureAgentId(); s.EnsureBaseId(b.Slug); });
             var orgs = Organizations(b);
-            ConnectRequest req;
-            try { req = CloudApi.CreateRequest(cfg, store, b, orgs); }
+            Log.Info(Txt.F("CloudConnectingLog", slug));
+            ConnectResult r;
+            try { r = CloudApi.Connect(cfg, store, b, orgs, code); }
             catch (CloudException e) when (e.Code == "key_revoked")
             {
-                // Ключ отозван облаком — забыть его и подать заявку без ключа: обмен кода выдаст новый (иначе «Подключить…» не работал бы никогда)
+                // Ключ отозван облаком — забыть его и повторить без ключа: облако выдаст новый (иначе «Подключить…» не работал бы никогда)
                 Log.Warn(Txt.S("CloudKeyRevokedLog"));
                 store = CloudStore.Update(s => s.SetKey(null));
-                req = CloudApi.CreateRequest(cfg, store, b, orgs);
-            }
-            Log.Info(Txt.F("CloudRequestLog", b.Slug));
-            return req;
-        }
-
-        /// <summary>Шаг 3: код из кабинета → привязка базы (и ключ компьютера, если его ещё не было).</summary>
-        public static CloudBinding Finish(string slug, ConnectRequest req, string code)
-        {
-            var cfg = AgentConfig.Load();
-            var store = CloudStore.Load();
-            ExchangeResult r;
-            try { r = CloudApi.Exchange(cfg, store, req.RequestId, code); }
-            catch (CloudException e) when (e.Code == "key_revoked")
-            {
-                CloudStore.Update(s => s.SetKey(null));
-                throw;
+                r = CloudApi.Connect(cfg, store, b, orgs, code);
             }
             CloudBinding bound = null;
             CloudStore.Update(s =>
