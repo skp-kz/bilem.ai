@@ -26,7 +26,7 @@ namespace Bilem.Agent.Core.Tests
         public PartLTests()
         {
             CloudChannel.Backoff = new[] { 0, 0, 1 };
-            _stub = new CloudStub(FreePort()) { PingInterval = 5 };
+            _stub = new CloudStub(FreePort()) { PingInterval = 5, PollInterval = 1 };
             _stub.Start();
             _mcpPort = FreePort();
             var cfg = AgentConfig.Load();
@@ -86,11 +86,16 @@ namespace Bilem.Agent.Core.Tests
             cfg.Save();
         }
 
+        /// <summary>Решение 0017, вторая редакция: код из агента → «кабинет» (дефисы и регистр не важны) → «Разрешить» владельца → опрос.</summary>
         private CloudBinding Connect(string slug)
         {
-            // Решение 0017: код рождается в «кабинете», агент вводит его — дефисы и регистр не важны
-            return CloudConnect.Connect(slug, _stub.IssueCode().Insert(4, "-").ToLowerInvariant());
+            var req = CloudConnect.Begin(slug);
+            _stub.Approve(req.Code.Replace("-", "").ToLowerInvariant());
+            return CloudConnect.Wait(slug, req, null, CancellationToken.None);
         }
+
+        private static CloudException WaitFails(string slug, ConnectRequest req) =>
+            Assert.Throws<CloudException>(() => CloudConnect.Wait(slug, req, null, CancellationToken.None));
 
         private static JObject ListBases() => new JObject
         {
@@ -152,26 +157,59 @@ namespace Bilem.Agent.Core.Tests
         }
 
         [Fact]
-        public void Codes_Invalid_Expired_Used_TooMany()
+        public void Request_CodeShown_WaitingOwner_ThenApproved_KeyOnce()
         {
-            var ex = Assert.Throws<CloudException>(() => CloudConnect.Connect("alpha", "ZZZZ-ZZZZ"));
-            Assert.Equal("code_invalid", ex.Code);
-            Assert.Equal(Txt.S("CloudCodeInvalid"), ex.Message);
+            var req = CloudConnect.Begin("alpha");
+            Assert.Matches("^[0-9A-Z]{4}-[0-9A-Z]{4}$", req.Code);
+            Assert.False(string.IsNullOrEmpty(req.RequestId));
+            Assert.Equal(1, req.PollInterval);
+            Assert.True(req.ExpiresAt > DateTime.UtcNow.AddMinutes(9));
+
+            // Код вставили в «кабинете» — агент видит waiting_owner с кабинетом, потом владелец нажал «Разрешить»
+            var seen = new System.Collections.Concurrent.ConcurrentQueue<ConnectStatus>();
+            var wait = System.Threading.Tasks.Task.Run(() => CloudConnect.Wait("alpha", req, seen.Enqueue, CancellationToken.None));
+            Until(() => seen.Any(s => s.Status == "pending"), "pending");
+            _stub.Claim(req.Code);
+            Until(() => seen.Any(s => s.Status == "waiting_owner"), "waiting_owner");
+            Assert.Equal(CloudStub.OrgName, seen.First(s => s.Status == "waiting_owner").OrgName);
+            Assert.False(wait.IsCompleted);
+            _stub.Approve(req.Code);
+            var b = wait.Result;
+            Assert.Equal(CloudStub.OrgName, b.OrgName);
+            Assert.True(CloudStore.Load().HasKey);
+
+            // Ключ — только в первом approved; повторный опрос — key_delivered без ключа
+            var again = CloudApi.Poll(AgentConfig.Load(), CloudStore.Load(), req.RequestId);
+            Assert.Equal("approved", again.Status);
+            Assert.Null(again.AgentKey);
+            Assert.True(again.KeyDelivered);
+        }
+
+        [Fact]
+        public void Declined_Expired_Unknown_CodeOnce()
+        {
+            var req = CloudConnect.Begin("alpha");
+            _stub.Claim(req.Code);
+            _stub.Decline(req.Code);
+            var ex = WaitFails("alpha", req);
+            Assert.Equal("declined", ex.Code);
+            Assert.Equal(Txt.S("CloudDeclined"), ex.Message);
             Assert.Null(CloudStore.Load().Binding("alpha"));
-            var code = _stub.IssueCode();
-            CloudConnect.Connect("alpha", code);
-            ex = Assert.Throws<CloudException>(() => CloudConnect.Connect("beta", code));
-            Assert.Equal("code_used", ex.Code);
+            // После declined тот же код в кабинете не принимается
+            Assert.ThrowsAny<Exception>(() => _stub.Claim(req.Code));
 
-            var old = _stub.IssueCode();
-            _stub.Expire(old);
-            ex = Assert.Throws<CloudException>(() => CloudConnect.Connect("beta", old));
-            Assert.Equal("code_expired", ex.Code);
+            req = CloudConnect.Begin("alpha");
+            _stub.Expire(req.Code);
+            ex = WaitFails("alpha", req);
+            Assert.Equal("expired", ex.Code);
+            Assert.Equal(Txt.S("CloudRequestExpired"), ex.Message);
 
-            // 5 неверных кодов с компьютера (один уже был) — дальше отказ даже с верным кодом
-            for (var i = 0; i < 4; i++) Assert.Equal("code_invalid", Assert.Throws<CloudException>(() => CloudConnect.Connect("beta", "WRONG000")).Code);
-            Assert.Equal("too_many_attempts", Assert.Throws<CloudException>(() => CloudConnect.Connect("beta", _stub.IssueCode())).Code);
-            Assert.Null(CloudStore.Load().Binding("beta"));
+            // Заявка неизвестна облаку — 404 request_not_found, начать заново
+            ex = WaitFails("alpha", new ConnectRequest { RequestId = "nope", Code = "AAAA-AAAA", PollInterval = 1 });
+            Assert.Equal("request_not_found", ex.Code);
+            Assert.Equal(404, ex.Http);
+            Assert.Equal(Txt.S("CloudRequestNotFound"), ex.Message);
+            Assert.Null(CloudStore.Load().Binding("alpha"));
         }
 
         [Fact]
@@ -180,17 +218,17 @@ namespace Bilem.Agent.Core.Tests
             _stub.MaxBases = 1;
             var a = Connect("alpha");
             var ex = Assert.Throws<CloudException>(() => Connect("beta"));
-            Assert.Equal("limit", ex.Code);
-            Assert.Equal(402, ex.Http);
+            Assert.Equal("limit", ex.Code);   // failed + error: limit — текст облака как есть
+            Assert.Equal("лимит баз по тарифу кабинета", ex.Message);
             Assert.Null(CloudStore.Load().Binding("beta"));
 
             // Та же база ещё раз (тот же base_id) — лимит не тратит
             var again = Connect("alpha");
             Assert.Equal(a.BaseId, again.BaseId);
 
-            // Другой компьютер (другой agent_id, без ключа) с тем же base_id — base_conflict
+            // Другой компьютер (другой agent_id, без ключа) с тем же base_id — заявка не создаётся, 409 base_conflict
             CloudStore.Update(s => { s.AgentId = Guid.NewGuid().ToString(); s.SetKey(null); });
-            ex = Assert.Throws<CloudException>(() => Connect("alpha"));
+            ex = Assert.Throws<CloudException>(() => CloudConnect.Begin("alpha"));
             Assert.Equal("base_conflict", ex.Code);
             Assert.Equal(409, ex.Http);
         }
@@ -243,15 +281,24 @@ namespace Bilem.Agent.Core.Tests
         }
 
         [Fact]
-        public void StaleKey_ForgottenOnConnect_NewKeyIssued()
+        public void StaleKey_ForgottenOnRequestAndPoll_NewKeyIssued()
         {
-            // Ключ, которого облако не знает (отозван, другое облако): key_revoked → агент забывает его и повторяет connect без ключа, облако выдаёт новый
+            // Ключ, которого облако не знает (отозван, другое облако): key_revoked → агент забывает его и подаёт заявку без ключа, облако выдаёт новый
             CloudStore.Update(s => { s.EnsureAgentId(); s.SetKey("stale-key"); });
             var b = Connect("alpha");
             Assert.NotNull(b);
             var key = CloudStore.Load().Key();
             Assert.False(string.IsNullOrEmpty(key));
             Assert.NotEqual("stale-key", key);
+
+            // То же на опросе: Bearer стал неверным, пока ждали владельца, — забыть ключ, опрос без него
+            CloudStore.Update(s => s.SetKey(null));
+            var req = CloudConnect.Begin("beta");
+            CloudStore.Update(s => s.SetKey("stale-key"));
+            _stub.Approve(req.Code);
+            CloudConnect.Wait("beta", req, null, CancellationToken.None);
+            Assert.NotEqual("stale-key", CloudStore.Load().Key());
+            Assert.True(CloudStore.Load().HasKey);
         }
 
         [Fact]
