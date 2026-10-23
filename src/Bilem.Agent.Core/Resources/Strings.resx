@@ -921,7 +921,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="CloudChannelStarting" xml:space="preserve"><value>Bilem Cloud: подключаюсь к {0}</value></data>
   <data name="CloudChannelStopped" xml:space="preserve"><value>Bilem Cloud: канал закрыт</value></data>
   <data name="CloudClosedLog" xml:space="preserve"><value>Bilem Cloud: облако закрыло соединение (код {0} {1}) — переподключусь</value></data>
-  <data name="CloudCodeExpired" xml:space="preserve"><value>Код устарел — нажмите «Открыть ещё раз» и введите новый код.</value></data>
+  <data name="CloudCodeExpired" xml:space="preserve"><value>Код устарел (действует 10 минут) — получите новый в кабинете: 1С-Базы → Подключить базу.</value></data>
   <data name="CloudCodeInvalid" xml:space="preserve"><value>Код не подходит — проверьте и введите ещё раз.</value></data>
   <data name="CloudCodeUsed" xml:space="preserve"><value>Код уже использован — получите новый в кабинете.</value></data>
   <data name="CloudConnectedLog" xml:space="preserve"><value>Bilem Cloud: база {0} подключена к организации «{1}»</value></data>
@@ -938,11 +938,13 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="CloudNoConnectionLog" xml:space="preserve"><value>Bilem Cloud: нет связи с облаком — {0}; переподключаюсь сам</value></data>
   <data name="CloudOrgsFailed" xml:space="preserve"><value>Bilem Cloud: организации базы {0} не прочитались ({1}) — заявка без них</value></data>
   <data name="CloudReplacedLog" xml:space="preserve"><value>Bilem Cloud: с этим номером агента подключён другой компьютер (копия машины?) — повтор через 5 минут</value></data>
-  <data name="CloudRequestLog" xml:space="preserve"><value>Bilem Cloud: заявка на подключение базы {0} — открываю кабинет</value></data>
+  <data name="CloudConnectingLog" xml:space="preserve"><value>Bilem Cloud: подключаю базу {0} кодом из кабинета</value></data>
   <data name="CloudResultTooBig" xml:space="preserve"><value>Ответ слишком большой (больше 8 МБ) — сузьте запрос.</value></data>
   <data name="CloudRevokedInCabinetLog" xml:space="preserve"><value>Bilem Cloud: база {0} отключена в кабинете</value></data>
   <data name="CloudStoreBroken" xml:space="preserve"><value>Bilem Cloud: файл подключений повреждён ({0}) — начинаю с чистого</value></data>
-  <data name="CloudTooManyAttempts" xml:space="preserve"><value>Слишком много попыток — начните подключение заново.</value></data>
+  <data name="CloudTooManyAttempts" xml:space="preserve"><value>Слишком много неверных кодов — подождите 10 минут и введите код ещё раз.</value></data>
+  <data name="CloudLimit" xml:space="preserve"><value>Лимит баз по тарифу кабинета исчерпан — расширьте тариф в кабинете или отключите другую базу.</value></data>
+  <data name="CloudBaseConflict" xml:space="preserve"><value>Эта база уже подключена к облаку с другого компьютера — сначала отключите её там или в кабинете.</value></data>
   <data name="CloudWorkingLog" xml:space="preserve"><value>Bilem Cloud: связь есть, баз в облаке: {0}</value></data>
   <data name="HintCloudNetwork" xml:space="preserve"><value>Проверьте интернет и прокси на этом компьютере; агент переподключится сам.</value></data>
   <data name="UiLocalMcpTitle" xml:space="preserve"><value>MCP на этом компьютере</value></data>
@@ -980,16 +982,9 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiCloudDisconnectConfirm" xml:space="preserve"><value>Отключить базу «{0}» от Bilem Cloud? Вопросы из облака к ней перестанут работать.</value></data>
   <data name="UiCloudConnectTitle" xml:space="preserve"><value>Подключить базу «{0}» к Bilem Cloud</value></data>
   <data name="UiCloudConnectBase" xml:space="preserve"><value>База: {0} · компьютер: {1}</value></data>
-  <data name="UiCloudReqCode" xml:space="preserve"><value>Код заявки:</value></data>
-  <data name="UiCloudReqValid" xml:space="preserve"><value>Действует 10 минут (до {0}), один раз.</value></data>
-  <data name="UiCloudReqExpired" xml:space="preserve"><value>Код заявки истёк — получите новый.</value></data>
-  <data name="UiCloudReqHint" xml:space="preserve"><value>Введите код в кабинете Bilem (app.bilem.ai → 1С-Базы → «Подключить базу по коду»).</value></data>
-  <data name="UiCloudOpenBrowser" xml:space="preserve"><value>Открыть в браузере</value></data>
-  <data name="UiCloudNewCode" xml:space="preserve"><value>Получить новый код</value></data>
-  <data name="UiCloudReqCopied" xml:space="preserve"><value>Скопировано</value></data>
-  <data name="UiCloudStep2" xml:space="preserve"><value>Код из кабинета (XXXX-XXXX):</value></data>
+  <data name="UiCloudCodeHint" xml:space="preserve"><value>Код — в кабинете app.bilem.ai → 1С-Базы → Подключить базу. Действует 10 минут, один раз.</value></data>
+  <data name="UiCloudStep2" xml:space="preserve"><value>Код из кабинета:</value></data>
   <data name="UiCloudConnectGo" xml:space="preserve"><value>Подключить</value></data>
-  <data name="UiCloudRequesting" xml:space="preserve"><value>Создаю заявку в облаке…</value></data>
   <data name="UiCloudExchanging" xml:space="preserve"><value>Проверяю код…</value></data>
   <data name="UiCloudConnectedMsg" xml:space="preserve"><value>База «{0}» подключена к Bilem Cloud (организация «{1}»).</value></data>
   <data name="UiStateCloud" xml:space="preserve"><value>Bilem Cloud · коммерческая лицензия · баз в облаке: {0} из {1}</value></data>
@@ -998,7 +993,6 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="CliCloudStatus" xml:space="preserve"><value>Bilem Cloud: включён — {0}; облако {1}; ключ компьютера — {2}; {3}</value></data>
   <data name="CliCloudLocalMode" xml:space="preserve"><value>служба в бесплатном режиме (локальный MCP)</value></data>
   <data name="CliCloudUrlSet" xml:space="preserve"><value>Адрес облака: {0}</value></data>
-  <data name="CliCloudOpen" xml:space="preserve"><value>Откройте кабинет и подтвердите подключение: {0}</value></data>
   <data name="CliCloudCode" xml:space="preserve"><value>Код из кабинета: </value></data>
   <data name="CliCloudOrgUrl" xml:space="preserve"><value>Облачный адрес организации: {0}</value></data>
   <data name="CliCloudStub" xml:space="preserve"><value>Заглушка Bilem Cloud: {0} (только этот компьютер). Ctrl+C — остановить. Агенту: bilem-agent cloud set-url --url {0}</value></data>
