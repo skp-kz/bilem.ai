@@ -7,7 +7,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <!-- Одна версия везде (SemVer): сборки, ProductVersion файлов, MSI. Релиз по тегу vX.Y.Z[-beta.N] передаёт
          VersionPrefix / VersionSuffix / FileVersion из тега (build/version.ps1) -->
-    <VersionPrefix>0.3.0</VersionPrefix>
+    <VersionPrefix>0.3.1</VersionPrefix>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Company>SKP.kz LLC</Company>
     <Product>Bilem Agent</Product>

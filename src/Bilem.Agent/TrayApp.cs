@@ -27,8 +27,6 @@ namespace Bilem.Agent
         private readonly ListView _bases = new ListView { View = View.Details, FullRowSelect = true, Dock = DockStyle.Fill, HeaderStyle = ColumnHeaderStyle.Nonclickable };
         private readonly ListView _journal = new ListView { View = View.Details, FullRowSelect = true, Dock = DockStyle.Fill, HeaderStyle = ColumnHeaderStyle.Nonclickable };
         private readonly Button _settings = new Button { Text = Txt.S("UiTraySettings"), AutoSize = true, FlatStyle = FlatStyle.System };
-        private readonly Button _copy = new Button { Text = Txt.S("UiTrayCopyUrl"), AutoSize = true, FlatStyle = FlatStyle.System };
-        private readonly Button _restart = new Button { Text = Txt.S("UiTrayMcpRestart"), AutoSize = true, FlatStyle = FlatStyle.System };
         private readonly Button _startSvc = new Button { Text = Txt.S("UiTrayStartService"), AutoSize = true, FlatStyle = FlatStyle.System, Visible = false };
         private readonly System.Windows.Forms.Timer _poll = new System.Windows.Forms.Timer { Interval = 2000 };
         private readonly bool _showOnStart;
@@ -70,12 +68,19 @@ namespace Bilem.Agent
             var journalBox = new GroupBox { Text = Txt.S("UiTrayJournal"), Dock = DockStyle.Fill, Padding = new Padding(6) };
             journalBox.Controls.Add(_journal);
 
-            var bar = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, Padding = new Padding(8) };
-            bar.Controls.AddRange(new Control[] { _settings, _copy, _restart, _startSvc });
-            foreach (var b in new[] { _settings, _copy, _restart, _startSvc }) Shield(b);
+            // Нижняя панель (Слава, 23.10): слева «Настройки…» (и «Запустить службу», если она остановлена), справа — версия.
+            // «Скопировать адрес MCP» и «Перезапустить MCP» убраны: локальный MCP на серверах клиентов выключен, работает облако.
+            var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0) };
+            buttons.Controls.AddRange(new Control[] { _settings, _startSvc });
+            foreach (var b in new[] { _settings, _startSvc }) Shield(b);
+            // Полная версия, с бета-суффиксом: «0.3.1» — стабильная, «0.3.1-beta.1» — бета
+            var version = new Label { Text = Txt.F("UiVersion", Bilem.Agent.Core.Mcp.McpHost.Version), AutoSize = true, Anchor = AnchorStyles.Right | AnchorStyles.Bottom, ForeColor = SystemColors.GrayText, Margin = new Padding(8, 0, 2, 6) };
+            var bar = new TableLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, ColumnCount = 2, RowCount = 1, Padding = new Padding(8) };
+            bar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            bar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            bar.Controls.Add(buttons, 0, 0);
+            bar.Controls.Add(version, 1, 0);
             _settings.Click += (s, e) => OpenSettings(null);
-            _copy.Click += (s, e) => Admin("copy-url", Txt.S("UiCopied"));
-            _restart.Click += (s, e) => Admin("restart-mcp", null);
             _startSvc.Click += (s, e) => Admin("start-service", null);
             var note = new Label { Text = Txt.S("UiTrayNote"), Dock = DockStyle.Bottom, AutoSize = true, Padding = new Padding(10, 0, 10, 4), ForeColor = SystemColors.GrayText };
 
@@ -198,15 +203,9 @@ namespace Bilem.Agent
             var upd = (string)st?["update_available"];
             _update.Visible = upd != null;
             if (upd != null) _update.Text = Txt.F("UiTrayUpdate", upd);
-            _restart.Enabled = st != null;
-            _copy.Enabled = st != null;
             var cloud = (string)st?["mode"] == "cloud";
-            if (cloud)
-            {
-                // Bilem Cloud: локальный MCP выключен — адрес с токеном не нужен; строка — состояние канала
-                _mcp.Text = MainForm.CloudStatusLine(st, bases.Count);
-                _copy.Enabled = false;
-            }
+            // Bilem Cloud: локальный MCP выключен; строка — состояние канала
+            if (cloud) _mcp.Text = MainForm.CloudStatusLine(st, bases.Count);
 
             _bases.BeginUpdate();
             _bases.Items.Clear();

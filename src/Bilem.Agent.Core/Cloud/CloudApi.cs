@@ -63,7 +63,6 @@ namespace Bilem.Agent.Core.Cloud
                 ["agent_id"] = store.AgentId,
                 ["agent_version"] = Mcp.McpHost.Version,
                 ["machine"] = Environment.MachineName,
-                ["login_hint"] = cfg.Cloud?.LoginHint ?? "",
                 ["base"] = new JObject
                 {
                     ["base_id"] = baseId,
