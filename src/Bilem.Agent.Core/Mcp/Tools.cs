@@ -453,9 +453,15 @@ namespace Bilem.Agent.Core.Mcp
 
         public const int SearchTop = 20;
 
+        /// <summary>Самый большой файл, который прикладываем к ответу (решение 0018).</summary>
+        public const int MaxFileBytes = 5 * 1024 * 1024;
+
         /// <summary>PDF — ресурсом (клиент на другой машине получает файл), первая страница — картинкой (для клиентов без показа PDF).</summary>
         internal static JArray PdfContent(string path, byte[] pdf)
         {
+            // Больше лимита — файл не прикладываем: иначе весь ответ вместе с текстом не пролезет в канал облака (8 МБ)
+            if (pdf != null && pdf.Length > MaxFileBytes)
+                return new JArray(new JObject { ["type"] = "text", ["text"] = Txt.F("ToolFileTooBig", System.IO.Path.GetFileName(path), (pdf.Length + 1048575) / 1048576) });
             var extra = new JArray(new JObject
             {
                 ["type"] = "resource",

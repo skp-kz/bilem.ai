@@ -416,6 +416,7 @@
   <data name="ToolDebtParamMinAmount" xml:space="preserve"><value>Только контрагенты с долгом не меньше этой суммы, тенге.</value></data>
   <data name="ToolDebtParamMinDays" xml:space="preserve"><value>Только долг по документам не моложе N дней (30 / 60 / 90).</value></data>
   <data name="ToolDebtParamTop" xml:space="preserve"><value>Сколько контрагентов показать (по убыванию суммы), по умолчанию 20.</value></data>
+  <data name="ToolFileTooBig" xml:space="preserve"><value>Файл «{0}» слишком большой ({1} МБ, можно до 5 МБ) — к ответу не приложен. Он сохранён на компьютере с 1С.</value></data>
   <data name="ToolFailed" xml:space="preserve"><value>Не удалось выполнить: {0}</value></data>
   <data name="ToolFindDesc" xml:space="preserve"><value>Поиск контрагента (покупателя, поставщика) в базе 1С по части наименования или по БИН/ИИН (цифры). Возвращает до 10 найденных: наименование, полное наименование, БИН/ИИН. Вызывай, когда пользователь называет компанию или БИН и нужно понять, о ком речь. Без base — по всем базам сразу.</value></data>
   <data name="ToolFindParamQuery" xml:space="preserve"><value>Часть наименования или БИН/ИИН (можно часть цифр).</value></data>
