@@ -16,13 +16,28 @@ namespace Bilem.Agent.Core.Cloud
         public CloudException(string code, int http, string message, string hint = null) : base(message, hint) { Code = code; Http = http; Short = code; }
     }
 
-    public sealed class ConnectResult
+    /// <summary>Заявка на подключение: `Code` показываем человеку (его вставляют в кабинете), `RequestId` — для опроса.</summary>
+    public sealed class ConnectRequest
     {
+        public string RequestId, Code;
+        public DateTime ExpiresAt;
+        public int PollInterval = 3;
+    }
+
+    /// <summary>Ответ опроса заявки: pending / waiting_owner / approved / declined / expired / failed.</summary>
+    public sealed class ConnectStatus
+    {
+        public string Status, Error, Message;
+        public DateTime? ExpiresAt;
         public string BaseId, OrgId, OrgName, OrgUrl, Login, AgentKey;
+        public bool KeyDelivered;
+        /// <summary>Заявка закончилась (подключено, отклонено, истекло, ошибка) — опрос прекратить.</summary>
+        public bool Final => Status == "approved" || Status == "declined" || Status == "expired" || Status == "failed";
     }
 
     /// <summary>
-    /// HTTP-часть протокола канала (stand/cloud-channel-protocol): подключение базы кодом из кабинета (решение 0017), отключение базы.
+    /// HTTP-часть протокола канала (stand/cloud-channel-protocol): заявка на подключение с кодом и опрос до «Разрешить» владельца
+    /// (решение 0017, вторая редакция), отключение базы.
     /// Только https; http — только к 127.0.0.1 (заглушка облака на стенде и в тестах). Прокси — системный.
     /// </summary>
     public static class CloudApi
@@ -48,15 +63,14 @@ namespace Bilem.Agent.Core.Cloud
         }
 
         /// <summary>
-        /// Подключение базы кодом из кабинета (решение 0017, stand #77): код + сведения о базе → привязка к кабинету и ключ компьютера,
-        /// если его ещё не было. Организации — наименование и БИН/ИИН (решение Славы 20.10). Дефисы, пробелы и регистр кода не важны.
+        /// 1. Заявка (решение 0017, вторая редакция; формат v1.1 — stand #77): сведения о базе → `request_id` и код подключения,
+        /// его вставляют в кабинете. Организации — наименование и БИН/ИИН (решение Славы 20.10).
         /// </summary>
-        public static ConnectResult Connect(AgentConfig cfg, CloudStore store, BaseConfig b, JArray organizations, string code)
+        public static ConnectRequest CreateRequest(AgentConfig cfg, CloudStore store, BaseConfig b, JArray organizations)
         {
             var baseId = store.BaseIds.TryGetValue(b.Slug, out var id) ? id : null;
             var body = new JObject
             {
-                ["code"] = NormalizeCode(code),
                 ["agent_id"] = store.AgentId,
                 ["agent_version"] = Mcp.McpHost.Version,
                 ["machine"] = Environment.MachineName,
@@ -68,15 +82,34 @@ namespace Bilem.Agent.Core.Cloud
                     ["organizations"] = organizations ?? new JArray(),
                 },
             };
-            var r = Send(cfg, "POST", ApiPath + "/connect", body, store.Key());
-            return new ConnectResult
+            var r = Send(cfg, "POST", ApiPath + "/connect-requests", body, store.Key());
+            return new ConnectRequest
             {
+                RequestId = (string)r["request_id"],
+                Code = (string)r["code"],
+                ExpiresAt = (DateTime?)r["expires_at"] ?? DateTime.UtcNow.AddMinutes(10),
+                PollInterval = Math.Max(1, Math.Min(30, (int?)r["poll_interval"] ?? 3)),
+            };
+        }
+
+        /// <summary>2. Опрос заявки: всегда 200 + `status`; в первом `approved` — ключ компьютера, если его не было (разбор — как у прежнего exchange).</summary>
+        public static ConnectStatus Poll(AgentConfig cfg, CloudStore store, string requestId)
+        {
+            var r = Send(cfg, "GET", ApiPath + "/connect-requests/" + Uri.EscapeDataString(requestId), null, store.Key());
+            var org = r["org"] as JObject;
+            return new ConnectStatus
+            {
+                Status = (string)r["status"] ?? "pending",
+                Error = (string)r["error"],
+                Message = (string)r["message"],
+                ExpiresAt = (DateTime?)r["expires_at"],
                 BaseId = (string)r["base_id"],
-                OrgId = (string)r["org"]?["id"] ?? (string)r["org"]?["slug"],
-                OrgName = (string)r["org"]?["name"],
-                OrgUrl = (string)r["org"]?["mcp_url"],
+                OrgId = (string)org?["id"] ?? (string)org?["slug"],
+                OrgName = (string)org?["name"],
+                OrgUrl = (string)org?["mcp_url"],
                 Login = (string)r["login"],
                 AgentKey = (string)r["agent_key"],
+                KeyDelivered = (bool?)r["key_delivered"] == true,
             };
         }
 
@@ -131,13 +164,12 @@ namespace Bilem.Agent.Core.Cloud
         {
             switch (code)
             {
-                case "code_invalid": return Txt.S("CloudCodeInvalid");
-                case "code_expired": return Txt.S("CloudCodeExpired");
-                case "code_used": return Txt.S("CloudCodeUsed");
-                case "too_many_attempts": return Txt.S("CloudTooManyAttempts");
-                // Лимит и конфликт облако объясняет точнее (тариф, какой компьютер) — его текст, наш — если пусто
+                case "too_many_requests": return Txt.S("CloudTooManyRequests");
+                case "request_not_found": return Txt.S("CloudRequestNotFound");
+                // Лимит, конфликт, отмену облако объясняет точнее (тариф, какой компьютер) — его текст, наш — если пусто
                 case "limit": return string.IsNullOrWhiteSpace(cloudText) ? Txt.S("CloudLimit") : cloudText;
                 case "base_conflict": return string.IsNullOrWhiteSpace(cloudText) ? Txt.S("CloudBaseConflict") : cloudText;
+                case "cancelled": return string.IsNullOrWhiteSpace(cloudText) ? Txt.S("CloudCancelled") : cloudText;
                 case "key_revoked": return Txt.S("CloudKeyRevoked");
                 default: return string.IsNullOrWhiteSpace(cloudText) ? Txt.F("CloudError", code) : cloudText;
             }

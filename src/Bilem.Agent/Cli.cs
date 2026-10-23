@@ -56,10 +56,13 @@ namespace Bilem.Agent
                 case "connect":
                     {
                         var slug = Require(a, "slug");
-                        // Решение 0017: код рождается в кабинете (1С-Базы → Подключить базу) — его передают ключом --code или вводят здесь
-                        var code = Get(a, "code");
-                        if (code == null) { Console.Write(Txt.S("CliCloudCode")); code = Console.ReadLine(); }
-                        var b = Bilem.Agent.Core.Cloud.CloudConnect.Connect(slug, code);
+                        // Решение 0017, вторая редакция: агент показывает код, его вставляют в кабинете, владелец — «Разрешить» на телефоне; ждём опросом
+                        var req = Bilem.Agent.Core.Cloud.CloudConnect.Begin(slug);
+                        Console.WriteLine(Txt.F("CliCloudCode", req.Code, req.ExpiresAt.ToLocalTime().ToString("HH:mm")));
+                        var b = Bilem.Agent.Core.Cloud.CloudConnect.Wait(slug, req, st =>
+                        {
+                            if (st.Status == "waiting_owner") Console.WriteLine(Txt.F("CliCloudWaitingOwner", st.OrgName ?? st.OrgId ?? "—"));
+                        }, System.Threading.CancellationToken.None);
                         if (!string.IsNullOrEmpty(b.OrgUrl)) Console.WriteLine(Txt.F("CliCloudOrgUrl", b.OrgUrl));
                         return 0;
                     }

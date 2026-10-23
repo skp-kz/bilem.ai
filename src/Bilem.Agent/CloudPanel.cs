@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Bilem.Agent.Core;
@@ -242,16 +243,23 @@ namespace Bilem.Agent
     }
 
     /// <summary>
-    /// «Подключить…» базу к облаку (решение 0017, stand #75/#77): одно поле «Код из кабинета» (XXXX-XXXX) → «Подключить».
-    /// Код рождается в кабинете (1С-Базы → Подключить базу), 10 минут, один раз; браузер на сервере не нужен.
+    /// «Подключить…» базу к облаку (решение 0017, вторая редакция — stand #77): заявка → крупный код подключения + «Скопировать» + отсчёт;
+    /// код вставляют в кабинете (1С-Базы → Подключить базу), владелец нажимает «Разрешить» на телефоне — окно узнаёт это опросом заявки.
+    /// Второго кода и браузера нет. Отклонено / истекло / ошибка — «Подключить…» ещё раз (новая заявка).
     /// </summary>
     internal sealed class CloudConnectForm : BilemForm
     {
         private readonly string _slug;
-        private readonly TextBox _code = new TextBox { Width = 160, CharacterCasing = CharacterCasing.Upper, MaxLength = 12, Font = new Font(FontFamily.GenericMonospace, 11f) };
+        private readonly Label _code = new Label { AutoSize = true, Font = new Font(FontFamily.GenericMonospace, 22f, FontStyle.Bold), Margin = new Padding(0, 0, 10, 0) };
+        private readonly Button _copy = new Button { Text = Txt.S("UiCopy"), AutoSize = true, Enabled = false, Margin = new Padding(0, 8, 0, 0) };
+        private readonly Label _left = new Label { AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(0, 2, 0, 0) };
         private readonly Label _msg = new Label { AutoSize = true, Margin = new Padding(0, 8, 0, 0), MaximumSize = new Size(460, 0) };
-        private readonly Button _ok = new Button { Text = Txt.S("UiCloudConnectGo"), AutoSize = true, Enabled = false };
-        private bool _busy;
+        private readonly Button _again = new Button { Text = Txt.S("UiCloudConnect"), AutoSize = true, Visible = false, Margin = new Padding(0, 10, 6, 0) };
+        private readonly System.Windows.Forms.Timer _tick = new System.Windows.Forms.Timer { Interval = 1000 };
+        private bool _waitingOwner;
+        private ConnectRequest _req;
+        private DateTime? _until;
+        private CancellationTokenSource _cts;
 
         public CloudConnectForm(string slug)
         {
@@ -264,53 +272,110 @@ namespace Bilem.Agent
             StartPosition = FormStartPosition.CenterParent;
             var f = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, Padding = new Padding(14), WrapContents = false };
             f.Controls.Add(new Label { Text = Txt.F("UiCloudConnectBase", slug, Environment.MachineName), AutoSize = true });
-            var row = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(0, 10, 0, 0) };
-            row.Controls.Add(new Label { Text = Txt.S("UiCloudStep2"), AutoSize = true, Margin = new Padding(0, 7, 6, 0) });
+            f.Controls.Add(new Label { Text = Txt.S("UiCloudConnCode"), AutoSize = true, Margin = new Padding(0, 10, 0, 2) });
+            var row = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(0) };
             row.Controls.Add(_code);
-            _ok.Click += (s, e) => Connect();
-            row.Controls.Add(_ok);
+            _copy.Click += (s, e) => CopyCode();
+            row.Controls.Add(_copy);
             f.Controls.Add(row);
-            f.Controls.Add(new Label { Text = Txt.S("UiCloudCodeHint"), AutoSize = true, MaximumSize = new Size(460, 0), ForeColor = SystemColors.GrayText, Margin = new Padding(0, 4, 0, 0) });
+            f.Controls.Add(_left);
             f.Controls.Add(_msg);
+            var buttons = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(0) };
+            _again.Click += (s, e) => Begin();
+            buttons.Controls.Add(_again);
             var cancel = new Button { Text = Txt.S("UiCancel"), AutoSize = true, DialogResult = DialogResult.Cancel, Margin = new Padding(0, 10, 0, 0) };
-            f.Controls.Add(cancel);
+            buttons.Controls.Add(cancel);
+            f.Controls.Add(buttons);
             CancelButton = cancel;
-            AcceptButton = _ok;
             Controls.Add(f);
-            _code.TextChanged += (s, e) => Buttons();
-            Shown += (s, e) => _code.Focus();
+            _tick.Tick += (s, e) => Countdown();
+            Shown += (s, e) => Begin();
+            FormClosed += (s, e) => { _cts?.Cancel(); _tick.Dispose(); };
         }
 
-        private void Buttons()
+        /// <summary>Срок — в местном времени (облако присылает UTC с «Z»).</summary>
+        private static DateTime Local(DateTime t) => t.Kind == DateTimeKind.Utc ? t.ToLocalTime() : t;
+
+        private void Countdown()
         {
-            UseWaitCursor = _busy;
-            _code.ReadOnly = _busy;
-            _ok.Enabled = !_busy && CloudApi.NormalizeCode(_code.Text).Length == 8;
+            if (_until == null) { _left.Text = ""; return; }
+            var left = Local(_until.Value) - DateTime.Now;
+            if (left < TimeSpan.Zero) left = TimeSpan.Zero;
+            _left.Text = Txt.F("UiCloudCodeLeft", $"{(int)left.TotalMinutes}:{left.Seconds:00}");
         }
 
-        private void Busy(bool on) { _busy = on; Buttons(); }
-
-        private void Connect()
+        private void Begin()
         {
-            if (!_ok.Enabled) return;
-            var code = _code.Text;
-            Busy(true);
-            _msg.Text = Txt.S("UiCloudExchanging");
-            Task.Run(() => CloudConnect.Connect(_slug, code)).ContinueWith(t => BeginInvoke((Action)(() =>
+            _cts?.Cancel();
+            _waitingOwner = false;
+            _req = null;
+            _until = null;
+            _code.Text = "—";
+            _copy.Enabled = false;
+            _again.Visible = false;
+            _msg.Text = Txt.S("UiCloudRequesting");
+            UseWaitCursor = true;
+            Task.Run(() => CloudConnect.Begin(_slug)).ContinueWith(t => BeginInvoke((Action)(() =>
             {
-                Busy(false);
-                if (t.Exception != null)
-                {
-                    var e = t.Exception.InnerException ?? t.Exception;
-                    _msg.Text = e.Message;
-                    _code.SelectAll();
-                    _code.Focus();
-                    return;
-                }
-                MessageBox.Show(this, Txt.F("UiCloudConnectedMsg", _slug, t.Result.OrgName ?? "—"), "Bilem Cloud", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                DialogResult = DialogResult.OK;
-                Close();
+                UseWaitCursor = false;
+                if (t.Exception != null) { End((t.Exception.InnerException ?? t.Exception).Message); return; }
+                _req = t.Result;
+                _code.Text = _req.Code;
+                _copy.Enabled = true;
+                _until = _req.ExpiresAt;
+                _msg.Text = Txt.S("UiCloudPending");
+                Countdown();
+                _tick.Start();
+                _copy.Focus();
+                Wait(_req);
             })));
+        }
+
+        private void Wait(ConnectRequest req)
+        {
+            var cts = _cts = new CancellationTokenSource();
+            Task.Run(() => CloudConnect.Wait(_slug, req, st => BeginInvoke((Action)(() => Changed(st))), cts.Token)).ContinueWith(t =>
+            {
+                if (cts.IsCancellationRequested || IsDisposed) return;
+                BeginInvoke((Action)(() =>
+                {
+                    if (t.Exception != null) { End((t.Exception.InnerException ?? t.Exception).Message); return; }
+                    _tick.Stop();
+                    MessageBox.Show(this, Txt.F("UiCloudConnectedMsg", _slug, t.Result.OrgName ?? "—"), "Bilem Cloud", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }));
+            });
+        }
+
+        /// <summary>Код вставили в кабинете — ждём «Разрешить» владельца (свои 10 минут).</summary>
+        private void Changed(ConnectStatus st)
+        {
+            if (IsDisposed || st.Status != "waiting_owner") return;
+            _waitingOwner = true;
+            _msg.Text = Txt.F("UiCloudWaitingOwner", st.OrgName ?? st.OrgId ?? "—");
+            if (st.ExpiresAt != null) _until = st.ExpiresAt;
+            Countdown();
+        }
+
+        /// <summary>Заявка закончилась без подключения: код больше не годится — «Подключить…» ещё раз.</summary>
+        private void End(string msg)
+        {
+            _tick.Stop();
+            _req = null;
+            _until = null;
+            _left.Text = "";
+            _code.Text = "—";
+            _copy.Enabled = false;
+            _msg.Text = msg;
+            _again.Visible = true;
+            _again.Focus();
+        }
+
+        private void CopyCode()
+        {
+            if (_req == null) return;
+            try { Clipboard.SetText(_req.Code); if (!_waitingOwner) _msg.Text = Txt.S("UiCloudCopied") + " " + Txt.S("UiCloudPending"); } catch { }
         }
     }
 }
