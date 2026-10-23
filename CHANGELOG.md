@@ -2,6 +2,10 @@
 
 Формат — [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/). Раздел версии — заметки к релизу на GitHub.
 
+## [Unreleased]
+
+- **Вкладка «MCP», блок Bilem Cloud: у адреса облака убрано «только чтение».** Это было неверно: через облако идёт и печать документов. В строке «Облако:» теперь только адрес.
+
 ## [0.3.0] — 2026-10-22
 
 **Public Beta.** Первая публичная бета Bilem Agent — та же сборка, что 0.3.0-beta.17, выпущена обычным релизом. *First public beta of Bilem Agent — the same build as 0.3.0-beta.17, published as a regular release.*

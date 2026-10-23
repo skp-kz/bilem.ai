@@ -954,7 +954,6 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiCloudCabinet" xml:space="preserve"><value>Кабинет — app.bilem.ai</value></data>
   <data name="UiCloudNeedService" xml:space="preserve"><value>Bilem Cloud работает через службу Bilem Agent — она не установлена (переустановите агент).</value></data>
   <data name="UiCloudUrl" xml:space="preserve"><value>Облако:</value></data>
-  <data name="UiCloudUrlNote" xml:space="preserve"><value>только чтение</value></data>
   <data name="UiCloudLogin" xml:space="preserve"><value>Логин:</value></data>
   <data name="UiCloudLoginNote" xml:space="preserve"><value>e-mail, с которым входите в кабинет</value></data>
   <data name="UiCloudColBase" xml:space="preserve"><value>База</value></data>

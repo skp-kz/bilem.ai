@@ -146,7 +146,7 @@ namespace Bilem.Agent
             _noService.Visible = !_svc;
             _about.Visible = _cabinet.Visible = !on;
             _details.Visible = on;
-            _url.Text = cfg.Cloud.EffectiveUrl + "   " + Txt.S("UiCloudUrlNote");
+            _url.Text = cfg.Cloud.EffectiveUrl;
             if (!_login.Focused) _login.Text = cfg.Cloud.LoginHint ?? "";
             _loading = false;
             Fill();
