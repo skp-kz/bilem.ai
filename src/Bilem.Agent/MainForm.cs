@@ -110,21 +110,14 @@ namespace Bilem.Agent
             // Трей: цветной значок состояния; крестик — в трей, MCP продолжает работать; выход — только из меню трея
             var menu = new ContextMenuStrip();
             menu.Items.Add(Txt.S("UiTrayOpen"), null, (s, e) => ShowFromTray());
-            menu.Items.Add(Txt.S("UiTrayCopyUrl"), null, (s, e) => { try { Clipboard.SetText(FullUrl()); } catch { } });
             menu.Items.Add(Txt.S("UiTrayResetWindow"), null, (s, e) => { WindowPlacement.Reset(this); ShowFromTray(); });
-            // MCP из трея: «Остановить / Запустить» (как кнопка на вкладке «MCP») и «Перезапустить»
+            // MCP из трея: «Остановить / Запустить» (как кнопка на вкладке «MCP»).
+            // «Скопировать адрес MCP» и «Перезапустить MCP» из трея убраны (Слава, 23.10)
             menu.Items.Add(new ToolStripSeparator());
             var trayMcp = new ToolStripMenuItem();
             trayMcp.Click += (s, e) => ToggleMcp();
-            var trayRestart = new ToolStripMenuItem(Txt.S("UiTrayMcpRestart"));
-            trayRestart.Click += (s, e) => RestartMcp();
-            menu.Opening += (s, e) =>
-            {
-                trayMcp.Text = Txt.S(_host.Running ? "UiTrayMcpStop" : "UiTrayMcpStart");
-                trayRestart.Enabled = _host.Running;
-            };
+            menu.Opening += (s, e) => trayMcp.Text = Txt.S(_host.Running ? "UiTrayMcpStop" : "UiTrayMcpStart");
             menu.Items.Add(trayMcp);
-            menu.Items.Add(trayRestart);
             // Тумблер «SMTP-клиент включён» — только на вкладке «SMTP» (решение Славы 19.10: из трея убран)
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(Txt.S("UiTrayExit"), null, (s, e) => { _exiting = true; Close(); });
