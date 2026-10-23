@@ -938,6 +938,9 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="CloudRequestLog" xml:space="preserve"><value>Bilem Cloud: заявка на подключение базы {0} — код показан, жду кабинет и подтверждение владельца</value></data>
   <data name="CloudKeyLostLog" xml:space="preserve"><value>Bilem Cloud: база {0} подключена, но ключ компьютера не получен — нажмите «Подключить…» ещё раз</value></data>
   <data name="CloudTooManyRequests" xml:space="preserve"><value>Слишком много заявок с этого компьютера — подождите несколько минут и нажмите «Подключить…» ещё раз.</value></data>
+  <data name="CloudOldServer" xml:space="preserve"><value>На сервере облака старая версия — подключение по коду там ещё не включено. Попробуйте позже или напишите в поддержку Bilem.</value></data>
+  <data name="CloudDown" xml:space="preserve"><value>Облако временно не отвечает (ошибка {0}). Подождите минуту и нажмите «Подключить…» ещё раз.</value></data>
+  <data name="CloudNoAnswer" xml:space="preserve"><value>Облако не отвечает. Проверьте интернет и прокси на этом компьютере и нажмите «Подключить…» ещё раз.</value></data>
   <data name="CloudRequestNotFound" xml:space="preserve"><value>Облако не знает эту заявку — нажмите «Подключить…» ещё раз.</value></data>
   <data name="CloudDeclined" xml:space="preserve"><value>Владелец отклонил подключение.</value></data>
   <data name="CloudRequestExpired" xml:space="preserve"><value>Код устарел или владелец не ответил — нажмите «Подключить…» ещё раз.</value></data>
@@ -988,7 +991,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiCloudCodeLeft" xml:space="preserve"><value>Действует ещё {0}, один раз.</value></data>
   <data name="UiCloudPending" xml:space="preserve"><value>Вставьте код в кабинете app.bilem.ai → 1С-Базы → Подключить базу.</value></data>
   <data name="UiCloudWaitingOwner" xml:space="preserve"><value>Ждём подтверждения владельца на телефоне (кабинет «{0}»).</value></data>
-  <data name="UiCloudRequesting" xml:space="preserve"><value>Создаю заявку в облаке…</value></data>
+  <data name="UiCloudRequesting" xml:space="preserve"><value>Получаем код…</value></data>
   <data name="UiCloudCopied" xml:space="preserve"><value>Код скопирован.</value></data>
   <data name="UiCloudConnectedMsg" xml:space="preserve"><value>База «{0}» подключена к Bilem Cloud (организация «{1}»).</value></data>
   <data name="UiStateCloud" xml:space="preserve"><value>Bilem Cloud · коммерческая лицензия · баз в облаке: {0} из {1}</value></data>
