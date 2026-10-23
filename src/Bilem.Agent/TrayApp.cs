@@ -15,8 +15,8 @@ namespace Bilem.Agent
 {
     /// <summary>
     /// Окно в трее (часть I): без прав администратора, у каждого вошедшего пользователя своё. Показывает состояние службы BilemAgent
-    /// и MCP, проверки баз, журнал службы. Всё, что меняет систему, — кнопки со щитом (UAC): «Настройки…», «Скопировать адрес MCP»,
-    /// «Перезапустить MCP», «Запустить службу». Закрыть окно — в трей; выход из трея не останавливает MCP (он в службе).
+    /// и MCP, проверки баз, журнал службы. Всё, что меняет систему, — кнопки со щитом (UAC): «Настройки…»,
+    /// «Запустить службу». Закрыть окно — в трей; выход из трея не останавливает MCP (он в службе).
     /// </summary>
     internal sealed class TrayApp : BilemForm
     {
@@ -93,9 +93,7 @@ namespace Bilem.Agent
             var menu = new ContextMenuStrip();
             menu.Items.Add(Txt.S("UiTrayOpen"), null, (s, e) => ShowWindow());
             menu.Items.Add(Txt.S("UiTraySettings"), null, (s, e) => OpenSettings(null));
-            menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(Txt.S("UiTrayCopyUrl"), null, (s, e) => Admin("copy-url", Txt.S("UiCopied")));
-            menu.Items.Add(Txt.S("UiTrayMcpRestart"), null, (s, e) => Admin("restart-mcp", null));
+            // «Скопировать адрес MCP» и «Перезапустить MCP» убраны и из трея (Слава, 23.10) — как с нижней панели окна
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(Txt.S("UiTrayExitTray"), null, (s, e) => { _exiting = true; Close(); });
             _tray.ContextMenuStrip = menu;
