@@ -83,6 +83,8 @@ namespace Bilem.Agent.Core.Cloud
                 },
             };
             var r = Send(cfg, "POST", ApiPath + "/connect-requests", body, store.Key());
+            // Без `code` — облако до v1.1: показывать нечего (раньше было окно с прочерком)
+            if (string.IsNullOrEmpty((string)r["code"])) throw new CloudException("old_server", 200, Txt.S("CloudOldServer"));
             return new ConnectRequest
             {
                 RequestId = (string)r["request_id"],
@@ -150,7 +152,7 @@ namespace Bilem.Agent.Core.Cloud
                 {
                     var j = ReadJson(er);
                     var code = (string)j?["error"] ?? ("http_" + (int)er.StatusCode);
-                    throw new CloudException(code, (int)er.StatusCode, Message(code, (string)j?["message"]));
+                    throw new CloudException(code, (int)er.StatusCode, Message(code, (string)j?["message"], (int)er.StatusCode));
                 }
             }
             catch (WebException e)
@@ -160,7 +162,7 @@ namespace Bilem.Agent.Core.Cloud
         }
 
         /// <summary>Текст для человека — таблица ошибок протокола; неизвестный код — текст облака.</summary>
-        internal static string Message(string code, string cloudText)
+        internal static string Message(string code, string cloudText, int http = 200)
         {
             switch (code)
             {
@@ -171,7 +173,11 @@ namespace Bilem.Agent.Core.Cloud
                 case "base_conflict": return string.IsNullOrWhiteSpace(cloudText) ? Txt.S("CloudBaseConflict") : cloudText;
                 case "cancelled": return string.IsNullOrWhiteSpace(cloudText) ? Txt.S("CloudCancelled") : cloudText;
                 case "key_revoked": return Txt.S("CloudKeyRevoked");
-                default: return string.IsNullOrWhiteSpace(cloudText) ? Txt.F("CloudError", code) : cloudText;
+                // Адреса нет — на сервере облака старая версия протокола (до v1.1); его «нет такого адреса» человеку ничего не говорит
+                case "not_found": case "http_404": return Txt.S("CloudOldServer");
+                default:
+                    if (http >= 500) return Txt.F("CloudDown", http);
+                    return string.IsNullOrWhiteSpace(cloudText) ? Txt.F("CloudError", code) : cloudText;
             }
         }
 

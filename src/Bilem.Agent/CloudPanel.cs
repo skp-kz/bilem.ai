@@ -243,15 +243,22 @@ namespace Bilem.Agent
     }
 
     /// <summary>
-    /// «Подключить…» базу к облаку (решение 0017, вторая редакция — stand #77): заявка → крупный код подключения + «Скопировать» + отсчёт;
+    /// «Подключить…» базу к облаку (решение 0017, вторая редакция — stand #77): заявка → крупный код подключения (выделяется мышью) + иконка копирования + отсчёт;
     /// код вставляют в кабинете (1С-Базы → Подключить базу), владелец нажимает «Разрешить» на телефоне — окно узнаёт это опросом заявки.
     /// Второго кода и браузера нет. Отклонено / истекло / ошибка — «Подключить…» ещё раз (новая заявка).
     /// </summary>
     internal sealed class CloudConnectForm : BilemForm
     {
         private readonly string _slug;
-        private readonly Label _code = new Label { AutoSize = true, Font = new Font(FontFamily.GenericMonospace, 22f, FontStyle.Bold), Margin = new Padding(0, 0, 10, 0) };
-        private readonly Button _copy = new Button { Text = Txt.S("UiCopy"), AutoSize = true, Enabled = false, Margin = new Padding(0, 8, 0, 0) };
+        // Код — главное в окне: крупно, жирный моноширинный, только чтение, но выделяется мышью и копируется Ctrl+C и без кнопки
+        private readonly TextBox _code = new TextBox
+        {
+            ReadOnly = true, BorderStyle = BorderStyle.None, TabStop = false,
+            Font = new Font(CodeFont(), 30f, FontStyle.Bold), Margin = new Padding(0, 0, 8, 0),
+        };
+        private readonly CopyIcon _copy = new CopyIcon { Enabled = false };
+        private readonly FlowLayoutPanel _row = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(0), WrapContents = false, Visible = false };
+        private readonly ToolTip _tips = new ToolTip();
         private readonly Label _left = new Label { AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(0, 2, 0, 0) };
         private readonly Label _msg = new Label { AutoSize = true, Margin = new Padding(0, 8, 0, 0), MaximumSize = new Size(460, 0) };
         private readonly Button _again = new Button { Text = Txt.S("UiCloudConnect"), AutoSize = true, Visible = false, Margin = new Padding(0, 10, 6, 0) };
@@ -273,8 +280,12 @@ namespace Bilem.Agent
             var f = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, Padding = new Padding(14), WrapContents = false };
             f.Controls.Add(new Label { Text = Txt.F("UiCloudConnectBase", slug, Environment.MachineName), AutoSize = true });
             f.Controls.Add(new Label { Text = Txt.S("UiCloudConnCode"), AutoSize = true, Margin = new Padding(0, 10, 0, 2) });
-            var row = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(0) };
+            var row = _row;
+            _code.BackColor = BackColor;
+            _code.Width = TextRenderer.MeasureText("WWWW-WWWW", _code.Font).Width + 4;
             row.Controls.Add(_code);
+            _copy.Margin = new Padding(0, Math.Max(0, (_code.PreferredHeight - _copy.Height) / 2), 0, 0);
+            _tips.SetToolTip(_copy, Txt.S("UiCopy"));
             _copy.Click += (s, e) => CopyCode();
             row.Controls.Add(_copy);
             f.Controls.Add(row);
@@ -290,7 +301,29 @@ namespace Bilem.Agent
             Controls.Add(f);
             _tick.Tick += (s, e) => Countdown();
             Shown += (s, e) => Begin();
-            FormClosed += (s, e) => { _cts?.Cancel(); _tick.Dispose(); };
+            FormClosed += (s, e) => { _cts?.Cancel(); _tick.Dispose(); _tips.Dispose(); };
+        }
+
+        /// <summary>Код есть — крупно с иконкой копирования; нет (ждём облако, ошибка) — строки нет совсем, без прочерка.</summary>
+        private void ShowCode(string code)
+        {
+            _code.Text = code ?? "";
+            _copy.Enabled = code != null;
+            _row.Visible = code != null;
+        }
+
+        /// <summary>Consolas есть в любой Windows начиная с Vista; нет — системный моноширинный.</summary>
+        private static FontFamily CodeFont()
+        {
+            try { return new FontFamily("Consolas"); } catch { return FontFamily.GenericMonospace; }
+        }
+
+        /// <summary>Ошибка словами: нет связи — «облако не отвечает» (подробности — в журнале), 404 / 5xx — тексты CloudApi.Message.</summary>
+        private static string Why(Exception e)
+        {
+            e = (e as AggregateException)?.InnerException ?? e;
+            if (e is CloudException ce && ce.Code == "no_connection") { Log.Warn(ce.Message); return Txt.S("CloudNoAnswer"); }
+            return e.Message;
         }
 
         /// <summary>Срок — в местном времени (облако присылает UTC с «Z»).</summary>
@@ -310,23 +343,23 @@ namespace Bilem.Agent
             _waitingOwner = false;
             _req = null;
             _until = null;
-            _code.Text = "—";
-            _copy.Enabled = false;
+            ShowCode(null);
             _again.Visible = false;
-            _msg.Text = Txt.S("UiCloudRequesting");
+            _left.Text = Txt.S("UiCloudRequesting");
+            _msg.Text = "";
             UseWaitCursor = true;
             Task.Run(() => CloudConnect.Begin(_slug)).ContinueWith(t => BeginInvoke((Action)(() =>
             {
                 UseWaitCursor = false;
-                if (t.Exception != null) { End((t.Exception.InnerException ?? t.Exception).Message); return; }
+                if (t.Exception != null) { End(Why(t.Exception)); return; }
                 _req = t.Result;
-                _code.Text = _req.Code;
-                _copy.Enabled = true;
+                ShowCode(_req.Code);
                 _until = _req.ExpiresAt;
                 _msg.Text = Txt.S("UiCloudPending");
                 Countdown();
                 _tick.Start();
-                _copy.Focus();
+                _code.Focus();
+                _code.SelectAll();
                 Wait(_req);
             })));
         }
@@ -339,7 +372,7 @@ namespace Bilem.Agent
                 if (cts.IsCancellationRequested || IsDisposed) return;
                 BeginInvoke((Action)(() =>
                 {
-                    if (t.Exception != null) { End((t.Exception.InnerException ?? t.Exception).Message); return; }
+                    if (t.Exception != null) { End(Why(t.Exception)); return; }
                     _tick.Stop();
                     MessageBox.Show(this, Txt.F("UiCloudConnectedMsg", _slug, t.Result.OrgName ?? "—"), "Bilem Cloud", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     DialogResult = DialogResult.OK;
@@ -365,8 +398,7 @@ namespace Bilem.Agent
             _req = null;
             _until = null;
             _left.Text = "";
-            _code.Text = "—";
-            _copy.Enabled = false;
+            ShowCode(null);
             _msg.Text = msg;
             _again.Visible = true;
             _again.Focus();
@@ -375,7 +407,44 @@ namespace Bilem.Agent
         private void CopyCode()
         {
             if (_req == null) return;
-            try { Clipboard.SetText(_req.Code); if (!_waitingOwner) _msg.Text = Txt.S("UiCloudCopied") + " " + Txt.S("UiCloudPending"); } catch { }
+            try { Clipboard.SetText(_req.Code); _copy.Done(); if (!_waitingOwner) _msg.Text = Txt.S("UiCloudCopied") + " " + Txt.S("UiCloudPending"); } catch { }
         }
+    }
+
+    /// <summary>Квадратная кнопка-иконка «копировать» 24×24, как у сниппетов кода: два листка; после клика на секунду — галочка. Рисуется сама, без шрифтов иконок.</summary>
+    internal sealed class CopyIcon : Button
+    {
+        private readonly System.Windows.Forms.Timer _back = new System.Windows.Forms.Timer { Interval = 1000 };
+        private bool _done;
+
+        public CopyIcon()
+        {
+            Size = new Size(24, 24);
+            FlatStyle = FlatStyle.Flat;
+            FlatAppearance.BorderSize = 0;
+            Cursor = Cursors.Hand;
+            AccessibleName = Txt.S("UiCopy");
+            _back.Tick += (s, e) => { _back.Stop(); _done = false; Invalidate(); };
+        }
+
+        public void Done() { _done = true; Invalidate(); _back.Stop(); _back.Start(); }
+
+        protected override void OnEnabledChanged(EventArgs e) { _back.Stop(); _done = false; base.OnEnabledChanged(e); }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            var g = e.Graphics;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            var c = !Enabled ? SystemColors.GrayText : _done ? Color.FromArgb(0, 128, 0) : SystemColors.ControlText;
+            using (var pen = new Pen(c, 1.6f))
+            {
+                if (_done) { g.DrawLines(pen, new[] { new PointF(6, 12.5f), new PointF(10, 16.5f), new PointF(18, 7.5f) }); return; }
+                g.DrawRectangle(pen, 9, 9, 9, 10);                                                           // передний листок
+                g.DrawLines(pen, new[] { new PointF(6, 15), new PointF(6, 5.5f), new PointF(14, 5.5f) });    // задний — уголком
+            }
+        }
+
+        protected override void Dispose(bool disposing) { if (disposing) _back.Dispose(); base.Dispose(disposing); }
     }
 }
