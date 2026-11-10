@@ -37,6 +37,42 @@ namespace Bilem.Agent.Core
     }
 
     /// <summary>
+    /// «Шаг 5 из 9 · 44%» в окне «Настройка базы» (stand #75, 10.11). Сделан — ✔, «внимание» или «не требуется»;
+    /// процент — сделанные из общего числа. Откат на свой Apache в план не входит — с ним шагов на один больше.
+    /// </summary>
+    public sealed class StepProgress
+    {
+        public int Done { get; private set; }
+        public int Total { get; private set; }
+        /// <summary>Номер шага, который идёт сейчас или упал (с 1).</summary>
+        public int Current { get; private set; }
+        public int Percent => Total == 0 ? 0 : Done * 100 / Total;
+        public bool Failed { get; private set; }
+
+        public static bool IsDone(StepStatus s) => s == StepStatus.Ok || s == StepStatus.Warn || s == StepStatus.Skipped;
+
+        /// <param name="finished">null — работа ещё идёт, true — закончилась успешно, false — с ошибкой.</param>
+        public static StepProgress Of(IList<Step> steps, int planned, bool? finished = null)
+        {
+            var p = new StepProgress { Total = Math.Max(planned, steps.Count) };
+            p.Done = steps.Count(x => IsDone(x.Status));
+            var fail = steps.Select((x, i) => new { x, i }).FirstOrDefault(t => t.x.Status == StepStatus.Fail);
+            p.Failed = fail != null || finished == false;
+            // Успех раньше плана (диагностика без изменений) — всё равно 100%
+            if (finished == true && !p.Failed) p.Done = p.Total;
+            p.Current = fail != null ? fail.i + 1 : Math.Max(1, Math.Min(p.Done + 1, p.Total));
+            return p;
+        }
+
+        public string Text()
+        {
+            if (Failed) return Txt.F("UiProgressFail", Current, Total);
+            if (Done == Total) return Txt.F("UiProgressDone", Done, Total);
+            return Txt.F("UiProgress", Current, Total, Percent);
+        }
+    }
+
+    /// <summary>
     /// Подключение базы 1С: перенос setup-spike.ps1 без потерь (находки known-issues 1–10 — см. журнал задачи).
     /// Каждый шаг: проверить → сделать → перепроверить. Повторный запуск ничего не ломает и продолжает с упавшего шага.
     /// </summary>
@@ -48,6 +84,9 @@ namespace Bilem.Agent.Core
 
         public List<Step> Steps { get; } = new List<Step>();
         public event Action<Step> StepChanged;
+        /// <summary>Сколько шагов будет всего (для «Шаг N из M»); 0 — заранее неизвестно, полосы в окне нет.</summary>
+        public int Planned { get; private set; }
+        public static readonly string[] SetupSteps = { "admin", "base", "platform", "connect", "user", "odata", "iis", "publish", "verify" };
 
         private Step _cur;
 
@@ -91,7 +130,7 @@ namespace Bilem.Agent.Core
         public bool Diag(SetupOptions o) => Run(o, apply: false);
 
         /// <summary>Подключить базу: пользователь bilem, состав OData, публикация только на 127.0.0.1, проверки.</summary>
-        public bool Setup(SetupOptions o) => Run(o, apply: true);
+        public bool Setup(SetupOptions o) { Planned = SetupSteps.Length; return Run(o, apply: true); }
 
         private bool Run(SetupOptions o, bool apply)
         {
@@ -329,6 +368,7 @@ namespace Bilem.Agent.Core
                 // BILEM_SIMULATE=iis_crash — ветка отката проверяется и на машине, где IIS работает
                 var reason = ok && !Web.WebSim.On("iis_crash") ? null : Web.WebChoice.FallbackReason(kind, mode, vr?.MetadataCode ?? -1, vr?.Crash);
                 if (reason == null) return ok;
+                Planned++;
                 Begin("apache_fallback");
                 Log.Warn(Txt.S(reason));
                 web.Unpublish(b);

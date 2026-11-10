@@ -703,6 +703,9 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiRotateToken" xml:space="preserve"><value>Сменить токен</value></data>
   <data name="UiRunFail" xml:space="preserve"><value>Не получилось — что случилось и что делать, смотрите в журнале ниже.</value></data>
   <data name="UiRunOk" xml:space="preserve"><value>Готово — всё прошло.</value></data>
+  <data name="UiProgress" xml:space="preserve"><value>Шаг {0} из {1} · {2}%</value></data>
+  <data name="UiProgressDone" xml:space="preserve"><value>{0} из {1} · 100% · Готово — всё прошло</value></data>
+  <data name="UiProgressFail" xml:space="preserve"><value>Шаг {0} из {1} — ошибка</value></data>
   <data name="UiSelectBase" xml:space="preserve"><value>Выберите базу в списке.</value></data>
   <data name="UiServiceDiagNote" xml:space="preserve"><value>Проверить всё, что нужно Bilem Agent: Windows, .NET, 1С, IIS, MCP и каждую базу — что в порядке и что исправить.</value></data>
   <data name="UiServiceSupport" xml:space="preserve"><value>Проверка и поддержка</value></data>

@@ -12,6 +12,11 @@ namespace Bilem.Agent
         private readonly ListView _steps = new ListView { View = View.Details, FullRowSelect = true, HeaderStyle = ColumnHeaderStyle.Nonclickable, Dock = DockStyle.Fill };
         private readonly TextBox _log = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, Font = new Font(FontFamily.GenericMonospace, 9f), BackColor = SystemColors.Window };
         private readonly Label _result = new Label { AutoSize = true, Padding = new Padding(0, 6, 0, 0) };
+        // «Шаг 5 из 9 · 44%» и полоса — только там, где число шагов известно заранее (Onboarding.Planned)
+        private readonly Label _progressText = new Label { AutoSize = true, Dock = DockStyle.Top, Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold), Padding = new Padding(0, 0, 0, 4) };
+        private readonly ProgressBar _progressBar = new ProgressBar { Dock = DockStyle.Top, Height = 18, Style = ProgressBarStyle.Continuous, Maximum = 100 };
+        private readonly Panel _progress = new Panel { Dock = DockStyle.Top, Padding = new Padding(8, 8, 8, 6), Visible = false };
+        private Onboarding _ob;
         private readonly Button _close = new Button { Text = Txt.S("UiClose"), Enabled = false, AutoSize = true };
         private readonly Func<Onboarding, bool> _work;
         public bool Success { get; private set; }
@@ -36,7 +41,12 @@ namespace Bilem.Agent
             bottom.Controls.Add(_result);
             _close.Click += (s, e) => Close();
 
+            _progress.Height = Px(58);
+            _progress.Controls.Add(_progressBar);
+            _progress.Controls.Add(_progressText);
+
             Controls.Add(split);
+            Controls.Add(_progress);
             Controls.Add(bottom);
             Shown += async (s, e) => await Start();
             FormClosing += (s, e) => { if (!_close.Enabled) e.Cancel = true; };
@@ -44,14 +54,15 @@ namespace Bilem.Agent
 
         private async Task Start()
         {
-            var ob = new Onboarding();
-            ob.StepChanged += st => BeginInvoke((Action)(() => ShowStep(st)));
+            var ob = _ob = new Onboarding();
+            ob.StepChanged += st => BeginInvoke((Action)(() => { ShowStep(st); ShowProgress(null); }));
             Action<LogEntry> onLog = en => BeginInvoke((Action)(() => _log.AppendText(en + Environment.NewLine)));
             Log.Written += onLog;
             try { Success = await Task.Run(() => _work(ob)); }
             finally { Log.Written -= onLog; }
             _result.Text = Success ? Txt.S("UiRunOk") : Txt.S("UiRunFail");
             _result.ForeColor = Success ? Color.DarkGreen : Color.DarkRed;
+            ShowProgress(Success);
             _close.Enabled = true;
             _close.Focus();
         }
@@ -75,6 +86,22 @@ namespace Bilem.Agent
             it.SubItems[1].Text = Txt.S("UiStep_" + st.Status) + (string.IsNullOrEmpty(st.Detail) ? "" : " — " + st.Detail);
             it.EnsureVisible();
         }
+
+        /// <param name="finished">null — идёт, true/false — закончилось успешно или с ошибкой.</param>
+        private void ShowProgress(bool? finished)
+        {
+            if (_ob == null || _ob.Planned == 0) return;
+            var p = StepProgress.Of(_ob.Steps.ToArray(), _ob.Planned, finished);
+            _progress.Visible = true;
+            _progressText.Text = p.Text();
+            _progressText.ForeColor = p.Failed ? Color.DarkRed : p.Done == p.Total ? Color.DarkGreen : SystemColors.ControlText;
+            _progressBar.Value = p.Percent;
+            // Красная полоса: у ProgressBar с темой Windows цвет не задать, только состояние Error (PBM_SETSTATE)
+            SendMessage(_progressBar.Handle, 0x410, (IntPtr)(p.Failed ? 2 : 1), IntPtr.Zero);
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr h, int msg, IntPtr w, IntPtr l);
     }
 
     /// <summary>Логин и пароль администратора 1С (пароль нигде не сохраняется).</summary>
