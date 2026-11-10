@@ -18,12 +18,20 @@ namespace Bilem.Agent
         private readonly Panel _progress = new Panel { Dock = DockStyle.Top, Padding = new Padding(8, 8, 8, 6), Visible = false };
         private Onboarding _ob;
         private readonly Button _close = new Button { Text = Txt.S("UiClose"), Enabled = false, AutoSize = true };
+        // При ошибке — лог запуска одним действием для поддержки
+        private readonly Button _copyLog = new Button { Text = Txt.S("UiCopyLog"), AutoSize = true, Visible = false };
+        private readonly Button _saveLog = new Button { Text = Txt.S("UiSaveLog"), AutoSize = true, Visible = false };
+        private readonly string _logKind, _slug;
+        private DateTime _started;
         private readonly Func<Onboarding, bool> _work;
         public bool Success { get; private set; }
 
-        public RunForm(string title, Func<Onboarding, bool> work)
+        /// <param name="logKind">Для имени файла лога: setup, verify, remove, access.</param>
+        public RunForm(string title, Func<Onboarding, bool> work, string logKind = "run", string slug = null)
         {
             _work = work;
+            _logKind = logKind;
+            _slug = slug;
             Text = title;
             StartPosition = FormStartPosition.CenterParent;
             Size = new Size(820, 620);
@@ -38,8 +46,12 @@ namespace Bilem.Agent
 
             var bottom = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, AutoSize = true, Padding = new Padding(8) };
             bottom.Controls.Add(_close);
+            bottom.Controls.Add(_saveLog);
+            bottom.Controls.Add(_copyLog);
             bottom.Controls.Add(_result);
             _close.Click += (s, e) => Close();
+            _copyLog.Click += (s, e) => CopyLog();
+            _saveLog.Click += (s, e) => SaveLog();
 
             _progress.Height = Px(58);
             _progress.Controls.Add(_progressBar);
@@ -54,6 +66,7 @@ namespace Bilem.Agent
 
         private async Task Start()
         {
+            _started = DateTime.Now;
             var ob = _ob = new Onboarding();
             ob.StepChanged += st => BeginInvoke((Action)(() => { ShowStep(st); ShowProgress(null); }));
             Action<LogEntry> onLog = en => BeginInvoke((Action)(() => _log.AppendText(en + Environment.NewLine)));
@@ -63,6 +76,7 @@ namespace Bilem.Agent
             _result.Text = Success ? Txt.S("UiRunOk") : Txt.S("UiRunFail");
             _result.ForeColor = Success ? Color.DarkGreen : Color.DarkRed;
             ShowProgress(Success);
+            _copyLog.Visible = _saveLog.Visible = !Success;
             _close.Enabled = true;
             _close.Focus();
         }
@@ -98,6 +112,29 @@ namespace Bilem.Agent
             _progressBar.Value = p.Percent;
             // Красная полоса: у ProgressBar с темой Windows цвет не задать, только состояние Error (PBM_SETSTATE)
             SendMessage(_progressBar.Handle, 0x410, (IntPtr)(p.Failed ? 2 : 1), IntPtr.Zero);
+        }
+
+        private string LogText() =>
+            RunLog.Build(Text, _slug, _started, _ob?.Steps.ToArray() ?? new Step[0], _progress.Visible ? _progressText.Text : null, _result.Text, _log.Text);
+
+        private void CopyLog()
+        {
+            try { Clipboard.SetText(LogText()); MessageBox.Show(this, Txt.S("UiLogCopied"), Text, MessageBoxButtons.OK, MessageBoxIcon.Information); }
+            catch (Exception ex) { MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+        }
+
+        private void SaveLog()
+        {
+            using (var d = new SaveFileDialog { FileName = RunLog.FileName(_logKind, _slug, _started), Filter = Txt.S("UiLogFilter"), InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) })
+            {
+                if (d.ShowDialog(this) != DialogResult.OK) return;
+                try
+                {
+                    System.IO.File.WriteAllText(d.FileName, LogText(), new System.Text.UTF8Encoding(true));
+                    MessageBox.Show(this, Txt.F("UiLogSaved", d.FileName), Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex) { MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+            }
         }
 
         [System.Runtime.InteropServices.DllImport("user32.dll")]

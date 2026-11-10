@@ -780,7 +780,7 @@ namespace Bilem.Agent
             {
                 if (f.ShowDialog(this) != DialogResult.OK) return;
                 var o = f.Options;
-                Busy(() => { using (var run = new RunForm(Txt.F("UiSetupTitle", o.Slug), ob => ob.Setup(o))) run.ShowDialog(this); });
+                Busy(() => { using (var run = new RunForm(Txt.F("UiSetupTitle", o.Slug), ob => ob.Setup(o), "setup", o.Slug)) run.ShowDialog(this); });
                 o.AdminPassword = null;
             }
             AfterChange();
@@ -793,7 +793,7 @@ namespace Bilem.Agent
         {
             var b = Selected();
             if (b == null) { Info(Txt.S("UiSelectBase")); return; }
-            Busy(() => { using (var run = new RunForm(Txt.F("UiVerifyTitle", b.Slug), ob => ob.Verify(b.Slug))) run.ShowDialog(this); });
+            Busy(() => { using (var run = new RunForm(Txt.F("UiVerifyTitle", b.Slug), ob => ob.Verify(b.Slug), "verify", b.Slug)) run.ShowDialog(this); });
             AfterChange();
         }
 
@@ -813,7 +813,7 @@ namespace Bilem.Agent
                     user = c.User; pwd = c.Password;
                 }
             }
-            Busy(() => { using (var run = new RunForm(Txt.F("UiRemoveRunTitle", b.Slug), ob => ob.Remove(b.Slug, drop, user, pwd))) run.ShowDialog(this); });
+            Busy(() => { using (var run = new RunForm(Txt.F("UiRemoveRunTitle", b.Slug), ob => ob.Remove(b.Slug, drop, user, pwd), "remove", b.Slug)) run.ShowDialog(this); });
             AfterChange();
         }
 
@@ -1076,7 +1076,7 @@ namespace Bilem.Agent
                     user = f.User; pwd = f.Password;
                 }
                 var r = read.ToList(); var w = write.ToList();
-                Busy(() => { using (var run = new RunForm(Txt.F("UiAccessRunTitle", b.Slug), ob => ob.ApplyAccess(b.Slug, user, pwd, r, w))) run.ShowDialog(this); });
+                Busy(() => { using (var run = new RunForm(Txt.F("UiAccessRunTitle", b.Slug), ob => ob.ApplyAccess(b.Slug, user, pwd, r, w), "access", b.Slug)) run.ShowDialog(this); });
             }
             AfterChange();
         }
@@ -1090,7 +1090,7 @@ namespace Bilem.Agent
             {
                 if (f.ShowDialog(this) != DialogResult.OK) return;
                 var user = f.User; var pwd = f.Password;
-                Busy(() => { using (var run = new RunForm(Txt.F("UiAccessReloadTitle", b.Slug), ob => ob.LoadCatalog(b.Slug, user, pwd))) run.ShowDialog(this); });
+                Busy(() => { using (var run = new RunForm(Txt.F("UiAccessReloadTitle", b.Slug), ob => ob.LoadCatalog(b.Slug, user, pwd), "access", b.Slug)) run.ShowDialog(this); });
             }
             ShowAccess();
         }

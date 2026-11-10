@@ -703,6 +703,11 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiRotateToken" xml:space="preserve"><value>Сменить токен</value></data>
   <data name="UiRunFail" xml:space="preserve"><value>Не получилось — что случилось и что делать, смотрите в журнале ниже.</value></data>
   <data name="UiRunOk" xml:space="preserve"><value>Готово — всё прошло.</value></data>
+  <data name="UiCopyLog" xml:space="preserve"><value>Скопировать лог</value></data>
+  <data name="UiSaveLog" xml:space="preserve"><value>Сохранить лог…</value></data>
+  <data name="UiLogCopied" xml:space="preserve"><value>Лог скопирован — вставьте его в WhatsApp или письмо в поддержку Bilem. Паролей в нём нет.</value></data>
+  <data name="UiLogSaved" xml:space="preserve"><value>Лог сохранён: {0}</value></data>
+  <data name="UiLogFilter" xml:space="preserve"><value>Журнал (*.log)|*.log|Текст (*.txt)|*.txt</value></data>
   <data name="UiProgress" xml:space="preserve"><value>Шаг {0} из {1} · {2}%</value></data>
   <data name="UiProgressDone" xml:space="preserve"><value>{0} из {1} · 100% · Готово — всё прошло</value></data>
   <data name="UiProgressFail" xml:space="preserve"><value>Шаг {0} из {1} — ошибка</value></data>

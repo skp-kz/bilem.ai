@@ -73,6 +73,51 @@ namespace Bilem.Agent.Core
     }
 
     /// <summary>
+    /// «Скопировать лог» / «Сохранить лог…» при ошибке в окне шагов (stand #75, 10.11): шапка, шаги и журнал запуска одним текстом —
+    /// клиент пересылает его поддержке одним действием. Пароли в журнал не пишутся; маскировка — страховка от чужого текста (ошибки 1С, IIS).
+    /// </summary>
+    public static class RunLog
+    {
+        private static readonly Regex[] Secrets =
+        {
+            new Regex("(\\bPwd\\s*=\\s*)(\"(?:[^\"]|\"\")*\"|[^;\\s]*)", RegexOptions.IgnoreCase),
+            new Regex("(\\b(?:password|пароль)\\s*[=:]\\s*)(\\S+)", RegexOptions.IgnoreCase),
+            new Regex("(\\s/P)(\"[^\"]*\"|\\S+)"),
+            new Regex("(\\bBearer\\s+)(\\S+)", RegexOptions.IgnoreCase),
+        };
+
+        public static string Mask(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text ?? "";
+            foreach (var rx in Secrets) text = rx.Replace(text, "$1***");
+            return Connectors.Mask(text);
+        }
+
+        /// <summary>bilem-setup-sentis101126-2026-11-10-1825.log</summary>
+        public static string FileName(string kind, string slug, DateTime at)
+        {
+            var s = string.IsNullOrEmpty(slug) ? "" : "-" + Regex.Replace(slug.ToLowerInvariant(), "[^a-z0-9_-]", "_");
+            return $"bilem-{kind}{s}-{at:yyyy-MM-dd-HHmm}.log";
+        }
+
+        public static string Build(string title, string slug, DateTime at, IList<Step> steps, string progress, string result, string log)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"{title} · Bilem Agent {Updates.SemVer.Current}");
+            if (!string.IsNullOrEmpty(slug)) sb.AppendLine($"База: {slug}");
+            sb.AppendLine($"Время: {at:yyyy-MM-dd HH:mm} · {Environment.MachineName} · {Environment.OSVersion.VersionString}");
+            if (!string.IsNullOrEmpty(progress)) sb.AppendLine(progress);
+            if (!string.IsNullOrEmpty(result)) sb.AppendLine(result);
+            sb.AppendLine();
+            for (var i = 0; i < steps.Count; i++)
+                sb.AppendLine($"{i + 1}. {steps[i].Title} — {Txt.S("UiStep_" + steps[i].Status)}{(string.IsNullOrEmpty(steps[i].Detail) ? "" : " — " + steps[i].Detail)}");
+            sb.AppendLine();
+            sb.Append(log);
+            return Mask(sb.ToString());
+        }
+    }
+
+    /// <summary>
     /// Подключение базы 1С: перенос setup-spike.ps1 без потерь (находки known-issues 1–10 — см. журнал задачи).
     /// Каждый шаг: проверить → сделать → перепроверить. Повторный запуск ничего не ломает и продолжает с упавшего шага.
     /// </summary>
