@@ -34,6 +34,43 @@ namespace Bilem.Agent.Core
         public string Title { get; set; }
         public StepStatus Status { get; set; }
         public string Detail { get; set; }
+        public DateTime? StartedAt { get; set; }
+        /// <summary>Сколько шаг шёл — для таблицы шагов в тексте для поддержки.</summary>
+        public TimeSpan? Duration { get; set; }
+    }
+
+    /// <summary>Что известно о базе в этом запуске — для текста поддержки; настройка могла упасть раньше, чем база попала в config.json.</summary>
+    public sealed class RunFacts
+    {
+        public string Name { get; set; }
+        public string Configuration { get; set; }
+        public string ConfigVersion { get; set; }
+        public string Platform { get; set; }
+        public int PlatformBits { get; set; }
+        /// <summary>Названия организаций базы: в тексте поддержки заменяются.</summary>
+        public List<string> Organizations { get; set; } = new List<string>();
+
+        public static RunFacts From(BaseConfig b) => b == null ? new RunFacts() : new RunFacts
+        {
+            Name = b.Slug, Configuration = b.DisplayName, ConfigVersion = b.Version, Platform = b.PlatformVersion, PlatformBits = b.PlatformBits,
+            Organizations = (b.Print?.Addresses?.Keys ?? Enumerable.Empty<string>()).ToList(),
+        };
+    }
+
+    /// <summary>Среда для текста поддержки: окно знает масштаб экрана, всё остальное — Core.</summary>
+    public sealed class SupportInfo
+    {
+        public string Title { get; set; }
+        public int ScalePercent { get; set; }
+        public RunFacts Base { get; set; }
+        public IList<Step> Steps { get; set; }
+        public string Progress { get; set; }
+        /// <summary>Номер упавшего шага; 0 — ошибки нет.</summary>
+        public int FailedStep { get; set; }
+        public string FailedTitle { get; set; }
+        public string Error { get; set; }
+        public string Hint { get; set; }
+        public string Log { get; set; }
     }
 
     /// <summary>
@@ -48,19 +85,25 @@ namespace Bilem.Agent.Core
         public int Current { get; private set; }
         public int Percent => Total == 0 ? 0 : Done * 100 / Total;
         public bool Failed { get; private set; }
+        /// <summary>Упавший шаг; null — ошибка случилась вне шагов или её нет.</summary>
+        public Step FailedStep { get; private set; }
 
         public static bool IsDone(StepStatus s) => s == StepStatus.Ok || s == StepStatus.Warn || s == StepStatus.Skipped;
 
         /// <param name="finished">null — работа ещё идёт, true — закончилась успешно, false — с ошибкой.</param>
         public static StepProgress Of(IList<Step> steps, int planned, bool? finished = null)
         {
-            var p = new StepProgress { Total = Math.Max(planned, steps.Count) };
-            p.Done = steps.Count(x => IsDone(x.Status));
-            var fail = steps.Select((x, i) => new { x, i }).FirstOrDefault(t => t.x.Status == StepStatus.Fail);
-            p.Failed = fail != null || finished == false;
+            // Повтор шага (проверки после отката на Apache) — тот же шаг, считается его последняя попытка
+            var uniq = steps.GroupBy(x => x.Id).Select(g => g.Last()).ToList();
+            var p = new StepProgress { Total = Math.Max(planned, uniq.Count) };
+            p.Done = uniq.Count(x => IsDone(x.Status));
+            var fail = finished == true ? -1 : uniq.FindLastIndex(x => x.Status == StepStatus.Fail);
+            // Упавший шаг, после которого работа пошла дальше (откат на Apache), — ещё не ошибка
+            p.Failed = finished == false || (fail >= 0 && steps[steps.Count - 1].Status == StepStatus.Fail);
+            p.FailedStep = p.Failed && fail >= 0 ? uniq[fail] : null;
             // Успех раньше плана (диагностика без изменений) — всё равно 100%
-            if (finished == true && !p.Failed) p.Done = p.Total;
-            p.Current = fail != null ? fail.i + 1 : Math.Max(1, Math.Min(p.Done + 1, p.Total));
+            if (finished == true) p.Done = p.Total;
+            p.Current = p.Failed && fail >= 0 ? fail + 1 : Math.Max(1, Math.Min(p.Done + 1, p.Total));
             return p;
         }
 
@@ -115,6 +158,75 @@ namespace Bilem.Agent.Core
             sb.Append(log);
             return Mask(sb.ToString());
         }
+
+        private static readonly Regex UserPath = new Regex("(\\\\Users[\\\\/]|/Users/)[^\\\\/\"'<>|:*?\\r\\n]+", RegexOptions.IgnoreCase);
+        // БИН/ИИН — 12 цифр; не хвост GUID и не часть длинного числа
+        private static readonly Regex Bin = new Regex("(?<![\\w-])\\d{12}(?![\\w-])");
+        private static readonly Regex OrgForm = new Regex("\\b(?:ТОО|ООО|АО|ЗАО|ОАО|ИП|ЧП|КХ|LLP|LLC|JSC)\\s+(?:[\"«„“][^\"»”\\r\\n]*[\"»”]|(?:[А-ЯЁA-Z][\\w.-]*\\s*){1,3})");
+
+        /// <summary>Для текста поддержки: Mask, плюс имя пользователя Windows в путях, БИН и названия организаций.</summary>
+        public static string Anonymize(string text, IEnumerable<string> organizations = null)
+        {
+            text = Mask(text);
+            foreach (var org in (organizations ?? Enumerable.Empty<string>()).Where(x => !string.IsNullOrWhiteSpace(x)).OrderByDescending(x => x.Length))
+                text = Regex.Replace(text, Regex.Escape(org), "<организация>", RegexOptions.IgnoreCase);
+            text = OrgForm.Replace(text, "<организация>");
+            text = Bin.Replace(text, "<БИН>");
+            return UserPath.Replace(text, m => m.Groups[1].Value + "<user>");
+        }
+
+        /// <summary>Одной-двумя строками: для блока ошибки и строки шага; полный текст — в журнале.</summary>
+        public static string Short(string text, int max = 240)
+        {
+            var s = Regex.Replace(text ?? "", "\\s+", " ").Trim();
+            return s.Length <= max ? s : s.Substring(0, max - 1).TrimEnd() + "…";
+        }
+
+        /// <summary>«Остановилось на шаге N «Название»: причина.» и с новой строки «Что делать: …».</summary>
+        public static string Stopped(int step, string title, string error, string hint)
+        {
+            var s = Txt.F("UiRunStopped", step, title, Short(Mask(error)));
+            return string.IsNullOrEmpty(hint) ? s : s + Environment.NewLine + Txt.S("WhatToDo") + " " + Short(Mask(hint));
+        }
+
+        private static string Cell(string s) => (s ?? "").Replace("|", "\\|").Replace("\r", " ").Replace("\n", " ");
+
+        /// <summary>«Скопировать для поддержки»: готовый markdown для LLM и поддержки — среда, база, шаги, ошибка, журнал. Без секретов и персональных данных.</summary>
+        public static string Support(SupportInfo i)
+        {
+            var b = i.Base ?? new RunFacts();
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("# " + i.Title).AppendLine();
+            sb.AppendLine("## " + Txt.S("SupportEnv"));
+            sb.AppendLine($"- {Txt.S("SupportAgent")}: {Updates.SemVer.Current}");
+            sb.AppendLine($"- Windows: {Environment.OSVersion.Version}, {Txt.F("SupportBits", Environment.Is64BitOperatingSystem ? 64 : 32)}");
+            sb.AppendLine($"- {Txt.S("SupportScale")}: {i.ScalePercent}%").AppendLine();
+            sb.AppendLine("## " + Txt.S("SupportBase"));
+            sb.AppendLine($"- {Txt.S("SupportBaseName")}: {b.Name ?? "—"}");
+            sb.AppendLine($"- {Txt.S("SupportBaseKind")}: {Txt.S("UiKindFile")}");
+            sb.AppendLine($"- {Txt.S("SupportConfig")}: {b.Configuration ?? "—"} {b.ConfigVersion}".TrimEnd());
+            sb.AppendLine($"- {Txt.S("SupportPlatform")}: {(b.Platform == null ? "—" : b.Platform + (b.PlatformBits > 0 ? ", " + Txt.F("SupportBits", b.PlatformBits) : ""))}").AppendLine();
+            sb.AppendLine("## " + Txt.S("SupportSteps"));
+            if (!string.IsNullOrEmpty(i.Progress)) sb.AppendLine(i.Progress).AppendLine();
+            sb.AppendLine($"| № | {Txt.S("UiStepColumn")} | {Txt.S("UiStatusColumn")} | {Txt.S("SupportDuration")} |").AppendLine("|---|---|---|---|");
+            for (var n = 0; n < i.Steps.Count; n++)
+            {
+                var st = i.Steps[n];
+                var status = Txt.S("UiStep_" + st.Status) + (string.IsNullOrEmpty(st.Detail) ? "" : " — " + st.Detail);
+                var took = st.Duration.HasValue ? Txt.F("SupportSeconds", st.Duration.Value.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)) : "—";
+                sb.AppendLine($"| {n + 1} | {Cell(st.Title)} | {Cell(status)} | {took} |");
+            }
+            sb.AppendLine();
+            if (i.FailedStep > 0)
+            {
+                sb.AppendLine("## " + Txt.S("SupportStopped"));
+                sb.AppendLine(Txt.F("UiRunStopped", i.FailedStep, i.FailedTitle, i.Error));
+                if (!string.IsNullOrEmpty(i.Hint)) sb.AppendLine(Txt.S("WhatToDo") + " " + i.Hint);
+                sb.AppendLine();
+            }
+            sb.AppendLine("## " + Txt.S("SupportLog")).AppendLine("```text").AppendLine((i.Log ?? "").TrimEnd()).AppendLine("```");
+            return Anonymize(sb.ToString(), b.Organizations);
+        }
     }
 
     /// <summary>
@@ -132,12 +244,16 @@ namespace Bilem.Agent.Core
         /// <summary>Сколько шагов будет всего (для «Шаг N из M»); 0 — заранее неизвестно, полосы в окне нет.</summary>
         public int Planned { get; private set; }
         public static readonly string[] SetupSteps = { "admin", "base", "platform", "connect", "user", "odata", "iis", "publish", "verify" };
+        /// <summary>Что случилось и что делать — последняя ошибка запуска (после отката на Apache значима только она).</summary>
+        public string FailMessage { get; private set; }
+        public string FailHint { get; private set; }
+        public RunFacts Facts { get; } = new RunFacts();
 
         private Step _cur;
 
         private void Begin(string id)
         {
-            _cur = new Step { Id = id, Title = Txt.S("Step_" + id), Status = StepStatus.Running };
+            _cur = new Step { Id = id, Title = Txt.S("Step_" + id), Status = StepStatus.Running, StartedAt = DateTime.Now };
             Steps.Add(_cur);
             Log.Info(Txt.F("StepHeader", Steps.Count, _cur.Title));
             StepChanged?.Invoke(_cur);
@@ -147,6 +263,7 @@ namespace Bilem.Agent.Core
         {
             _cur.Status = st;
             _cur.Detail = detail;
+            _cur.Duration = DateTime.Now - _cur.StartedAt;
             StepChanged?.Invoke(_cur);
             SaveState();
         }
@@ -196,6 +313,7 @@ namespace Bilem.Agent.Core
                 var slug = string.IsNullOrEmpty(o.Slug) ? BaseDiscovery.SlugFromPath(basePath) : o.Slug.ToLowerInvariant();
                 if (!SlugRx.IsMatch(slug)) { End(StepStatus.Fail); return Fail(Txt.F("BadSlug", slug), Txt.S("HintSlug")); }
                 _stateSlug = slug;
+                Facts.Name = slug;
                 var cfg = AgentConfig.Load();
                 var existing = cfg.Find(slug);
                 if (existing != null && !string.Equals(existing.Path.TrimEnd('\\'), basePath, StringComparison.OrdinalIgnoreCase))
@@ -215,6 +333,8 @@ namespace Bilem.Agent.Core
                 if (found.Count == 0) { End(StepStatus.Fail); return Fail(Platform.Explain(survey), Platform.ExplainHint(survey)); }
                 var plat = Platform.Choose(found, o.PlatformVersion);
                 if (plat == null) { End(StepStatus.Fail); return Fail(Txt.F("PlatformNotFound", o.PlatformVersion), Txt.S("HintInstallPlatform")); }
+                Facts.Platform = plat.Version.ToString();
+                Facts.PlatformBits = plat.Bits;
                 Log.Ok(Txt.F("PlatformChosen", plat, Platform.MaskProfile(plat.Bin)));
                 if (plat.PerUser) Log.Warn(Txt.S("PlatformPerUser"));
                 var com = Platform.ComProblem(plat);
@@ -244,6 +364,8 @@ namespace Bilem.Agent.Core
                 var userInfo = r1[1];
                 var cfgName = (string)info["name"];
                 var profile = Profiles.For(cfgName);
+                Facts.Configuration = (string)info["synonym"] ?? cfgName;
+                Facts.ConfigVersion = (string)info["version"];
                 Log.Ok(Txt.F("ConfigInfo", (string)info["synonym"], cfgName, (string)info["version"]));
                 Log.Info(Txt.F("BspInfo", (bool)info["hasBsp"] ? Txt.S("Yes") : Txt.S("No")));
                 if (!profile.Tested) Log.Warn(Txt.F("ProfileUntested", cfgName));
@@ -346,6 +468,7 @@ namespace Bilem.Agent.Core
                     b.Print = b.Print ?? new Print.PrintSettings();
                     b.Print.Addresses = ((JObject)r2[4]["addresses"]).Properties().ToDictionary(p => p.Name, p => (string)p.Value);
                     b.Print.Signers = Print.OrgSigner.Parse((JObject)r2[5]["signers"]);
+                    Facts.Organizations = b.Print.Addresses.Keys.Concat(b.Print.Signers.Keys).Distinct().ToList();
                     Log.Ok(Txt.F("PrintDetailsLoaded", b.Print.Addresses.Count));
                     Log.Ok(Txt.F("AccessCatalogLoaded", b.Catalog.Sections.Count, b.Catalog.Items.Count));
                     var flags = (JObject)r2[2]["flags"];
@@ -404,6 +527,9 @@ namespace Bilem.Agent.Core
                 b.WebServer = kind;
                 b.OData = web.BaseUrl(spec);
                 b.SetupAt = DateTime.Now;
+                // До итога проверок база инструментам не видна — и если настройка оборвётся на них
+                b.LastCheckOk = false;
+                b.LastCheckError = Txt.S("CheckPending");
                 cfg.Upsert(b);
                 cfg.Save();
                 End(StepStatus.Ok, pub + " · " + WebName(kind));
@@ -447,18 +573,37 @@ namespace Bilem.Agent.Core
             result = null;
             Begin("verify");
             Health.Resume(b.Slug);
+            void Record(bool ok, string reason, string warning = null)
+            {
+                b.VerifiedAt = DateTime.Now;
+                b.LastCheckOk = ok;
+                b.LastCheckError = ok ? null : RunLog.Short(RunLog.Mask(reason), 200);
+                b.LastCheckWarning = warning;
+                cfg.Upsert(b);
+                cfg.Save();
+            }
             var pwd = File.Exists(b.SecretFile) ? Secrets.ReadSecretFile(b.SecretFile) : null;
-            if (pwd == null) { End(StepStatus.Fail); return Fail(Txt.F("NoSecret", b.SecretFile), Txt.S("HintResetPassword")); }
-            var vr = Verifier.Run(b, pwd);
+            if (pwd == null)
+            {
+                var noSecret = Txt.F("NoSecret", b.SecretFile);
+                Record(false, noSecret);
+                End(StepStatus.Fail);
+                return Fail(noSecret, Txt.S("HintResetPassword"));
+            }
+            VerifyResult vr;
+            try { vr = Verifier.Run(b, pwd); }
+            catch (Exception e) { Record(false, e.Message); throw; }
             result = vr;
-            var now = DateTime.Now;
-            b.VerifiedAt = now;
-            b.LastCheckOk = vr.Ok;
-            if (vr.WriteDenied) b.WriteDeniedAt = now;
-            cfg.Upsert(b);
-            cfg.Save();
-            if (!vr.Ok) { End(StepStatus.Fail, Txt.F("ChecksFailed", vr.Failures)); return Fail(Txt.F("ChecksFailed", vr.Failures), Txt.S("HintSeeFail")); }
-            End(StepStatus.Ok);
+            if (vr.WriteDenied) b.WriteDeniedAt = DateTime.Now;
+            Record(vr.Ok, vr.Reason, vr.Warning);
+            if (!vr.Ok)
+            {
+                var why = Txt.F("ChecksFailedReason", vr.Failures, vr.Reason);
+                End(StepStatus.Fail, RunLog.Short(RunLog.Mask(vr.Reason), 160));
+                return Fail(why, vr.Hint);
+            }
+            if (vr.Warning != null) End(StepStatus.Warn, vr.Warning);
+            else End(StepStatus.Ok, Txt.F("VerifyShort", vr.ReadOk, vr.ReadTotal));
             var writes = b.WriteInOneC?.Count ?? 0;
             Log.Ok(writes > 0 ? Txt.F("DoneWithWrite", b.Slug, b.OData, writes) : Txt.F("Done", b.Slug, b.OData));
             return true;
@@ -478,6 +623,9 @@ namespace Bilem.Agent.Core
                 foreach (var b in bases)
                 {
                     _stateSlug = null;
+                    var known = RunFacts.From(b);
+                    Facts.Name = known.Name; Facts.Configuration = known.Configuration; Facts.ConfigVersion = known.ConfigVersion;
+                    Facts.Platform = known.Platform; Facts.PlatformBits = known.PlatformBits; Facts.Organizations = known.Organizations;
                     Log.Info(Txt.F("VerifyBase", b.Slug, b.DisplayName));
                     if (!string.IsNullOrEmpty(adminUser))
                     {
@@ -495,8 +643,8 @@ namespace Bilem.Agent.Core
                 }
                 return ok;
             }
-            catch (AgentException e) { return Fail(e.Message, e.Hint); }
-            catch (Exception e) { return Fail(Txt.F("Unexpected", e.GetType().Name, e.Message), Txt.S("HintSendLog")); }
+            catch (AgentException e) { if (_cur?.Status == StepStatus.Running) End(StepStatus.Fail, e.Message); return Fail(e.Message, e.Hint); }
+            catch (Exception e) { if (_cur?.Status == StepStatus.Running) End(StepStatus.Fail, e.Message); return Fail(Txt.F("Unexpected", e.GetType().Name, e.Message), Txt.S("HintSendLog")); }
         }
 
         // ---------------- Доступ ----------------
@@ -721,10 +869,15 @@ namespace Bilem.Agent.Core
             return true;
         }
 
-        private static bool Fail(string message, string hint)
+        private bool Fail(string message, string hint)
         {
+            hint = string.IsNullOrEmpty(hint) || hint == Txt.S("HintSendLog") ? Txt.S("HintCopySupport") : hint;
+            FailMessage = message;
+            FailHint = hint;
             Log.Fail(message);
-            if (!string.IsNullOrEmpty(hint)) Log.Fail(Txt.S("WhatToDo") + " " + hint);
+            Log.Fail(Txt.S("WhatToDo") + " " + hint);
+            // Причина — в той же строке, что и упавший шаг
+            if (_cur?.Status == StepStatus.Fail && string.IsNullOrEmpty(_cur.Detail)) { _cur.Detail = RunLog.Short(RunLog.Mask(message), 160); StepChanged?.Invoke(_cur); }
             return false;
         }
     }

@@ -191,11 +191,12 @@ namespace Bilem.Agent
             var m = st?["mcp"];
             var port = (int?)m?["port"] ?? 8796;
             var bases = (st?["bases"] as JArray)?.OfType<JObject>().ToList() ?? new List<JObject>();
+            var inMcp = bases.Count(b => (bool?)b["last_check_ok"] != false);
             var mcpRunning = (bool?)m?["running"] == true;
             var starting = (bool?)m?["starting"] == true;
             var mcpError = (string)m?["error"];
             _mcp.Text = st == null ? Txt.S("UiTrayMcpUnknown")
-                : mcpRunning ? Txt.F("UiTrayMcpRunning", port, bases.Count)
+                : mcpRunning ? Txt.F("UiTrayMcpRunning", port, inMcp)
                 : starting ? Txt.F("UiStateStartingSvc", port)
                 : Txt.F("UiStateStartFailed", mcpError ?? "—");
             var upd = (string)st?["update_available"];
@@ -203,7 +204,7 @@ namespace Bilem.Agent
             if (upd != null) _update.Text = Txt.F("UiTrayUpdate", upd);
             var cloud = (string)st?["mode"] == "cloud";
             // Bilem Cloud: локальный MCP выключен; строка — состояние канала
-            if (cloud) _mcp.Text = MainForm.CloudStatusLine(st, bases.Count);
+            if (cloud) _mcp.Text = MainForm.CloudStatusLine(st, inMcp);
 
             _bases.BeginUpdate();
             _bases.Items.Clear();
@@ -213,8 +214,8 @@ namespace Bilem.Agent
                 it.SubItems.Add((string)b["name"] ?? (string)b["configuration"]);
                 it.SubItems.Add((string)b["version"]);
                 var err = (string)b["error"];
-                it.SubItems.Add(err != null ? Txt.F("UiTrayBaseError", err)
-                    : b["verified"]?.Type == JTokenType.String ? Txt.F("UiTrayBaseOk", (string)b["verified"]) : Txt.S("UiStatusNotChecked"));
+                // Статус — тот же текст, что на вкладке «Базы 1С»; сверху только живая ошибка базы, прошедшей проверки
+                it.SubItems.Add(err != null && (bool?)b["last_check_ok"] != false ? Txt.F("UiTrayBaseError", err) : (string)b["status"] ?? Txt.S("UiStatusNotChecked"));
                 _bases.Items.Add(it);
             }
             _bases.EndUpdate();

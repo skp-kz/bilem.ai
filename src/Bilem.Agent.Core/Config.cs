@@ -35,6 +35,20 @@ namespace Bilem.Agent.Core
         public DateTime? WriteDeniedAt { get; set; }
         /// <summary>Итог последней проверки: все проверки прошли.</summary>
         public bool? LastCheckOk { get; set; }
+        /// <summary>Почему последняя проверка не прошла — короткая причина для статуса базы.</summary>
+        public string LastCheckError { get; set; }
+        /// <summary>База видна инструментам MCP: проверки не падали. Базы, подключённые до появления проверок (null), остаются.</summary>
+        [JsonIgnore] public bool McpReady => LastCheckOk != false;
+        /// <summary>Проверки прошли, но есть предупреждение (чужие объекты в составе OData).</summary>
+        public string LastCheckWarning { get; set; }
+
+        /// <summary>Статус базы одной строкой: один текст для главного окна и вкладки «Базы 1С».</summary>
+        [JsonIgnore] public string StatusText =>
+            LastCheckOk == false ? Txt.F("UiStatusCheckFailed", VerifiedAt ?? SetupAt ?? DateTime.Now, LastCheckError ?? Txt.S("UiCheckNoReason"))
+            : !VerifiedAt.HasValue ? Txt.S("UiStatusNotChecked")
+            : LastCheckOk == null ? Txt.F("UiStatusChecked", VerifiedAt.Value)
+            : !string.IsNullOrEmpty(LastCheckWarning) ? Txt.F("UiStatusOkWarn", VerifiedAt.Value)
+            : Txt.F("UiStatusOk", VerifiedAt.Value);
 
         // ----- Вкладка «Доступ» (только имена объектов метаданных) -----
         /// <summary>Разделы и человеческие имена объектов — из подсистем самой конфигурации (или запасная раскладка профиля).</summary>

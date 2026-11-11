@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace Bilem.Agent
@@ -43,6 +44,32 @@ namespace Bilem.Agent
             host.Resize += (s, e) => Fit();
             host.HandleCreated += (s, e) => Fit();
             Fit();
+        }
+
+        /// <summary>Колонки — по содержимому, но не шире половины списка; колонка fill берёт остаток. Без горизонтальной прокрутки, полный текст — в подсказке.</summary>
+        internal void FitContent(ListView lv, int fill)
+        {
+            if (!lv.IsHandleCreated || lv.Columns.Count == 0) return;
+            var rest = lv.ClientSize.Width;
+            for (int i = 0; i < lv.Columns.Count; i++)
+            {
+                if (i == fill) continue;
+                lv.AutoResizeColumn(i, ColumnHeaderAutoResizeStyle.HeaderSize);
+                var header = lv.Columns[i].Width;
+                if (lv.Items.Count > 0) lv.AutoResizeColumn(i, ColumnHeaderAutoResizeStyle.ColumnContent);
+                // Запас: ширины «по содержимому» впритык хватает не всегда, и текст обрезается многоточием
+                lv.Columns[i].Width = Math.Min(Math.Max(lv.Columns[i].Width + Px(12), header), lv.ClientSize.Width / 2);
+                rest -= lv.Columns[i].Width;
+            }
+            // Узкое окно: сначала сжимается самая широкая колонка, чтобы осталось место под fill
+            var min = Px(80);
+            if (rest < min)
+            {
+                var widest = lv.Columns.Cast<ColumnHeader>().Where(c => c.Index != fill).OrderByDescending(c => c.Width).First();
+                widest.Width = Math.Max(min, widest.Width - (min - rest));
+                rest = min;
+            }
+            lv.Columns[fill].Width = rest;
         }
 
         /// <summary>Последняя колонка списка занимает оставшуюся ширину — без горизонтальной прокрутки в узком окне.</summary>

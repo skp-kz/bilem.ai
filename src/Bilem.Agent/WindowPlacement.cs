@@ -14,7 +14,7 @@ namespace Bilem.Agent
     internal static class WindowPlacement
     {
         /// <summary>Размер по умолчанию и минимальный — в логических пикселях (96 dpi), масштабируются под экран.</summary>
-        public static readonly Size DefaultSize = new Size(640, 440);
+        public static readonly Size DefaultSize = new Size(860, 520);
         public static readonly Size MinSize = new Size(560, 380);
 
         private sealed class Saved
@@ -27,7 +27,8 @@ namespace Bilem.Agent
             public int Dpi { get; set; }
         }
 
-        private static string File => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Bilem", "window.json");
+        // Новое имя файла: прежний размер запоминался и при простом перемещении окна, с ним новый размер по умолчанию не дошёл бы до людей
+        private static string File => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Bilem", "settings-window.json");
 
         /// <summary>Вернуть сохранённое положение, если оно есть и видно на каком-нибудь экране.</summary>
         public static bool TryRestore(Form f)
@@ -59,6 +60,34 @@ namespace Bilem.Agent
                 var s = new Saved { X = b.X, Y = b.Y, Width = b.Width, Height = b.Height, Maximized = f.WindowState == FormWindowState.Maximized, Dpi = f.DeviceDpi };
                 Directory.CreateDirectory(Path.GetDirectoryName(File));
                 System.IO.File.WriteAllText(File, JsonConvert.SerializeObject(s));
+            }
+            catch { }
+        }
+
+        private static string RunFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Bilem", "run-window.json");
+
+        /// <summary>Окно шагов: только размер, положение — по центру родителя. Не меньше минимума и не больше экрана.</summary>
+        public static void RestoreRunSize(Form f)
+        {
+            try
+            {
+                if (!System.IO.File.Exists(RunFile)) return;
+                var s = JsonConvert.DeserializeObject<Saved>(System.IO.File.ReadAllText(RunFile));
+                if (s == null || s.Width <= 0 || s.Height <= 0) return;
+                var scale = s.Dpi > 0 && f.DeviceDpi > 0 ? (double)f.DeviceDpi / s.Dpi : 1.0;
+                var area = Screen.FromControl(f).WorkingArea;
+                f.Size = new Size(Math.Min(Math.Max((int)(s.Width * scale), f.MinimumSize.Width), area.Width), Math.Min(Math.Max((int)(s.Height * scale), f.MinimumSize.Height), area.Height));
+            }
+            catch { }
+        }
+
+        public static void SaveRunSize(Form f)
+        {
+            try
+            {
+                if (f.WindowState != FormWindowState.Normal) return;
+                Directory.CreateDirectory(Path.GetDirectoryName(RunFile));
+                System.IO.File.WriteAllText(RunFile, JsonConvert.SerializeObject(new Saved { Width = f.Width, Height = f.Height, Dpi = f.DeviceDpi }));
             }
             catch { }
         }

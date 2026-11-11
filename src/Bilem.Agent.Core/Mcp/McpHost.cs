@@ -76,14 +76,15 @@ namespace Bilem.Agent.Core.Mcp
             try { _cfgStamp = System.IO.File.GetLastWriteTimeUtc(Paths.ConfigFile); } catch { }
             cfg = cfg ?? AgentConfig.Load();
             var list = new List<BaseRuntime>();
-            foreach (var b in cfg.Bases)
+            // Проверки не прошли — инструментам база не видна, пока не пройдут
+            foreach (var b in cfg.Bases.Where(x => x.McpReady))
             {
                 try { list.Add(BaseRuntime.FromConfig(b)); }
                 catch (Exception e) { Log.Warn(Txt.F("McpBaseSkipped", b.Slug, e.Message)); }
             }
             _bases = list;
             _smtpOn = cfg.Smtp?.Enabled == true;
-            _accessStamp = string.Join(";", cfg.Bases.Select(b => b.Slug + ":" + string.Join(",", b.ReadEffective.OrderBy(x => x)) + "/" + string.Join(",", (b.Write ?? new List<string>()).OrderBy(x => x))));
+            _accessStamp = string.Join(";", cfg.Bases.Where(x => x.McpReady).Select(b => b.Slug + ":" + string.Join(",", b.ReadEffective.OrderBy(x => x)) + "/" + string.Join(",", (b.Write ?? new List<string>()).OrderBy(x => x))));
             if (!string.IsNullOrEmpty(cfg.TokenProtected)) _token = cfg.GetOrCreateToken();
             // Тот же набор баз — без повтора строки (повторы запуска MCP при занятом порте писали её каждые 2 с)
             var basesLine = Txt.F("McpBases", _bases.Count, string.Join(", ", _bases.Select(x => x.Config.Slug)));

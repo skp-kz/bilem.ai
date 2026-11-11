@@ -47,6 +47,7 @@ namespace Bilem.Agent
         };
 
         // Базы 1С
+        private const int BaseFolderColumn = 3;
         private readonly ListView _bases = new ListView { View = View.Details, FullRowSelect = true, MultiSelect = false, HideSelection = false, Dock = DockStyle.Fill };
         // Подключение
         private readonly TextBox _url = new TextBox { ReadOnly = true, Dock = DockStyle.Fill };
@@ -151,6 +152,8 @@ namespace Bilem.Agent
             Load += (s, e) =>
             {
                 MinimumSize = new Size(Px(WindowPlacement.MinSize.Width), Px(WindowPlacement.MinSize.Height));
+                var area = Screen.FromControl(this).WorkingArea;
+                Size = new Size(Math.Min(Px(WindowPlacement.DefaultSize.Width), area.Width), Math.Min(Px(WindowPlacement.DefaultSize.Height), area.Height));
                 WindowPlacement.TryRestore(this);
                 lastState = WindowState;
                 ListenForSecondLaunch();
@@ -185,7 +188,9 @@ namespace Bilem.Agent
             _bases.Columns.Add(Txt.S("UiColVersion"), Px(60));
             _bases.Columns.Add(Txt.S("UiColFolder"), Px(100));
             _bases.Columns.Add(Txt.S("UiColStatus"), Px(140));
-            FillLastColumn(_bases);
+            _bases.ShowItemToolTips = true;
+            _bases.Resize += (s, e) => FitContent(_bases, BaseFolderColumn);
+            _bases.HandleCreated += (s, e) => FitContent(_bases, BaseFolderColumn);
             var add = new Button { Text = Txt.S("UiAdd"), AutoSize = true };
             var verify = new Button { Text = Txt.S("UiVerify"), AutoSize = true };
             var remove = new Button { Text = Txt.S("UiRemove"), AutoSize = true };
@@ -876,8 +881,8 @@ namespace Bilem.Agent
                 _cloud?.UpdateStatus(_svcStatus);
                 if (_updInstalling != null) _stState.Text = Txt.F("UiStateUpdating", _updInstalling);
                 else if (_svcStatus == null) _stState.Text = Txt.S("UiSvcNotRunning");
-                else if ((string)_svcStatus["mode"] == "cloud") _stState.Text = CloudStatusLine(_svcStatus, cfg.Bases.Count);
-                else if ((bool?)m?["running"] == true) _stState.Text = Txt.F("UiStateRunningSvc", cfg.Port, cfg.Bases.Count);
+                else if ((string)_svcStatus["mode"] == "cloud") _stState.Text = CloudStatusLine(_svcStatus, cfg.Bases.Count(x => x.McpReady));
+                else if ((bool?)m?["running"] == true) _stState.Text = Txt.F("UiStateRunningSvc", cfg.Port, cfg.Bases.Count(x => x.McpReady));
                 else if ((bool?)m?["starting"] == true) _stState.Text = Txt.F("UiStateStartingSvc", cfg.Port);
                 else _stState.Text = Txt.F("UiStateStartFailed", (string)m?["error"] ?? "—");
                 _mcpToggle.Text = Txt.S("UiTrayMcpRestart");
@@ -904,14 +909,14 @@ namespace Bilem.Agent
             // Только чёрный текст, без цветов — и для ошибок (решение Славы 19.10: инженерное приложение)
             _stState.ForeColor = SystemColors.ControlText;
             if (_updInstalling != null) { _stState.Text = Txt.F("UiStateUpdating", _updInstalling); }
-            else if (_host.Running) { _stState.Text = Txt.F("UiStateRunning", cfg.Port, cfg.Bases.Count); }
+            else if (_host.Running) { _stState.Text = Txt.F("UiStateRunning", cfg.Port, cfg.Bases.Count(x => x.McpReady)); }
             else if (_mcpStartingSince.HasValue)
             {
                 var sec = (int)(DateTime.Now - _mcpStartingSince.Value).TotalSeconds;
                 _stState.Text = Txt.F("UiStateStarting", cfg.Port, sec, (int)McpPatience.TotalSeconds);
             }
             else if (!_mcpStoppedByUser && !string.IsNullOrEmpty(_mcpError)) { _stState.Text = Txt.F("UiStateStartFailed", _mcpError); }
-            else { _stState.Text = Txt.F("UiStateStopped", cfg.Port, cfg.Bases.Count); }
+            else { _stState.Text = Txt.F("UiStateStopped", cfg.Port, cfg.Bases.Count(x => x.McpReady)); }
             _mcpToggle.Text = Txt.S(_host.Running ? "UiMcpStop" : "UiMcpStart");
         }
 
@@ -957,13 +962,11 @@ namespace Bilem.Agent
                 it.SubItems.Add(b.DisplayName);
                 it.SubItems.Add(b.Version);
                 it.SubItems.Add(b.Path);
-                it.SubItems.Add(b.VerifiedAt.HasValue
-                    ? (b.LastCheckOk == true ? Txt.F("UiStatusOk", b.VerifiedAt.Value)
-                        : b.LastCheckOk == false ? Txt.F("UiStatusCheckFailed", b.VerifiedAt.Value)
-                        : Txt.F("UiStatusChecked", b.VerifiedAt.Value))
-                    : Txt.S("UiStatusNotChecked"));
+                it.SubItems.Add(b.StatusText);
+                it.ToolTipText = string.Join(Environment.NewLine, new[] { b.Slug, b.DisplayName, b.Path, b.StatusText, b.LastCheckWarning }.Where(x => !string.IsNullOrEmpty(x)));
                 _bases.Items.Add(it);
             }
+            FitContent(_bases, BaseFolderColumn);
             RefreshUrl();
             RefreshAccess();
             _print?.Reload();

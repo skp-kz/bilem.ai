@@ -19,6 +19,11 @@ namespace Bilem.Agent.Core
         /// <summary>Код ответа на $metadata (0 — обрыв) и падение веб-сервера из журнала событий — для переключения на Apache (J5).</summary>
         public int MetadataCode { get; set; } = 200;
         public string Crash { get; set; }
+        /// <summary>Первая упавшая проверка и что с ней делать — для блока ошибки и статуса базы.</summary>
+        public string Reason { get; set; }
+        public string Hint { get; set; }
+        /// <summary>Проверки прошли, но есть что сказать: в составе OData чужие объекты.</summary>
+        public string Warning { get; set; }
     }
 
     /// <summary>
@@ -31,20 +36,28 @@ namespace Bilem.Agent.Core
         {
             var r = new VerifyResult();
             var od = new ODataClient(b.OData, b.User, password);
+            int Bad(string text, string hint)
+            {
+                Log.Fail(text);
+                r.Reason = r.Reason ?? text;
+                r.Hint = r.Hint ?? hint;
+                return 1;
+            }
 
             var started = DateTime.Now;
             var meta = od.Send("GET", b.OData + "/$metadata");
             r.MetadataCode = meta.Code;
             if (meta.Code != 200)
             {
-                Log.Fail(Txt.F("VerifyMetadataFailed", meta.Code, ODataClient.ErrorText(meta.Body)));
+                r.Reason = Txt.F("VerifyMetadataFailed", meta.Code, ODataClient.ErrorText(meta.Body));
+                Log.Fail(r.Reason);
                 // Лицензия 1С не видна учётке веб-сервера (J6) — понятная причина вместо общего «HTTP 500»
                 if ((meta.Body ?? "").IndexOf("лиценз", StringComparison.OrdinalIgnoreCase) >= 0) Log.Fail(Txt.S("J6License"));
                 // Обрыв соединения или 5xx — часто это упавший рабочий процесс IIS: причина в журнале событий Windows
                 var crash = meta.Code == 0 || meta.Code >= 500 ? Crashes.IisExplain(started) : null;
                 r.Crash = crash;
-                if (crash != null) { Log.Fail(crash); Log.Fail(Txt.S("WhatToDo") + " " + Txt.S("HintIisCrash")); }
-                else Log.Fail(Txt.S("WhatToDo") + " " + HintForCode(meta.Code));
+                if (crash != null) Log.Fail(crash);
+                r.Hint = crash != null ? Txt.S("HintIisCrash") : HintForCode(meta.Code);
                 r.Failures++;
                 return r;
             }
@@ -57,19 +70,28 @@ namespace Bilem.Agent.Core
             {
                 r.ReadTotal++;
                 var set = ODataClient.SetName(fn);
-                if (!sets.Contains(set)) { Log.Fail(Txt.F("VerifySetMissing", set)); r.Failures++; continue; }
+                if (!sets.Contains(set)) { r.Failures += Bad(Txt.F("VerifySetMissing", set), Txt.S("HintRunSetupAgain")); continue; }
                 var g = od.Get(set, new Dictionary<string, string> { ["$top"] = "1" });
-                if (g.Code != 200) { Log.Fail(Txt.F("VerifyReadHttp", set, g.Code, ODataClient.ErrorText(g.Body))); r.Failures++; continue; }
+                if (g.Code != 200) { r.Failures += Bad(Txt.F("VerifyReadHttp", set, g.Code, ODataClient.ErrorText(g.Body)), HintForCode(g.Code)); continue; }
                 var n = ((JArray)JObject.Parse(g.Body)["value"])?.Count ?? 0;
-                if (n == 0 && b.NonEmpty.Contains(fn)) { Log.Fail(Txt.F("VerifyReadEmpty", set)); r.Failures++; continue; }
+                if (n == 0 && b.NonEmpty.Contains(fn)) { r.Failures += Bad(Txt.F("VerifyReadEmpty", set), Txt.S("HintRunSetupAgain")); continue; }
                 r.ReadOk++;
             }
             Log.Write(r.ReadOk == r.ReadTotal ? LogLevel.Ok : LogLevel.Warn, Txt.F("VerifyReadSummary", r.ReadOk, r.ReadTotal, b.NonEmpty.Count));
 
-            // Выключенное «Доступом» в составе OData не видно
+            // Выключенное «Доступом» в составе OData не видно. Пока «Доступ» не применяли, состав мы только дополняем:
+            // объекты сверх нашего добавлены не Bilem — не ошибка, инструменты ИИ их всё равно не показывают (ReadEffective)
             var off = Access.CatalogOf(b).Items.Select(i => i.FullName).Where(fn => !b.ODataObjects.Contains(fn)).ToList();
             var leaked = off.Where(fn => sets.Contains(ODataClient.SetName(fn))).ToList();
-            if (leaked.Count > 0) { Log.Fail(Txt.F("VerifyOffVisible", string.Join(", ", leaked.Select(ODataClient.SetName)))); r.Failures++; }
+            if (leaked.Count > 0 && b.Read != null) r.Failures += Bad(Txt.F("VerifyOffVisible", string.Join(", ", leaked.Select(ODataClient.SetName))), Txt.S("HintApplyAccess"));
+            else if (leaked.Count > 0)
+            {
+                var names = leaked.Select(ODataClient.SetName).ToList();
+                var readable = names.Count(set => od.Get(set, new Dictionary<string, string> { ["$top"] = "1" }).Code == 200);
+                r.Warning = Txt.F("VerifyForeignShort", names.Count);
+                Log.Warn(Txt.F("VerifyForeignOData", string.Join(", ", names)));
+                Log.Warn(readable == 0 ? Txt.S("VerifyForeignDenied") : Txt.F("VerifyForeignReadable", readable, names.Count));
+            }
             else if (off.Count > 0) Log.Ok(Txt.F("VerifyOffHidden", off.Count));
 
             // (2) Запись запрещена: отказ 1С — HTTP 500 «Нарушение прав доступа» (known-issues 9), поэтому судим по результату
@@ -81,7 +103,7 @@ namespace Bilem.Agent.Core
                 var before = Count(od, docSet);
                 var post = od.Send("POST", $"{b.OData}/{docSet}?$format=json", "{}");
                 var after = Count(od, docSet);
-                if (post.Ok || after != before) { Log.Fail(Txt.F("VerifyPostAllowed", docSet, post.Code, before, after)); writeFails++; }
+                if (post.Ok || after != before) writeFails += Bad(Txt.F("VerifyPostAllowed", docSet, post.Code, before, after), Txt.S("HintWriteAllowed"));
                 else Log.Ok(Txt.F("VerifyPostDenied", docSet, post.Code, ODataClient.ErrorText(post.Body), before, after));
             }
             else Log.Warn(Txt.F("VerifyPostSkipped", docSet));
@@ -96,7 +118,7 @@ namespace Bilem.Agent.Core
                 var patch = od.Send("PATCH", one + "?$format=json", new JObject { ["Description"] = item["Description"] }.ToString(Newtonsoft.Json.Formatting.None));
                 var ver2 = od.Send("GET", one + "?$select=DataVersion&$format=json");
                 var changed = ver2.Code == 200 && (string)JObject.Parse(ver2.Body)["DataVersion"] != (string)item["DataVersion"];
-                if (patch.Ok || changed) { Log.Fail(Txt.F("VerifyPatchAllowed", catSet, patch.Code)); writeFails++; }
+                if (patch.Ok || changed) writeFails += Bad(Txt.F("VerifyPatchAllowed", catSet, patch.Code), Txt.S("HintWriteAllowed"));
                 else Log.Ok(Txt.F("VerifyPatchDenied", catSet, patch.Code, ODataClient.ErrorText(patch.Body)));
             }
             else Log.Warn(Txt.F("VerifyPatchSkipped", catSet, cat.Code));
@@ -105,7 +127,7 @@ namespace Bilem.Agent.Core
 
             // (3) Периметр
             var anon = new ODataClient(b.OData, null, null).Send("GET", b.OData + "/$metadata", withAuth: false);
-            if (anon.Code == 401) Log.Ok(Txt.S("VerifyNoPassword401")); else { Log.Fail(Txt.F("VerifyNoPasswordCode", anon.Code)); r.Failures++; }
+            if (anon.Code == 401) Log.Ok(Txt.S("VerifyNoPassword401")); else r.Failures += Bad(Txt.F("VerifyNoPasswordCode", anon.Code), Txt.S("HintRunSetupAgain"));
             var ips = MachineAddresses();
             foreach (var ip in ips)
             {
@@ -114,7 +136,7 @@ namespace Bilem.Agent.Core
                 // IIS отвечает 403 (ограничения по IP); свой Apache по адресу машины вообще не слушает — соединение не устанавливается
                 if (ext.Code == 403) Log.Ok(Txt.F("VerifyExternal403", shown));
                 else if (ext.Code == 0 && Web.WebServerKind.Of(b) == Web.WebServerKind.Apache) Log.Ok(Txt.F("VerifyExternalClosed", shown));
-                else { Log.Fail(Txt.F("VerifyExternalCode", shown, ext.Code)); r.Failures++; }
+                else r.Failures += Bad(Txt.F("VerifyExternalCode", shown, ext.Code), Txt.S("HintRunSetupAgain"));
             }
             if (ips.Count == 0) Log.Warn(Txt.S("VerifyNoExternalIp"));
             return r;
