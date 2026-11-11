@@ -51,16 +51,13 @@ namespace Bilem.Agent
                     if (d.ShowDialog(this) == DialogResult.OK) _path.Text = d.SelectedPath;
             };
 
-            var grid = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, Padding = new Padding(10) };
+            // Поля — своей панелью снизу: они получают высоту первыми, список берёт остаток. В общей таблице список при масштабе не сжимался и выталкивал поля под кнопки
+            var grid = new TableLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 3, Padding = new Padding(0, 6, 0, 0) };
             grid.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             grid.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            grid.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             int r = 0;
-            var lbl = new Label { Text = Txt.S("UiFoundHint"), AutoSize = true };
-            grid.Controls.Add(lbl, 0, r); grid.SetColumnSpan(lbl, 3); r++;
-            grid.Controls.Add(_found, 0, r); grid.SetColumnSpan(_found, 3); r++;
+            var lbl = new Label { Text = Txt.S("UiFoundHint"), AutoSize = true, Dock = DockStyle.Top, Padding = new Padding(0, 0, 0, 6) };
             grid.Controls.Add(new Label { Text = Txt.S("UiFolder"), AutoSize = true, Anchor = AnchorStyles.Left }, 0, r);
             grid.Controls.Add(_path, 1, r); grid.Controls.Add(browse, 2, r); r++;
             grid.Controls.Add(new Label { Text = Txt.S("UiSlug"), AutoSize = true, Anchor = AnchorStyles.Left }, 0, r);
@@ -69,9 +66,13 @@ namespace Bilem.Agent
             grid.Controls.Add(_user, 1, r); r++;
             grid.Controls.Add(new Label { Text = Txt.S("UiAdminPassword"), AutoSize = true, Anchor = AnchorStyles.Left }, 0, r);
             grid.Controls.Add(_pwd, 1, r); r++;
-            grid.Controls.Add(_iis, 1, r); r++;
-            var note = new Label { Text = Txt.S("UiAddBaseNote"), AutoSize = true, ForeColor = SystemColors.GrayText, MaximumSize = new Size(780, 0) };
+            grid.Controls.Add(_iis, 0, r); grid.SetColumnSpan(_iis, 3); r++;
+            var note = new Label { Text = Txt.S("UiAddBaseNote"), AutoSize = true, ForeColor = SystemColors.GrayText };
             grid.Controls.Add(note, 0, r); grid.SetColumnSpan(note, 3); r++;
+
+            var body = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10, 10, 10, 0) };
+            body.Controls.Add(_found); body.Controls.Add(grid); body.Controls.Add(lbl);
+            Wrap(lbl, body, 30); Wrap(note, body, 30); Wrap(_iis, body, 30);
 
             var ok = new Button { Text = Txt.S("UiConnectBase"), AutoSize = true };
             var cancel = new Button { Text = Txt.S("UiCancel"), DialogResult = DialogResult.Cancel, AutoSize = true };
@@ -79,9 +80,19 @@ namespace Bilem.Agent
             var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, AutoSize = true, Padding = new Padding(8) };
             buttons.Controls.Add(cancel); buttons.Controls.Add(ok);
 
-            Controls.Add(grid);
+            Controls.Add(body);
             Controls.Add(buttons);
             AcceptButton = ok; CancelButton = cancel;
+        }
+
+        /// <summary>Окно не больше рабочей области экрана: при крупном масштабе на маленьком мониторе низ не уезжает за край.</summary>
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            var area = Screen.FromControl(this).WorkingArea;
+            MinimumSize = new Size(Math.Min(MinimumSize.Width, area.Width), Math.Min(MinimumSize.Height, area.Height));
+            Size = new Size(Math.Min(Width, area.Width), Math.Min(Height, area.Height));
+            Location = new Point(Math.Max(area.Left, Math.Min(Left, area.Right - Width)), Math.Max(area.Top, Math.Min(Top, area.Bottom - Height)));
         }
 
         private void Accept()

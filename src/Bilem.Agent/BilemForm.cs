@@ -37,7 +37,7 @@ namespace Bilem.Agent
         protected int Px(int logical) => LogicalToDeviceUnits(logical);
 
         /// <summary>Надпись переносится по словам по ширине контейнера (pad — отступы справа и слева, логические px).</summary>
-        protected void Wrap(Label l, Control host, int pad)
+        protected void Wrap(Control l, Control host, int pad)
         {
             void Fit() { var w = host.ClientSize.Width - Px(pad); if (w > Px(100)) l.MaximumSize = new Size(w, 0); }
             host.Resize += (s, e) => Fit();
