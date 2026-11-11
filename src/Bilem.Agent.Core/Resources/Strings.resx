@@ -509,7 +509,7 @@ Bilem не меняет ваш бухгалтерский учёт: читает
   <data name="UiAddBaseTitle" xml:space="preserve"><value>Добавить базу 1С</value></data>
   <data name="UiAdminLogin" xml:space="preserve"><value>Логин администратора 1С:</value></data>
   <data name="UiAdminPassword" xml:space="preserve"><value>Пароль:</value></data>
-  <data name="UiBrowse" xml:space="preserve"><value>Указать папку вручную…</value></data>
+  <data name="UiBrowse" xml:space="preserve"><value>Обзор…</value></data>
   <data name="UiBrowseHint" xml:space="preserve"><value>Папка файловой базы 1С (в ней лежит файл 1Cv8.1CD)</value></data>
   <data name="UiCancel" xml:space="preserve"><value>Отмена</value></data>
   <data name="UiCheckUpdates" xml:space="preserve"><value>Проверить обновления</value></data>
@@ -561,12 +561,11 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiDiagNote" xml:space="preserve"><value>Быстрый самотест всего, что нужно Bilem Agent: Windows, .NET, 1С, IIS, MCP и каждая подключённая база. Ничего не меняет. Красное — без этого не работает, жёлтое — стоит поправить, серое — справочно.</value></data>
   <data name="UiDiagRunning" xml:space="preserve"><value>Проверяю…</value></data>
   <data name="UiDiagTitle" xml:space="preserve"><value>Диагностика компонентов</value></data>
-  <data name="UiEnableIis" xml:space="preserve"><value>Включить IIS и «Ограничения по IP», если их нет (компоненты Windows)</value></data>
+  <data name="UiEnableIis" xml:space="preserve"><value>Включить IIS и «Ограничения по IP», если их нет</value></data>
   <data name="UiFolder" xml:space="preserve"><value>Папка базы:</value></data>
-  <data name="UiFoundHint" xml:space="preserve"><value>Базы из списков 1С на этом компьютере. Выберите базу или укажите папку вручную. В этой версии — только файловые базы.</value></data>
+  <data name="UiFoundHint" xml:space="preserve"><value>Базы из списков 1С на этом компьютере. Выберите базу или укажите папку вручную.</value></data>
   <data name="UiFoundKind" xml:space="preserve"><value>Тип</value></data>
   <data name="UiFoundName" xml:space="preserve"><value>Название</value></data>
-  <data name="UiFoundWhere" xml:space="preserve"><value>Где</value></data>
   <data name="UiInstalledVersion" xml:space="preserve"><value>Установлена версия {0}</value></data>
   <data name="UiKindFile" xml:space="preserve"><value>файловая</value></data>
   <data name="UiKindFileMissing" xml:space="preserve"><value>файловая — папки нет</value></data>
