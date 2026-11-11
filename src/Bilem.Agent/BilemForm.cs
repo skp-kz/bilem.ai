@@ -11,6 +11,8 @@ namespace Bilem.Agent
     /// </summary>
     internal class BilemForm : Form
     {
+        private bool _fittingColumns;
+
         public BilemForm()
         {
             AutoScaleDimensions = new SizeF(96F, 96F);
@@ -49,27 +51,36 @@ namespace Bilem.Agent
         /// <summary>Колонки — по содержимому, но не шире половины списка; колонка fill берёт остаток. Без горизонтальной прокрутки, полный текст — в подсказке.</summary>
         internal void FitContent(ListView lv, int fill)
         {
-            if (!lv.IsHandleCreated || lv.Columns.Count == 0) return;
-            var rest = lv.ClientSize.Width;
-            for (int i = 0; i < lv.Columns.Count; i++)
+            // Смена ширины колонок включает и выключает полосы прокрутки, а это снова Resize списка: без защиты окно крутится и не показывается
+            if (_fittingColumns || !lv.IsHandleCreated || lv.Columns.Count == 0) return;
+            _fittingColumns = true;
+            try
             {
-                if (i == fill) continue;
-                lv.AutoResizeColumn(i, ColumnHeaderAutoResizeStyle.HeaderSize);
-                var header = lv.Columns[i].Width;
-                if (lv.Items.Count > 0) lv.AutoResizeColumn(i, ColumnHeaderAutoResizeStyle.ColumnContent);
-                // Запас: ширины «по содержимому» впритык хватает не всегда, и текст обрезается многоточием
-                lv.Columns[i].Width = Math.Min(Math.Max(lv.Columns[i].Width + Px(12), header), lv.ClientSize.Width / 2);
-                rest -= lv.Columns[i].Width;
+                for (int i = 0; i < lv.Columns.Count; i++)
+                {
+                    if (i == fill) continue;
+                    lv.AutoResizeColumn(i, ColumnHeaderAutoResizeStyle.HeaderSize);
+                    var header = lv.Columns[i].Width;
+                    if (lv.Items.Count > 0) lv.AutoResizeColumn(i, ColumnHeaderAutoResizeStyle.ColumnContent);
+                    // Запас: ширины «по содержимому» впритык хватает не всегда, и текст обрезается многоточием
+                    lv.Columns[i].Width = Math.Min(Math.Max(lv.Columns[i].Width + Px(12), header), lv.ClientSize.Width / 2);
+                }
+                // Ширину списка берём после подгонки: полоса прокрутки могла её изменить
+                var others = lv.Columns.Cast<ColumnHeader>().Where(c => c.Index != fill).ToList();
+                var widths = others.Select(c => c.Width).ToArray();
+                var rest = lv.ClientSize.Width - widths.Sum();
+                // Узкое окно: сжимается самая широкая колонка, пока не останется место под fill. Считаем в памяти, колонкам — один раз
+                var min = Px(80);
+                while (rest < min && widths.Length > 0 && widths.Max() > min)
+                {
+                    widths[Array.IndexOf(widths, widths.Max())]--;
+                    rest++;
+                }
+                for (int i = 0; i < others.Count; i++)
+                    if (others[i].Width != widths[i]) others[i].Width = widths[i];
+                lv.Columns[fill].Width = Math.Max(min, rest);
             }
-            // Узкое окно: сначала сжимается самая широкая колонка, чтобы осталось место под fill
-            var min = Px(80);
-            if (rest < min)
-            {
-                var widest = lv.Columns.Cast<ColumnHeader>().Where(c => c.Index != fill).OrderByDescending(c => c.Width).First();
-                widest.Width = Math.Max(min, widest.Width - (min - rest));
-                rest = min;
-            }
-            lv.Columns[fill].Width = rest;
+            finally { _fittingColumns = false; }
         }
 
         /// <summary>Последняя колонка списка занимает оставшуюся ширину — без горизонтальной прокрутки в узком окне.</summary>

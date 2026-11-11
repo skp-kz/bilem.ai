@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Threading;
 using System.Windows.Forms;
+using Bilem.Agent.Core;
 using Bilem.Agent.Core.Service;
 
 namespace Bilem.Agent
@@ -84,20 +85,63 @@ namespace Bilem.Agent
         /// <summary>Окно создаётся после настройки WinForms (SetCompatibleTextRenderingDefault — до первого окна).</summary>
         private static int RunWindow(Func<Form> create)
         {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
             using (var mutex = new Mutex(true, MutexName, out var firstInstance))
             {
                 if (!firstInstance)
                 {
-                    try { using (var ev = EventWaitHandle.OpenExisting(ShowEventName)) ev.Set(); } catch { }
+                    ShowRunningWindow();
                     return 0;
                 }
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                // Пароль настроек (если задан) — до окна: без него настройки не открываются
-                if (!SettingsGate.Pass(Bilem.Agent.Core.Txt.S("UiLockWhatSettings"))) return 1;
-                Application.Run(create());
-                return 0;
+                Application.ThreadException += (s, e) => ReportWindowError(e.Exception);
+                try
+                {
+                    // Пароль настроек (если задан) — до окна: без него настройки не открываются
+                    if (!SettingsGate.Pass(Txt.S("UiLockWhatSettings"))) return 1;
+                    Application.Run(create());
+                    return 0;
+                }
+                catch (Exception e)
+                {
+                    ReportWindowError(e);
+                    return 1;
+                }
             }
+        }
+
+        /// <summary>Окно настроек уже запущено — вывести его вперёд. Не вышло за 2 секунды (зависло, открыто в другом сеансе) — сказать об этом, а не молчать.</summary>
+        private static void ShowRunningWindow()
+        {
+            try { using (var ev = EventWaitHandle.OpenExisting(ShowEventName)) ev.Set(); } catch { }
+            var titles = new[] { Txt.S("UiTitleSettings"), Txt.S("UiTitle") };
+            using (var me = Process.GetCurrentProcess())
+            {
+                for (var i = 0; i < 20; i++)
+                {
+                    var running = Process.GetProcessesByName(me.ProcessName);
+                    try
+                    {
+                        var p = running.FirstOrDefault(x => x.Id != me.Id && x.SessionId == me.SessionId && titles.Contains(x.MainWindowTitle) && x.Responding);
+                        if (p != null) { SetForegroundWindow(p.MainWindowHandle); return; }
+                    }
+                    finally { foreach (var x in running) x.Dispose(); }
+                    Thread.Sleep(100);
+                }
+            }
+            MessageBox.Show(Txt.S("UiSettingsBusy"), Txt.S("UiTitleSettings"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+
+        private static bool _reportingError;
+
+        /// <summary>Сбой окна — в журнал и на экран; пока сообщение открыто, следующие только в журнал.</summary>
+        private static void ReportWindowError(Exception e)
+        {
+            Log.Fail(Txt.F("UiSettingsCrashed", e));
+            if (_reportingError) return;
+            _reportingError = true;
+            try { MessageBox.Show(Txt.F("UiSettingsCrashed", e.Message), Txt.S("UiTitleSettings"), MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            finally { _reportingError = false; }
         }
 
         internal static bool IsElevated()
@@ -134,5 +178,6 @@ namespace Bilem.Agent
         }
 
         [DllImport("kernel32.dll")] private static extern bool AttachConsole(int processId);
+        [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hWnd);
     }
 }

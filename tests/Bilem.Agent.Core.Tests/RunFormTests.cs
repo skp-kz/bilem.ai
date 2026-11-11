@@ -138,6 +138,46 @@ namespace Bilem.Agent.Core.Tests
             }
         }
 
+        /// <summary>Настоящая вкладка «Базы 1С»: подгонка колонок не зацикливается на полосах прокрутки (beta.9: окно настроек не открывалось).</summary>
+        [Theory]
+        [InlineData(560, 0)]
+        [InlineData(560, 1)]
+        [InlineData(860, 1)]
+        [InlineData(860, 30)]
+        [InlineData(1290, 2)]
+        public void BasesTab_ColumnFitDoesNotLoop(int width, int items)
+        {
+            using (var main = new MainForm(viaService: true))
+            using (var f = new BilemForm { ShowInTaskbar = false, Opacity = 0, StartPosition = FormStartPosition.Manual, Size = new Size(width, 520) })
+            using (var tabs = new TabControl { Dock = DockStyle.Fill })
+            {
+                var page = main.Controls.OfType<TabControl>().Single().TabPages[0];
+                var lv = All(page).OfType<ListView>().Single();
+                for (var i = 0; i < items; i++)
+                    lv.Items.Add(new ListViewItem(new[] { "make_it_easy_2026", "Бухгалтерия для Казахстана", "3.0.73.1", @"C:\bds\Make IT", "✖ проверка не прошла: " + new string('x', 200) }));
+                var changes = 0;
+                lv.ColumnWidthChanged += (s, e) => changes++;
+                tabs.TabPages.Add(page);
+                f.Controls.Add(tabs);
+                f.Show();
+                f.Width -= 40;
+                var end = DateTime.Now.AddMilliseconds(300);
+                Pump(() => DateTime.Now > end);
+                Assert.True(changes < 100, $"колонки менялись {changes} раз");
+                Assert.True(lv.Columns.Cast<ColumnHeader>().Sum(c => c.Width) <= lv.ClientSize.Width);
+            }
+        }
+
+        /// <summary>Сохранённое окно больше экрана или за его краем (другое разрешение в удалённом сеансе) — целиком в рабочей области.</summary>
+        [Fact]
+        public void Placement_FitsWorkingArea()
+        {
+            var area = new Rectangle(0, 0, 1024, 728);
+            Assert.Equal(area, WindowPlacement.FitToArea(new Rectangle(300, 200, 1920, 1080), area));
+            Assert.Equal(new Rectangle(524, 228, 500, 500), WindowPlacement.FitToArea(new Rectangle(900, 600, 500, 500), area));
+            Assert.Equal(new Rectangle(10, 20, 500, 500), WindowPlacement.FitToArea(new Rectangle(10, 20, 500, 500), area));
+        }
+
         [Fact]
         public void Status_IsOneTextForEveryWindow()
         {

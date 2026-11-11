@@ -45,7 +45,8 @@ namespace Bilem.Agent
                 r.Height = Math.Max(r.Height, f.MinimumSize.Height);
                 if (!IsVisibleOnAnyScreen(r)) return false;
                 f.StartPosition = FormStartPosition.Manual;
-                f.Bounds = r;
+                // Сохранено при другом разрешении (удалённый сеанс): окно не должно быть больше экрана или уходить за край
+                f.Bounds = FitToArea(r, Screen.FromRectangle(r).WorkingArea);
                 if (s.Maximized) f.WindowState = FormWindowState.Maximized;
                 return true;
             }
@@ -100,6 +101,14 @@ namespace Bilem.Agent
             var size = new Size(Scale(f, DefaultSize.Width), Scale(f, DefaultSize.Height));
             var wa = Screen.PrimaryScreen.WorkingArea;
             f.Bounds = new Rectangle(wa.X + (wa.Width - size.Width) / 2, wa.Y + (wa.Height - size.Height) / 2, size.Width, size.Height);
+        }
+
+        /// <summary>Окно целиком в рабочей области: не больше её и не за краем.</summary>
+        internal static Rectangle FitToArea(Rectangle r, Rectangle area)
+        {
+            var w = Math.Min(r.Width, area.Width);
+            var h = Math.Min(r.Height, area.Height);
+            return new Rectangle(Math.Max(area.X, Math.Min(r.X, area.Right - w)), Math.Max(area.Y, Math.Min(r.Y, area.Bottom - h)), w, h);
         }
 
         /// <summary>Хотя бы заголовок окна (полоса 40 px) — на каком-нибудь экране.</summary>

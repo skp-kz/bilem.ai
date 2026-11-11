@@ -799,6 +799,8 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiTextFilter" xml:space="preserve"><value>Текст (*.txt)|*.txt</value></data>
   <data name="UiTitle" xml:space="preserve"><value>Bilem Agent — локальный режим</value></data>
   <data name="UiTitleSettings" xml:space="preserve"><value>Bilem Agent — настройки</value></data>
+  <data name="UiSettingsBusy" xml:space="preserve"><value>Окно настроек уже запущено, но не отвечает или открыто в другом сеансе. Закройте его или завершите фоновый процесс bilem-agent в диспетчере задач и нажмите «Настройки…» ещё раз.</value></data>
+  <data name="UiSettingsCrashed" xml:space="preserve"><value>Ошибка в окне настроек: {0}</value></data>
   <data name="UiTitleTray" xml:space="preserve"><value>Bilem Agent</value></data>
   <data name="UiTokenDisclaimer" xml:space="preserve"><value>В адресе — секретный токен: с ним любая программа на этом компьютере может читать данные 1С через Bilem. Не пересылайте адрес и не публикуйте его. Если адрес мог попасть к чужим — нажмите «Сменить токен». Снаружи этот адрес недоступен: только с этой машины (127.0.0.1).</value></data>
   <data name="UiTrayBaseError" xml:space="preserve"><value>ошибка: {0}</value></data>  <data name="UiTrayExit" xml:space="preserve"><value>Выход (остановить MCP)</value></data>
