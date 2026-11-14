@@ -6,29 +6,35 @@ using Bilem.Agent.Core;
 
 namespace Bilem.Agent
 {
-    /// <summary>Окно «Настройка»: список шагов с галочками и живой журнал. Работа идёт в фоне, окно не зависает.</summary>
+    /// <summary>
+    /// Окно «Настройка базы» / «Проверка базы» (#97, 14.11): низкое и широкое, две колонки — шаги столбиком слева,
+    /// живой журнал справа на всю высоту; под ними полоса прогресса, при ошибке — причина и что делать. Работа идёт в фоне, окно не зависает.
+    /// </summary>
     internal sealed class RunForm : BilemForm
     {
-        private const int StepsRow = 2;
-        // Таблица, а не ListView: ListView не переносит текст в ячейке. Высота — ровно по строкам, прокрутки нет
-        private readonly DataGridView _steps = new DataGridView
+        // Левая колонка — ~40% ширины, но не уже 280 px: названия шагов не обрезаются на 100–150%
+        private const int StepsMinWidth = 280;
+        private const double StepsShare = 0.4;
+        private readonly TableLayoutPanel _split = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = new Padding(0, 0, 0, 6) };
+        // Шаги — строки-подписи сверху вниз (без растяжения): подробность после тире обрезается многоточием, полный текст — в подсказке
+        private readonly Panel _stepsBox = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = SystemColors.Window, BorderStyle = BorderStyle.FixedSingle, Margin = new Padding(0, 0, 6, 0) };
+        private readonly TableLayoutPanel _steps = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill, ReadOnly = true, RowHeadersVisible = false, ScrollBars = ScrollBars.None, TabStop = false, MultiSelect = false,
-            AllowUserToAddRows = false, AllowUserToDeleteRows = false, AllowUserToResizeRows = false, AllowUserToResizeColumns = false, AllowUserToOrderColumns = false,
-            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill, AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells,
-            ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize, SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-            BackgroundColor = SystemColors.Window, BorderStyle = BorderStyle.FixedSingle, CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal, Margin = new Padding(0, 0, 0, 6),
+            Dock = DockStyle.Top, ColumnCount = 1, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Margin = Padding.Empty, GrowStyle = TableLayoutPanelGrowStyle.AddRows,
         };
-        private readonly TextBox _log = new TextBox { Multiline = true, ReadOnly = true, HideSelection = false, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, Font = new Font("Consolas", 9f), BackColor = SystemColors.Window, Margin = new Padding(0, 0, 0, 6) };
+        private readonly TextBox _log = new TextBox { Multiline = true, WordWrap = true, ReadOnly = true, HideSelection = false, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, Font = new Font("Consolas", 9f), BackColor = SystemColors.Window, Margin = Padding.Empty };
         // Итог: при ошибке — на каком шаге, причина и что делать
         private readonly Label _result = new Label { AutoSize = true, Dock = DockStyle.Fill, Visible = false, Margin = new Padding(0, 0, 0, 6), Padding = new Padding(6) };
-        // «Шаг 5 из 9 · 44%» и полоса — только там, где число шагов известно заранее (Onboarding.Planned)
-        private readonly Label _progressText = new Label { AutoSize = true, Dock = DockStyle.Fill, Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold), Margin = new Padding(0, 0, 0, 4), Visible = false };
-        private readonly ProgressBar _progressBar = new ProgressBar { Dock = DockStyle.Top, Style = ProgressBarStyle.Continuous, Maximum = 100, Margin = new Padding(0, 0, 0, 6), Visible = false };
+        // Полоса и «44%» — только там, где число шагов известно заранее (Onboarding.Planned)
+        private readonly TableLayoutPanel _progress = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, AutoSize = true, Margin = new Padding(0, 0, 0, 6), Visible = false };
+        private readonly ProgressBar _progressBar = new ProgressBar { Dock = DockStyle.Fill, Style = ProgressBarStyle.Continuous, Maximum = 100, Margin = Padding.Empty };
+        private readonly Label _percent = new Label { AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(6, 0, 0, 0), Text = "0%" };
         private readonly TableLayoutPanel _root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1 };
+        private readonly ToolTip _tip = new ToolTip();
         private Onboarding _ob;
         private Font _bold;
         private bool _fitting;
+        private readonly string _title;
         private readonly Button _close = new Button { Text = Txt.S("UiClose"), Enabled = false, AutoSize = true, Margin = Padding.Empty };
         // Когда закончилось — текст для поддержки и лог одним действием
         private readonly Button _copy = new Button { Text = Txt.S("UiCopySupport"), AutoSize = true, Visible = false, Margin = new Padding(0, 0, 6, 0) };
@@ -45,22 +51,29 @@ namespace Bilem.Agent
             _work = work;
             _logKind = logKind;
             _slug = slug;
-            Text = title;
+            _title = Text = title;
             StartPosition = FormStartPosition.CenterParent;
 
-            _steps.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
-            _steps.DefaultCellStyle.SelectionBackColor = SystemColors.Window;
-            _steps.DefaultCellStyle.SelectionForeColor = SystemColors.ControlText;
-            _steps.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = Txt.S("UiStepColumn"), FillWeight = 42, SortMode = DataGridViewColumnSortMode.NotSortable });
-            _steps.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = Txt.S("UiStatusColumn"), FillWeight = 58, SortMode = DataGridViewColumnSortMode.NotSortable });
             _log.Resize += (s, e) => { if (_log.IsHandleCreated) ScrollLog(); };
-            _steps.SelectionChanged += (s, e) => _steps.ClearSelection();
-            _steps.RowHeightChanged += (s, e) => FitSteps();
-            // После того как таблица пересчитает высоту строк под новую ширину
-            _steps.Resize += (s, e) => { if (IsHandleCreated) BeginInvoke((Action)FitSteps); };
+            _steps.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            _split.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Px(StepsMinWidth)));
+            _split.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            _split.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            _stepsBox.Controls.Add(_steps);
+            _split.Controls.Add(_stepsBox, 0, 0);
+            _split.Controls.Add(_log, 1, 0);
+            _split.Resize += (s, e) => FitColumns();
+            // Перенос строк в блоке ошибки пересчитывается при раскладке — после неё ещё раз проверяем, что шаги помещаются
+            _stepsBox.Resize += (s, e) => { if (_result.Visible && IsHandleCreated) BeginInvoke((Action)FitSteps); };
             // Настройка: все шаги известны заранее и видны сразу
             if (logKind == "setup")
                 foreach (var id in Onboarding.SetupSteps) ShowStep(new Step { Id = id, Title = Txt.S("Step_" + id), Status = StepStatus.Pending });
+
+            _progress.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            _progress.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            _progress.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            _progress.Controls.Add(_progressBar, 0, 0);
+            _progress.Controls.Add(_percent, 1, 0);
 
             var bottom = new FlowLayoutPanel { Anchor = AnchorStyles.Right, FlowDirection = FlowDirection.RightToLeft, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Margin = Padding.Empty };
             bottom.Controls.Add(_close);
@@ -71,21 +84,20 @@ namespace Bilem.Agent
             _saveLog.Click += (s, e) => SaveLog();
             _copied.Tick += (s, e) => { _copied.Stop(); _copy.Text = Txt.S("UiCopySupport"); };
 
-            _progressBar.Height = Px(18);
-            // Одна колонка, журнал — единственная растягивающаяся строка
+            // Колонки шагов и журнала — единственная растягивающаяся строка; полоса, итог и кнопки — на всю ширину под ними
             _root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            var rows = new Control[] { _progressText, _progressBar, _steps, _log, _result, bottom };
+            var rows = new Control[] { _split, _progress, _result, bottom };
             _root.RowCount = rows.Length;
             for (int i = 0; i < rows.Length; i++)
             {
-                _root.RowStyles.Add(rows[i] == _log ? new RowStyle(SizeType.Percent, 100) : i == StepsRow ? new RowStyle(SizeType.Absolute, Px(100)) : new RowStyle(SizeType.AutoSize));
+                _root.RowStyles.Add(rows[i] == _split ? new RowStyle(SizeType.Percent, 100) : new RowStyle(SizeType.AutoSize));
                 _root.Controls.Add(rows[i], 0, i);
             }
             Controls.Add(_root);
             Shown += async (s, e) => await Start();
             ResizeEnd += (s, e) => WindowPlacement.SaveRunSize(this);
             FormClosing += (s, e) => { if (!_close.Enabled) e.Cancel = true; };
-            FormClosed += (s, e) => _copied.Dispose();
+            FormClosed += (s, e) => { _copied.Dispose(); _tip.Dispose(); };
         }
 
         /// <summary>Размеры — здесь, в пикселях текущего экрана (см. AddBaseForm): окно собрано кодом, автомасштаб к нему не применяется.</summary>
@@ -93,15 +105,18 @@ namespace Bilem.Agent
         {
             base.OnLoad(e);
             _root.Padding = new Padding(Px(12));
+            _progressBar.MinimumSize = new Size(0, Px(18));
+            _percent.Font = new Font(Font, FontStyle.Bold);
             var area = Screen.FromControl(this).WorkingArea;
             FitMinimum();
-            Size = new Size(Math.Min(Px(820), area.Width), Math.Min(Px(640), area.Height));
+            Size = new Size(Math.Min(Px(860), area.Width), Math.Min(Px(400), area.Height));
             WindowPlacement.RestoreRunSize(this);
             var around = StartPosition == FormStartPosition.CenterParent && Owner != null ? Owner.Bounds : area;
             var x = around.Left + (around.Width - Width) / 2;
             var y = around.Top + (around.Height - Height) / 2;
             StartPosition = FormStartPosition.Manual;
             Location = new Point(Math.Max(area.Left, Math.Min(x, area.Right - Width)), Math.Max(area.Top, Math.Min(y, area.Bottom - Height)));
+            FitColumns();
             FitSteps();
         }
 
@@ -109,26 +124,45 @@ namespace Bilem.Agent
         {
             base.OnDpiChanged(e);
             FitMinimum();
+            FitColumns();
+            FitSteps();
         }
 
         private void FitMinimum()
         {
             var area = Screen.FromControl(this).WorkingArea;
-            MinimumSize = new Size(Math.Min(Px(720), area.Width), Math.Min(Px(560), area.Height));
+            MinimumSize = new Size(Math.Min(Px(720), area.Width), Math.Min(Px(340), area.Height));
         }
 
-        /// <summary>Высота таблицы — по её строкам: все шаги видны, журнал берёт остальное.</summary>
+        /// <summary>Левая колонка — 40% ширины, не уже 280 px.</summary>
+        private void FitColumns()
+        {
+            if (_split.ColumnStyles.Count < 2) return;
+            var w = Math.Max(Px(StepsMinWidth) + _stepsBox.Margin.Horizontal, (int)(_split.ClientSize.Width * StepsShare));
+            if ((int)_split.ColumnStyles[0].Width != w) _split.ColumnStyles[0].Width = w;
+        }
+
+        private int StepHeight => Font.Height + Px(6);
+
+        /// <summary>Строки шагов — по высоте шрифта; если блок ошибки отнял высоту и шаги не помещаются, окно подрастает.</summary>
         private void FitSteps()
         {
-            if (_fitting || _root.RowStyles.Count <= StepsRow) return;
+            var h = StepHeight;
+            for (var i = 0; i < _steps.RowStyles.Count; i++)
+                if ((int)_steps.RowStyles[i].Height != h) _steps.RowStyles[i].Height = h;
+            if (_fitting || !IsHandleCreated || !_result.Visible) return;
             _fitting = true;
             try
             {
-                // Высота строк пересчитывается лениво; без этого таблица остаётся по старой ширине колонок
-                if (IsHandleCreated) _steps.AutoResizeRows(DataGridViewAutoSizeRowsMode.AllCells);
-                var h = _steps.ColumnHeadersHeight + _steps.Rows.GetRowsHeight(DataGridViewElementStates.Visible) + _steps.Margin.Vertical + 2;
-                if ((int)_root.RowStyles[StepsRow].Height != h) _root.RowStyles[StepsRow].Height = h;
-                if (_result.Visible) KeepLogLines();
+                _root.PerformLayout();
+                var need = _steps.RowStyles.Count * h - _stepsBox.ClientSize.Height;
+                if (need <= 0) return;
+                var area = Screen.FromControl(this).WorkingArea;
+                var height = Math.Min(Height + need, area.Height);
+                if (height <= Height) return;
+                MinimumSize = new Size(MinimumSize.Width, Math.Max(MinimumSize.Height, height));
+                Height = height;
+                if (Bottom > area.Bottom) Top = Math.Max(area.Top, area.Bottom - Height);
             }
             finally { _fitting = false; }
         }
@@ -162,40 +196,55 @@ namespace Bilem.Agent
             _result.Text = Success ? Txt.S("UiRunOk")
                 : p.FailedStep != null ? RunLog.Stopped(p.Current, p.FailedStep.Title, _ob.FailMessage ?? p.FailedStep.Detail ?? Txt.S("UiRunFail"), _ob.FailHint ?? Txt.S("HintCopySupport"))
                 : RunLog.Short(RunLog.Mask(_ob.FailMessage ?? Txt.S("UiRunFail"))) + Environment.NewLine + Txt.S("WhatToDo") + " " + RunLog.Short(RunLog.Mask(_ob.FailHint ?? Txt.S("HintCopySupport")));
+            // Перенос — по ширине окна, а не по самой длинной строке причины
+            _result.MaximumSize = new Size(Math.Max(Px(200), _root.ClientSize.Width - _root.Padding.Horizontal), 0);
             _result.Visible = true;
             FitSteps();
         }
 
-        /// <summary>Блок ошибки и перенос строк забирают высоту у журнала: окно и его минимум подрастают, чтобы в журнале осталось 10 строк.</summary>
-        private void KeepLogLines()
+        /// <summary>Строка шага: «✓ Права Windows», «▸ Пользователь bilem», «· Состав OData», «✗ … — причина»; подробность — после тире.</summary>
+        internal static string StepLine(Step st)
         {
-            _root.PerformLayout();
-            var need = Height + 10 * _log.Font.Height - _log.ClientSize.Height;
-            var area = Screen.FromControl(this).WorkingArea;
-            if (need > MinimumSize.Height) MinimumSize = new Size(MinimumSize.Width, Math.Min(need, area.Height));
+            string mark;
+            switch (st.Status)
+            {
+                case StepStatus.Ok: mark = "✓"; break;
+                case StepStatus.Fail: mark = "✗"; break;
+                case StepStatus.Warn: mark = "!"; break;
+                case StepStatus.Running: mark = "▸"; break;
+                case StepStatus.Skipped: mark = "–"; break;
+                default: mark = "·"; break;
+            }
+            var detail = !string.IsNullOrEmpty(st.Detail) ? st.Detail : st.Status == StepStatus.Skipped ? Txt.S("UiStep_Skipped") : null;
+            return mark + " " + st.Title + (detail == null ? "" : " — " + detail);
         }
 
         private void ShowStep(Step st)
         {
-            DataGridViewRow row = null;
-            foreach (DataGridViewRow x in _steps.Rows) if ((string)x.Tag == st.Id) row = x;
-            if (row == null) { row = _steps.Rows[_steps.Rows.Add()]; row.Tag = st.Id; }
-            string mark;
+            Label row = null;
+            foreach (Control x in _steps.Controls) if ((string)x.Tag == st.Id) row = (Label)x;
+            if (row == null)
+            {
+                row = new Label { Tag = st.Id, AutoSize = false, AutoEllipsis = true, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Margin = Padding.Empty, Padding = new Padding(Px(4), 0, Px(4), 0), UseMnemonic = false };
+                _steps.RowStyles.Add(new RowStyle(SizeType.Absolute, StepHeight));
+                _steps.RowCount = _steps.RowStyles.Count;
+                _steps.Controls.Add(row, 0, _steps.RowCount - 1);
+            }
+            // Текущий — жирным, ожидает — серым, упал — красным
             var color = SystemColors.ControlText;
             switch (st.Status)
             {
-                case StepStatus.Ok: mark = "✔ "; color = Color.DarkGreen; break;
-                case StepStatus.Fail: mark = "✗ "; color = Color.DarkRed; break;
-                case StepStatus.Warn: mark = "! "; color = Color.DarkGoldenrod; break;
-                case StepStatus.Running: mark = "▶ "; break;
-                case StepStatus.Skipped: mark = "– "; color = SystemColors.GrayText; break;
-                default: mark = ""; color = SystemColors.GrayText; break;
+                case StepStatus.Ok: color = Color.DarkGreen; break;
+                case StepStatus.Fail: color = Color.DarkRed; break;
+                case StepStatus.Warn: color = Color.DarkGoldenrod; break;
+                case StepStatus.Running: break;
+                default: color = SystemColors.GrayText; break;
             }
-            if (_bold == null || _bold.Size != _steps.Font.Size) _bold = new Font(_steps.Font, FontStyle.Bold);
-            row.DefaultCellStyle.ForeColor = row.DefaultCellStyle.SelectionForeColor = color;
-            row.DefaultCellStyle.Font = st.Status == StepStatus.Running ? _bold : null;
-            row.Cells[0].Value = mark + st.Title;
-            row.Cells[1].Value = Txt.S("UiStep_" + st.Status) + (string.IsNullOrEmpty(st.Detail) ? "" : " — " + st.Detail);
+            if (_bold == null || _bold.Size != Font.Size) _bold = new Font(Font, FontStyle.Bold);
+            row.ForeColor = color;
+            row.Font = st.Status == StepStatus.Running ? _bold : null;
+            row.Text = StepLine(st);
+            _tip.SetToolTip(row, row.Text);
             FitSteps();
         }
 
@@ -204,16 +253,20 @@ namespace Bilem.Agent
         {
             if (_ob == null || _ob.Planned == 0) return;
             var p = StepProgress.Of(_ob.Steps.ToArray(), _ob.Planned, finished);
-            _progressText.Visible = _progressBar.Visible = true;
-            _progressText.Text = p.Text();
-            _progressText.ForeColor = p.Failed ? Color.DarkRed : p.Done == p.Total ? Color.DarkGreen : SystemColors.ControlText;
+            _progress.Visible = true;
+            _percent.Text = p.Percent + "%";
+            _percent.ForeColor = p.Failed ? Color.DarkRed : p.Done == p.Total ? Color.DarkGreen : SystemColors.ControlText;
             _progressBar.Value = p.Percent;
             // Красная полоса: у ProgressBar с темой Windows цвет не задать, только состояние Error (PBM_SETSTATE)
             SendMessage(_progressBar.Handle, 0x410, (IntPtr)(p.Failed ? 2 : 1), IntPtr.Zero);
+            // «Настройка базы «demo» · шаг 5 из 9»
+            Text = _title + " · " + Txt.F("UiTitleStep", p.Current, p.Total);
         }
 
+        private string ProgressText() => _ob != null && _ob.Planned > 0 ? StepProgress.Of(_ob.Steps.ToArray(), _ob.Planned, _close.Enabled ? Success : (bool?)null).Text() : null;
+
         private string LogText() =>
-            RunLog.Build(Text, _slug, _started, _ob?.Steps.ToArray() ?? new Step[0], _progressText.Visible ? _progressText.Text : null, _result.Text, _log.Text);
+            RunLog.Build(_title, _slug, _started, _ob?.Steps.ToArray() ?? new Step[0], ProgressText(), _result.Text, _log.Text);
 
         private string SupportText()
         {
@@ -223,7 +276,7 @@ namespace Bilem.Agent
             facts.Name = facts.Name ?? _slug;
             return RunLog.Support(new SupportInfo
             {
-                Title = Text, ScalePercent = DeviceDpi * 100 / 96, Base = facts, Steps = steps, Log = _log.Text,
+                Title = _title, ScalePercent = DeviceDpi * 100 / 96, Base = facts, Steps = steps, Log = _log.Text,
                 Progress = _ob.Planned > 0 ? p.Text() : null,
                 FailedStep = !Success && p.FailedStep != null ? p.Current : 0, FailedTitle = p.FailedStep?.Title,
                 Error = _ob.FailMessage ?? p.FailedStep?.Detail, Hint = _ob.FailHint,

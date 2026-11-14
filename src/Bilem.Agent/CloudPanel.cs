@@ -26,12 +26,16 @@ namespace Bilem.Agent
         private readonly Label _about = new Label { Text = Txt.S("UiCloudAbout"), AutoSize = true, Margin = new Padding(0, 2, 0, 4) };
         private readonly LinkLabel _cabinet = new LinkLabel { Text = Txt.S("UiCloudCabinet"), AutoSize = true, Margin = new Padding(0, 0, 0, 4) };
         private readonly Label _noService = new Label { Text = Txt.S("UiCloudNeedService"), AutoSize = true, ForeColor = SystemColors.GrayText, Visible = false };
-        private readonly TableLayoutPanel _details = new TableLayoutPanel { ColumnCount = 1, AutoSize = true, Dock = DockStyle.Top };
+        // #98: список баз — на всё свободное место блока, кнопки прижаты к нижнему краю
+        private readonly TableLayoutPanel _details = new TableLayoutPanel { ColumnCount = 1, Dock = DockStyle.Fill, Margin = Padding.Empty };
         private readonly Label _url = new Label { AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
         private readonly Label _state = new Label { AutoSize = true, Margin = new Padding(0, 6, 0, 4) };
-        private readonly ListView _bases = new ListView { View = View.Details, FullRowSelect = true, MultiSelect = false, HideSelection = false, Height = 130, Width = 520 };
+        private readonly ListView _bases = new ListView { View = View.Details, FullRowSelect = true, MultiSelect = false, HideSelection = false, ShowItemToolTips = true, Dock = DockStyle.Fill, Margin = new Padding(0, 4, 0, 0) };
         private readonly Button _connect = new Button { Text = Txt.S("UiCloudConnect"), AutoSize = true };
         private readonly Button _disconnect = new Button { Text = Txt.S("UiCloudDisconnect"), AutoSize = true };
+        private readonly FlowLayoutPanel _buttons;
+        private readonly ToolTip _tip = new ToolTip();
+        private bool _tipShown, _fitting;
         private readonly TextBox _orgUrl = new TextBox { ReadOnly = true, Width = 360 };
         private readonly FlowLayoutPanel _orgRow;
         private readonly Label _orgNote = new Label { Text = Txt.S("UiCloudOrgNote"), AutoSize = true, ForeColor = SystemColors.GrayText };
@@ -47,47 +51,108 @@ namespace Bilem.Agent
         {
             _owner = owner;
             _svc = viaService;
-            AutoSize = true;
-            AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            var root = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Location = new Point(0, 0), Margin = new Padding(0) };
-            root.Controls.Add(_on);
-            root.Controls.Add(_paid);
-            root.Controls.Add(_noService);
-            root.Controls.Add(_about);
+            Dock = DockStyle.Fill;
+            var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Margin = Padding.Empty };
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             _cabinet.LinkClicked += (s, e) => Open(CabinetUrl);
-            root.Controls.Add(_cabinet);
+            Rows(root, _details, _on, _paid, _noService, _about, _cabinet, _details);
 
-            _details.Controls.Add(Line(Col(Txt.S("UiCloudUrl")), _url));
-            _details.Controls.Add(_state);
             _bases.Columns.Add(Txt.S("UiCloudColBase"), LogicalToDeviceUnits(90));
             _bases.Columns.Add(Txt.S("UiCloudColOrg"), LogicalToDeviceUnits(190));
             _bases.Columns.Add(Txt.S("UiCloudColState"), LogicalToDeviceUnits(220));
             _bases.SelectedIndexChanged += (s, e) => Buttons();
+            // Двойной клик по строке = «Подключить…»
             _bases.DoubleClick += (s, e) => { if (_connect.Enabled) ConnectSelected(); };
-            _details.Controls.Add(_bases);
+            _bases.Resize += (s, e) => FitColumns();
             _connect.Click += (s, e) => ConnectSelected();
             _disconnect.Click += (s, e) => DisconnectSelected();
-            _details.Controls.Add(Line(_connect, _disconnect));
+            _buttons = Line(_connect, _disconnect);
+            _buttons.Margin = new Padding(0, 6, 0, 0);
+            // У неактивной кнопки своей подсказки нет (Windows не шлёт ей мышь) — показываем её с панели под кнопкой
+            _buttons.MouseMove += (s, e) => ConnectTip(e.Location);
+            _buttons.MouseLeave += (s, e) => HideTip();
             var copy = new Button { Text = Txt.S("UiCopy"), AutoSize = true };
             copy.Click += (s, e) => { try { Clipboard.SetText(_orgUrl.Text); } catch { } };
             _orgRow = Line(Col(Txt.S("UiCloudOrgUrl")), _orgUrl, copy);
-            _details.Controls.Add(_orgRow);
-            _details.Controls.Add(_orgNote);
-            root.Controls.Add(_details);
+            _details.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            Rows(_details, _bases, Line(Col(Txt.S("UiCloudUrl")), _url), _state, _orgRow, _orgNote, _bases, _buttons);
             Controls.Add(root);
 
             _on.CheckedChanged += (s, e) => { if (!_loading) Toggle(); };
+            Disposed += (s, e) => _tip.Dispose();
         }
 
-        /// <summary>Ширина блока — от окна: длинные строки переносятся, таблица баз — во всю ширину.</summary>
+        /// <summary>Строки таблицы сверху вниз; растягивается только <paramref name="fill"/>.</summary>
+        private static void Rows(TableLayoutPanel t, Control fill, params Control[] cs)
+        {
+            t.RowCount = cs.Length;
+            for (var i = 0; i < cs.Length; i++)
+            {
+                t.RowStyles.Add(cs[i] == fill ? new RowStyle(SizeType.Percent, 100) : new RowStyle(SizeType.AutoSize));
+                t.Controls.Add(cs[i], 0, i);
+            }
+        }
+
+        private void ConnectTip(Point p)
+        {
+            var over = !_connect.Enabled && _connect.Bounds.Contains(p);
+            if (over && !_tipShown) { _tip.Show(Txt.S("UiCloudSelectBase"), _buttons, _connect.Left, _connect.Bottom + LogicalToDeviceUnits(2)); _tipShown = true; }
+            else if (!over) HideTip();
+        }
+
+        private void HideTip()
+        {
+            if (!_tipShown) return;
+            _tip.Hide(_buttons);
+            _tipShown = false;
+        }
+
+        /// <summary>Ширина блока — от окна: длинные строки переносятся.</summary>
         public void FitWidth(int w)
         {
             w = Math.Max(LogicalToDeviceUnits(360), w);
             foreach (var l in new[] { _paid, _about, _noService, _orgNote, _state }) l.MaximumSize = new Size(w - LogicalToDeviceUnits(6), 0);
-            _bases.Width = w - LogicalToDeviceUnits(6);
             _orgUrl.Width = Math.Min(LogicalToDeviceUnits(420), w - LogicalToDeviceUnits(200));
         }
 
+        /// <summary>Сколько блоку нужно по высоте, чтобы в списке баз было не меньше 6 строк (#98): окно подрастает или вкладка прокручивается.</summary>
+        public int MinHeight
+        {
+            get
+            {
+                var root = Controls[0];
+                var h = 0;
+                foreach (Control c in root.Controls) if (c != _details && c.Visible) h += c.PreferredSize.Height + c.Margin.Vertical;
+                if (!_details.Visible) return h;
+                foreach (Control c in _details.Controls) if (c != _bases && c.Visible) h += c.PreferredSize.Height + c.Margin.Vertical;
+                int top, row;
+                if (_bases.IsHandleCreated && _bases.Items.Count > 0) { var r = _bases.GetItemRect(0); top = r.Top; row = r.Height; }
+                else { top = Font.Height + LogicalToDeviceUnits(8); row = Font.Height + LogicalToDeviceUnits(5); }
+                return h + top + 6 * row + (_bases.Height - _bases.ClientSize.Height) + _bases.Margin.Vertical;
+            }
+        }
+
+        /// <summary>«База» и «Организация в облаке» — по содержимому (имя целиком), «Состояние» — остаток ширины.</summary>
+        private void FitColumns()
+        {
+            if (_fitting || !_bases.IsHandleCreated || _bases.Columns.Count < 3) return;
+            _fitting = true;
+            try
+            {
+                for (var i = 0; i < 2; i++)
+                {
+                    var c = _bases.Columns[i];
+                    var w = TextRenderer.MeasureText(c.Text, _bases.Font).Width;
+                    foreach (ListViewItem it in _bases.Items) w = Math.Max(w, TextRenderer.MeasureText(it.SubItems[i].Text, _bases.Font).Width);
+                    w += LogicalToDeviceUnits(16);
+                    if (c.Width != w) c.Width = w;
+                }
+                var rest = _bases.ClientSize.Width - _bases.Columns[0].Width - _bases.Columns[1].Width;
+                var last = Math.Max(LogicalToDeviceUnits(120), rest);
+                if (_bases.Columns[2].Width != last) _bases.Columns[2].Width = last;
+            }
+            finally { _fitting = false; }
+        }
         private static FlowLayoutPanel Line(params Control[] cs)
         {
             var f = new FlowLayoutPanel { AutoSize = true, WrapContents = true, Margin = new Padding(0, 2, 0, 2) };
@@ -196,10 +261,12 @@ namespace Bilem.Agent
                 // Логин кабинета здесь не показываем (Слава, 23.10): кто входит в кабинет — информация админки, не окна на сервере клиента
                 it.SubItems.Add(bind == null ? "—" : bind.OrgName ?? "—");
                 it.SubItems.Add(BaseStateText(state, null));
+                it.ToolTipText = string.Join(" · ", it.SubItems.Cast<ListViewItem.ListViewSubItem>().Select(x => x.Text));
                 if (b.Slug == sel) it.Selected = true;
                 _bases.Items.Add(it);
             }
             _bases.EndUpdate();
+            FitColumns();
             // Облачный адрес организации — после первой подключённой базы (у разных организаций — свой: показываем выбранной или первой)
             var shown = store.Binding(sel ?? "") ?? store.Bindings.FirstOrDefault(x => !x.RevokedInCabinet);
             var url = shown?.OrgUrl;

@@ -65,7 +65,7 @@ namespace Bilem.Agent
             catch { }
         }
 
-        private static string RunFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Bilem", "run-window.json");
+        private static string RunFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Bilem", "run-window-2col.json");
 
         /// <summary>Окно шагов: только размер, положение — по центру родителя. Не меньше минимума и не больше экрана.</summary>
         public static void RestoreRunSize(Form f)

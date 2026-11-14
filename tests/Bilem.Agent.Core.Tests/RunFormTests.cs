@@ -58,17 +58,24 @@ namespace Bilem.Agent.Core.Tests
                 var close = all.OfType<Button>().Single(b => b.Text == Txt.S("UiClose"));
                 Pump(() => close.Enabled);
                 Assert.Equal(f.LogicalToDeviceUnits(720), f.MinimumSize.Width);
-                Assert.True(f.MinimumSize.Height >= f.LogicalToDeviceUnits(560));
+                Assert.True(f.MinimumSize.Height >= f.LogicalToDeviceUnits(340));
+                Assert.True(f.MinimumSize.Height <= f.LogicalToDeviceUnits(560), "окно снова высокое: " + f.MinimumSize.Height);
                 f.Size = f.MinimumSize;
                 f.PerformLayout();
                 for (var i = 0; i < 20; i++) { Application.DoEvents(); Thread.Sleep(5); }
 
-                var grid = all.OfType<DataGridView>().Single();
-                Assert.Equal(Onboarding.SetupSteps.Length, grid.Rows.Count);
-                Assert.Equal(ScrollBars.None, grid.ScrollBars);
-                Assert.True(grid.ColumnHeadersHeight + grid.Rows.GetRowsHeight(DataGridViewElementStates.Visible) <= grid.ClientSize.Height, "шаги не помещаются: " + grid.ClientSize.Height);
+                // #97: две колонки — шаги слева (не уже 280 px), журнал справа на ту же высоту
+                var steps = all.OfType<Label>().Where(l => l.Tag is string).ToList();
+                Assert.Equal(Onboarding.SetupSteps.Length, steps.Count);
+                var box = steps[0].Parent.Parent;
+                Assert.True(steps[0].Parent.Height <= box.ClientSize.Height, "шаги не помещаются: " + box.ClientSize.Height);
+                Assert.All(steps, l => Assert.Equal(steps[0].Height, l.Height));
+                Assert.True(box.Width >= f.LogicalToDeviceUnits(280), "колонка шагов узкая: " + box.Width);
+                Assert.Contains(steps, l => l.Text.StartsWith("✗ ") && l.ForeColor == Color.DarkRed);
                 var log = all.OfType<TextBox>().Single();
-                Assert.True(log.ClientSize.Height >= 10 * log.Font.Height, "журнал ниже 10 строк: " + log.ClientSize.Height);
+                Assert.True(log.Parent.PointToScreen(log.Location).X > box.Parent.PointToScreen(box.Location).X + box.Width - 1, "журнал не справа от шагов");
+                Assert.True(log.Height >= box.Height - 2, "журнал ниже колонки шагов");
+                Assert.True(log.ClientSize.Height >= 8 * log.Font.Height, "журнал ниже 8 строк: " + log.ClientSize.Height);
                 Assert.True(SendMessage(log.Handle, 0xCE, IntPtr.Zero, IntPtr.Zero) > 0, "журнал не прокручен к концу");
                 Assert.Contains(all.OfType<Button>(), b => b.Text == Txt.S("UiCopySupport") && b.Visible);
                 Assert.Contains(all.OfType<Button>(), b => b.Text == Txt.S("UiSaveLog") && b.Visible);
@@ -93,6 +100,17 @@ namespace Bilem.Agent.Core.Tests
             Assert.Contains("C:\\Users\\<user>\\AppData", s);
             Assert.Contains("883f-123456789012", s);
             foreach (var secret in new[] { "Pwd=\"123\"", "ivan.petrov", "БИН 123456789012", "Альфа", "Ромашка" }) Assert.DoesNotContain(secret, s);
+        }
+
+        /// <summary>#97: строка шага без колонки «Состояние» — значок, название, подробность после тире.</summary>
+        [Fact]
+        public void StepLine_MarkTitleAndDetail()
+        {
+            Assert.Equal("✓ База — nashi_aitishniki", RunForm.StepLine(new Step { Title = "База", Status = StepStatus.Ok, Detail = "nashi_aitishniki" }));
+            Assert.Equal("▸ Пользователь bilem", RunForm.StepLine(new Step { Title = "Пользователь bilem", Status = StepStatus.Running }));
+            Assert.Equal("· Состав OData", RunForm.StepLine(new Step { Title = "Состав OData", Status = StepStatus.Pending }));
+            Assert.Equal("✗ Веб-сервер — нет IIS", RunForm.StepLine(new Step { Title = "Веб-сервер", Status = StepStatus.Fail, Detail = "нет IIS" }));
+            Assert.Equal("– Веб-сервер — " + Txt.S("UiStep_Skipped"), RunForm.StepLine(new Step { Title = "Веб-сервер", Status = StepStatus.Skipped }));
         }
 
         [Fact]

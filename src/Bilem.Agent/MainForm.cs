@@ -94,10 +94,12 @@ namespace Bilem.Agent
             tabs.TabPages.Add(JournalTab());
             tabs.TabPages.Add(ServiceTab());
             tabs.TabPages.Add(AboutTab());
-            tabs.SelectedIndexChanged += (s, e) => { if (tabs.SelectedIndex == 2) RefreshAccess(); };
+            tabs.SelectedIndexChanged += (s, e) => { if (tabs.SelectedIndex == 2) RefreshAccess(); if (tabs.SelectedIndex == 1) FitConnect(grow: true); };
+            _tabs = tabs;
             // «Настройки…» из трея открывают нужную вкладку: bases, mcp, access, print, smtp, journal, service, about
             var tabIndex = Array.IndexOf(new[] { "bases", "mcp", "access", "print", "smtp", "journal", "service", "about" }, (tab ?? "").ToLowerInvariant());
             if (tabIndex > 0) tabs.SelectedIndex = tabIndex;
+            Shown += (s, e) => FitConnect(grow: true);
 
             // Строка состояния: слева — MCP, порт, базы; справа — версия сборки
             var status = new StatusStrip();
@@ -209,11 +211,21 @@ namespace Bilem.Agent
         {
             var p = new TabPage(Txt.S("UiTabConnect"));
             // Либо бесплатно, либо Bilem Cloud (часть L): блок 1 — локальный MCP, блок 2 — облако; включено облако — блок 1 серый
-            var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Padding = new Padding(10), AutoScroll = true };
+            var root = _connectRoot = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Padding = new Padding(10), AutoScroll = true };
             root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            // #98: облачный блок берёт всё место до низа окна, локальный — по содержимому
+            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             _localBox = new GroupBox { Text = Txt.S("UiLocalMcpTitle"), Dock = DockStyle.Fill, AutoSize = true, Padding = new Padding(10) };
             var t = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, AutoSize = true };
-            _localBox.Controls.Add(t);
+            // Выключен (включено облако) — одна строка «Выключен — включён MCP в облаке» и «Показать» вместо полэкрана серых полей
+            _localShow.Click += (s, e) => { _localExpanded = !_localExpanded; ApplyCloudMode(); };
+            _localCollapsed.Controls.Add(new Label { Text = Txt.S("UiLocalCollapsed"), AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 0, 8, 0) });
+            _localCollapsed.Controls.Add(_localShow);
+            var local = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, AutoSize = true, Margin = Padding.Empty };
+            local.Controls.Add(_localCollapsed, 0, 0);
+            local.Controls.Add(t, 0, 1);
+            _localBox.Controls.Add(local);
             _localTable = t;
             root.Controls.Add(_localBox, 0, 0);
             // Правка Славы 21.10: сверху бесплатно, снизу платно — плашки в заголовках блоков
@@ -249,9 +261,9 @@ namespace Bilem.Agent
             docs.LinkClicked += (s, e) => Open("https://docs.bilem.ai/connect");
             t.Controls.Add(docs, 0, r); t.SetColumnSpan(docs, 3); r++;
 
-            var cloudBox = new GroupBox { Text = Txt.S("UiCloudTitle"), Dock = DockStyle.Fill, AutoSize = true, Padding = new Padding(10), Margin = new Padding(3, 10, 3, 3) };
-            _cloud = new CloudPanel(() => this, _svc) { Location = new Point(10, 22) };
-            cloudBox.Resize += (s, e) => _cloud.FitWidth(cloudBox.ClientSize.Width - Px(24));
+            var cloudBox = _cloudBox = new GroupBox { Text = Txt.S("UiCloudTitle"), Dock = DockStyle.Fill, Padding = new Padding(10), Margin = new Padding(3, 10, 3, 3) };
+            _cloud = new CloudPanel(() => this, _svc);
+            cloudBox.Resize += (s, e) => { _cloud.FitWidth(cloudBox.ClientSize.Width - Px(24)); if (IsHandleCreated) BeginInvoke((Action)(() => FitConnect(grow: false))); };
             _cloud.ModeChanged += () => { ApplyCloudMode(); PollService(); };
             cloudBox.Controls.Add(_cloud);
             Badge(cloudBox, Txt.S("UiBadgeCommercial"));
@@ -273,9 +285,33 @@ namespace Bilem.Agent
             Place();
         }
 
-        private GroupBox _localBox;
+        private GroupBox _localBox, _cloudBox;
+        private TableLayoutPanel _connectRoot;
+        private TabControl _tabs;
+
+        /// <summary>
+        /// #98: в списке баз облака — не меньше 6 строк. Не хватает места — вкладка прокручивается (AutoScrollMinSize),
+        /// а при открытии вкладки и смене режима окно подрастает в пределах экрана.
+        /// </summary>
+        private void FitConnect(bool grow)
+        {
+            if (_connectRoot == null || _cloud == null || !IsHandleCreated) return;
+            var chrome = _cloudBox.Height - _cloud.Height;
+            var need = _connectRoot.Padding.Vertical + _localBox.Height + _localBox.Margin.Vertical + _cloudBox.Margin.Vertical + chrome + _cloud.MinHeight;
+            if (_connectRoot.AutoScrollMinSize.Height != need) _connectRoot.AutoScrollMinSize = new Size(0, need);
+            var lack = need - _connectRoot.ClientSize.Height;
+            if (!grow || lack <= 0 || WindowState != FormWindowState.Normal || _tabs?.SelectedIndex != 1) return;
+            var area = Screen.FromControl(this).WorkingArea;
+            var h = Math.Min(Height + lack, area.Height);
+            if (h <= Height) return;
+            Height = h;
+            if (Bottom > area.Bottom) Top = Math.Max(area.Top, area.Bottom - Height);
+        }
         private TableLayoutPanel _localTable;
         private CloudPanel _cloud;
+        private readonly FlowLayoutPanel _localCollapsed = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Dock = DockStyle.Fill, Margin = Padding.Empty, Visible = false };
+        private readonly Button _localShow = new Button { Text = Txt.S("UiShow"), AutoSize = true, Margin = Padding.Empty };
+        private bool _localExpanded;
         private readonly Label _localOff = new Label { Text = Txt.S("UiLocalOffByCloud"), AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
 
         /// <summary>Включён Bilem Cloud — блок локального MCP серый, кнопки недоступны (порт закрыт службой).</summary>
@@ -285,7 +321,11 @@ namespace Bilem.Agent
             if (_localTable == null) return;
             // Таблица блока — по ссылке, не Controls[0]: плашка «Бесплатно» поднята наверх и стоит первой
             foreach (Control c in _localTable.Controls) if (c != _localOff) c.Enabled = !on;
-            _localOff.Visible = on;
+            _localOff.Visible = false;
+            _localCollapsed.Visible = on;
+            _localTable.Visible = !on || _localExpanded;
+            _localShow.Text = Txt.S(_localExpanded ? "UiHide" : "UiShow");
+            if (IsHandleCreated) BeginInvoke((Action)(() => FitConnect(grow: true)));
         }
 
         /// <summary>«Доступ»: дерево разделов 1С с галочками «Чтение / Запись», «Применить» (слой MCP — сразу, слой 1С — с паролем администратора).</summary>

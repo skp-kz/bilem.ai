@@ -720,6 +720,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiServiceSupport" xml:space="preserve"><value>Проверка и поддержка</value></data>
   <data name="UiServiceUpdates" xml:space="preserve"><value>Обновления</value></data>
   <data name="UiSetupTitle" xml:space="preserve"><value>Настройка базы «{0}»</value></data>
+  <data name="UiTitleStep" xml:space="preserve"><value>шаг {0} из {1}</value></data>
   <data name="UiShowToken" xml:space="preserve"><value>Показать токен</value></data>
   <data name="UiSlug" xml:space="preserve"><value>Короткое имя:</value></data>
   <data name="UiSmtpAbout" xml:space="preserve"><value>Только отправка документов агента (счёт с печатью): письмо уходит сразу, когда пользователь попросит в чате; скрытая копия — на адрес ниже, каждое письмо — в журнале. Приём почты не делаем. Выключено — ИИ ничего не отправит.</value></data>
@@ -998,6 +999,10 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiCloudColOrg" xml:space="preserve"><value>Организация в облаке</value></data>
   <data name="UiCloudColState" xml:space="preserve"><value>Состояние</value></data>
   <data name="UiCloudConnect" xml:space="preserve"><value>Подключить…</value></data>
+  <data name="UiCloudSelectBase" xml:space="preserve"><value>Выберите базу в списке</value></data>
+  <data name="UiLocalCollapsed" xml:space="preserve"><value>Выключен — включён MCP в облаке</value></data>
+  <data name="UiShow" xml:space="preserve"><value>Показать</value></data>
+  <data name="UiHide" xml:space="preserve"><value>Скрыть</value></data>
   <data name="UiCloudReconnect" xml:space="preserve"><value>Подключить заново…</value></data>
   <data name="UiCloudDisconnect" xml:space="preserve"><value>Отключить</value></data>
   <data name="UiCloudOrgUrl" xml:space="preserve"><value>Адрес:</value></data>
