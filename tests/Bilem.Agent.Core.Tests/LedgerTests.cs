@@ -160,5 +160,72 @@ namespace Bilem.Agent.Core.Tests
             Assert.Equal(50m, e1.Where(e => e.Kt).Sum(e => e.Amount));
             Assert.Empty(Ledger.Pick(recs, keys, "both", "другая", f));
         }
+
+        private static Ledger.Row Bal(string side, string cp, string contract, decimal close) => new Ledger.Row
+        {
+            Account = side, Org = Org, Close = close,
+            Keys = new List<(string, string, string)> { ("counterparty", "Catalog_Контрагенты", cp), ("contract", "Catalog_ДоговорыКонтрагентов", contract) },
+        };
+
+        [Fact]
+        public void Offsets_ByCounterparty_AndByContract()
+        {
+            var p = Offsets.PairOf("suppliers");
+            var rows = new List<Ledger.Row>
+            {
+                Bal("adv", Cp1, K1, 500), Bal("debt", Cp1, K1, -800),     // аванс и долг по одному договору
+                Bal("adv", Cp2, K1, 300), Bal("debt", Cp2, K2, -100),     // на разных договорах
+                Bal("adv", "33333333-0000-0000-0000-000000000001", K1, 50), // только аванс
+            };
+            var (byCp, _) = Offsets.Match(rows, p, false);
+            Assert.Equal(2, byCp.Count);
+            Assert.Equal(Cp1, byCp[0].Counterparty);
+            Assert.Equal(500m, byCp[0].Offset);
+            Assert.True(byCp[0].SameContract);
+            Assert.Equal(100m, byCp[1].Offset);
+            Assert.False(byCp[1].SameContract);
+            var (byK, diff) = Offsets.Match(rows, p, true);
+            var one = Assert.Single(byK);
+            Assert.Equal(K1, one.Contract);
+            Assert.Equal(500m, one.Advance);
+            Assert.Equal(800m, one.Debt);
+            Assert.Equal(Cp2, Assert.Single(diff).Counterparty);
+        }
+
+        [Fact]
+        public void Offsets_BuyersSigns_CreditAdvanceDebitDebt()
+        {
+            var p = Offsets.PairOf("buyers");
+            Assert.Equal("3510", p.Advance);
+            var (lines, _) = Offsets.Match(new List<Ledger.Row> { Bal("adv", Cp1, K1, -200), Bal("debt", Cp1, K1, 700), Bal("adv", Cp2, K1, 90) }, p, false);
+            var l = Assert.Single(lines);
+            Assert.Equal(200m, l.Offset);
+            Assert.Equal(500m, l.Debt - l.Offset);
+        }
+
+        [Fact]
+        public void Age_Fifo_PaymentsCloseOldest_BucketsAndOldest()
+        {
+            var accByKey = ByKey;
+            var by = new[] { "employee" };
+            var row = new Ledger.Row { Account = "1251", Org = Org, Close = 150, Keys = new List<(string, string, string)> { ("employee", "Catalog_ФизическиеЛица", E1) } };
+            var asOf = new DateTime(2026, 11, 14);
+            var keys = new HashSet<string> { "a1251" };
+            var recs = new JArray(
+                Rec("old", "2026-01-10", 1, "a1251", ET, E1, "a1030", "", null, 100),   // 308 дней — погашена возвратом
+                Rec("mid", "2026-07-01", 1, "a1251", ET, E1, "a1030", "", null, 100),   // 136 дней
+                Rec("new", "2026-11-01", 1, "a1251", ET, E1, "a1030", "", null, 50),    // 13 дней
+                Rec("ret", "2026-08-01", 1, "a1030", "", null, "a1251", ET, E1, 100),
+                Rec("mv", "2026-10-01", 1, "a1251", ET, E1, "a1251", ET, E1, 999));    // перенос внутри строки — не выдача
+            var entries = Ledger.Pick(recs, keys, "both", null, new List<(string[], HashSet<string>)>());
+            Assert.True(Ledger.Age(new List<Ledger.Row> { row }, entries, accByKey, by, null, null, asOf));
+            Assert.Equal(new[] { 50m, 0m, 100m, 0m }, row.Aging);
+            Assert.Equal("mid", row.Oldest.Recorder);
+            // Сальдо больше всех выдач в окне — остаток в «больше 180» и признак окна
+            var big = new Ledger.Row { Account = "1251", Org = Org, Close = 400, Keys = row.Keys };
+            Assert.False(Ledger.Age(new List<Ledger.Row> { big }, entries, accByKey, by, null, null, asOf));
+            Assert.Equal(150m, big.Older);
+            Assert.Equal(250m, big.Aging[3]);
+        }
     }
 }

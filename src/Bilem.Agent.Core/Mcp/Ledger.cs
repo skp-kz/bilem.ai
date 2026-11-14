@@ -50,6 +50,10 @@ namespace Bilem.Agent.Core.Mcp
             public decimal Open, TurnDr, TurnCr, Close;
             public bool Zero => Open == 0 && TurnDr == 0 && TurnCr == 0 && Close == 0;
             public decimal Size => Math.Max(Math.Abs(Close), Math.Max(Math.Abs(Open), Math.Max(TurnDr, TurnCr)));
+            /// <summary>aging: непогашенный остаток по корзинам возраста, самое старое увеличение и часть старше окна истории.</summary>
+            public decimal[] Aging;
+            public Entry Oldest;
+            public decimal Older;
         }
 
         // ---------- План счетов ----------
@@ -135,19 +139,8 @@ namespace Bilem.Agent.Core.Mcp
             foreach (var c in cells)
             {
                 if (!accByKey.TryGetValue(c.Account ?? "", out var acc)) continue;
-                var keys = new List<(string, string, string)>();
-                foreach (var t in by)
-                {
-                    string set = null, val = null;
-                    for (var i = 0; i < 3; i++)
-                    {
-                        var s = SetOf(c.Types[i]);
-                        if (Matches(t, s, titleOf)) { set = s; val = Od.IsEmpty(c.Values[i]) ? null : c.Values[i]; break; }
-                    }
-                    if (set != null && hidden != null && hidden.Contains(set)) val = null;
-                    keys.Add((t, set, val));
-                }
-                var k = acc.Code + "|" + c.Org + "|" + string.Join("|", keys.Select(x => x.Item3));
+                var keys = KeysOf(c.Types, c.Values, by, titleOf, hidden);
+                var k = RowKey(acc.Code, c.Org, keys);
                 if (!map.TryGetValue(k, out var r)) map[k] = r = new Row { Account = acc.Code, Org = c.Org ?? "", Keys = keys };
                 else
                     // одна строка, а тип субконто разный (у разных субсчетов) — оставляем первый непустой
@@ -156,6 +149,27 @@ namespace Bilem.Agent.Core.Mcp
             }
             return map.Values.Where(r => !r.Zero).ToList();
         }
+
+        /// <summary>Значения разрезов by по субконто строки (регистра или одной стороны проводки).</summary>
+        internal static List<(string By, string Set, string Value)> KeysOf(string[] types, string[] values, IList<string> by, Func<string, string> titleOf, ISet<string> hidden)
+        {
+            var keys = new List<(string, string, string)>();
+            foreach (var t in by)
+            {
+                string set = null, val = null;
+                for (var i = 0; i < 3; i++)
+                {
+                    var s = SetOf(types[i]);
+                    if (Matches(t, s, titleOf)) { set = s; val = Od.IsEmpty(values[i]) ? null : values[i]; break; }
+                }
+                if (set != null && hidden != null && hidden.Contains(set)) val = null;
+                keys.Add((t, set, val));
+            }
+            return keys;
+        }
+
+        internal static string RowKey(string code, string org, List<(string By, string Set, string Value)> keys) =>
+            code + "|" + (org ?? "") + "|" + string.Join("|", keys.Select(x => x.Value));
 
         internal static (decimal Dt, decimal Kt) Split(IEnumerable<decimal> nets)
         {
@@ -201,6 +215,7 @@ namespace Bilem.Agent.Core.Mcp
             public string Organization;
             public int Top = 20;
             public decimal MinAmount;
+            public bool Aging;
         }
 
         public sealed class TbResult
@@ -210,7 +225,10 @@ namespace Bilem.Agent.Core.Mcp
             public List<string> Warnings = new List<string>();
             public Dictionary<string, string> OrgNames = new Dictionary<string, string>();
             public Dictionary<string, JToken> Names = new Dictionary<string, JToken>();
+            public DateTime WindowFrom;
         }
+
+        public const int AgingYears = 3;
 
         private static readonly CultureInfo Ci = CultureInfo.InvariantCulture;
         internal static string D(DateTime d) => d.ToString("yyyy-MM-dd", Ci);
@@ -297,6 +315,22 @@ namespace Bilem.Agent.Core.Mcp
         internal static HashSet<string> HiddenSets(ODataClient od) =>
             new HashSet<string>(Aliases["employee"].Where(s => od.Deny != null && od.Deny(s) != null));
 
+        /// <summary>Строки ОСВ без отбора по сумме и имён: для встречных сальдо (свой accByKey — сторона пары вместо кода счёта).</summary>
+        internal static List<Row> Rows(BaseRuntime b, TbRequest q, Dictionary<string, Acc> accByKey, out Dictionary<string, string> orgNames)
+        {
+            var od = b.OData;
+            orgNames = new Dictionary<string, string>();
+            var orgKey = OrgKey(b, q.Organization, orgNames);
+            var filters = Filters(od, q.Filter, new List<string>());
+            var end = q.To.Date.AddDays(1).AddSeconds(-1);
+            var cells = Cells(Query(od, $"{Reg(b)}/Balance(Period=datetime'{Od.D(end)}')", accByKey.Keys, k => $"Account_Key eq guid'{k}'"), false)
+                .Where(c => orgKey == null || c.Org == orgKey)
+                .Where(c => Pass(c.Types, c.Values, filters));
+            return Aggregate(cells, accByKey, q.By, Titles(b), null);
+        }
+
+        internal static string DateRu(DateTime d) => d.ToString("dd.MM.yyyy", Ci);
+
         public static TbResult TrialBalance(BaseRuntime b, TbRequest q)
         {
             var od = b.OData;
@@ -337,6 +371,26 @@ namespace Bilem.Agent.Core.Mcp
             res.All = rows.Where(r => r.Size >= q.MinAmount)
                 .OrderByDescending(r => Math.Abs(r.Close)).ThenByDescending(r => r.Size).ThenBy(r => r.Account, StringComparer.Ordinal).ToList();
             res.Shown = res.All.Take(Math.Max(1, q.Top)).ToList();
+            if (q.Aging && res.All.Count > 0)
+            {
+                // Окно истории: 3 года; не хватило — с начала учёта (2000 г.)
+                res.WindowFrom = q.To.Date.AddYears(-AgingYears);
+                List<Entry> History(DateTime from)
+                {
+                    var resource = $"{Reg(b)}/RecordsWithExtDimensions(StartPeriod=datetime'{Od.D(from)}',EndPeriod=datetime'{Od.D(end)}')";
+                    var recs = new JArray();
+                    foreach (var r in Query(od, resource, keys, k => $"AccountDr_Key eq guid'{k}'")) recs.Add(r);
+                    foreach (var r in Query(od, resource, keys, k => $"AccountCr_Key eq guid'{k}'"))
+                        if (!keys.Contains((string)r["AccountDr_Key"] ?? "")) recs.Add(r);
+                    return Pick(recs, keys, "both", orgKey, filters);
+                }
+                if (!Age(res.All, History(res.WindowFrom), accByKey, q.By, titleOf, hidden, q.To))
+                {
+                    res.WindowFrom = new DateTime(2000, 1, 1);
+                    Age(res.All, History(res.WindowFrom), accByKey, q.By, titleOf, hidden, q.To);
+                }
+                FillNumbers(od, res.Shown.Select(r => r.Oldest));
+            }
             res.Names = Describe(b, res.Shown.SelectMany(r => r.Keys).Where(x => x.Value != null).Select(x => (x.Set, x.Value)), hidden);
             return res;
         }
@@ -395,6 +449,12 @@ namespace Bilem.Agent.Core.Mcp
             return names.TryGetValue(set + "|" + value, out var n) && n != null ? n.DeepClone() : (JToken)value;
         }
 
+        private static JObject AgingJson(decimal[] a) => new JObject
+        {
+            ["d0_30"] = Tools.Money((double)a[0]), ["d31_90"] = Tools.Money((double)a[1]),
+            ["d91_180"] = Tools.Money((double)a[2]), ["d181_plus"] = Tools.Money((double)a[3]),
+        };
+
         private static JObject Totals(IList<Row> rows, bool turnovers)
         {
             var o = new JObject();
@@ -430,6 +490,28 @@ namespace Bilem.Agent.Core.Mcp
                 }
                 o["closing"] = Pair(Split(new[] { x.Close }));
                 o["net"] = Tools.Money((double)x.Close);
+                if (q.Aging && x.Aging != null)
+                {
+                    o["aging"] = AgingJson(x.Aging);
+                    var titleOf = Titles(b);
+                    if (x.Older > 0)
+                        o["oldest"] = new JObject
+                        {
+                            ["date"] = JValue.CreateNull(), ["note"] = Txt.F("LedgerOlderThan", r.WindowFrom.ToString("dd.MM.yyyy", Ci)),
+                            ["days"] = Math.Max(0, (int)(q.To.Date - r.WindowFrom).TotalDays),
+                        };
+                    else if (x.Oldest != null)
+                        o["oldest"] = new JObject
+                        {
+                            ["date"] = D(x.Oldest.Date), ["days"] = Math.Max(0, (int)(q.To.Date - x.Oldest.Date).TotalDays),
+                            ["document"] = new JObject
+                            {
+                                ["type"] = x.Oldest.RecorderType == null ? Txt.S("LedgerDocUnknown") : ReconciliationSource.DocTitle(x.Oldest.RecorderType, null, titleOf).Doc,
+                                ["number"] = x.Oldest.Number == null ? JValue.CreateNull() : (JToken)x.Oldest.Number,
+                                ["date"] = x.Oldest.DocDate.HasValue ? (JToken)D(x.Oldest.DocDate.Value) : JValue.CreateNull(),
+                            },
+                        };
+                }
                 rows.Add(o);
             }
             var chart = Chart(b);
@@ -449,6 +531,13 @@ namespace Bilem.Agent.Core.Mcp
                 ["note"] = Txt.S(turnovers ? "LedgerTbNote" : "LedgerTbNoteBalance"),
             };
             if (turnovers) res["from"] = D(q.From.Value);
+            if (q.Aging)
+            {
+                var sum = new decimal[4];
+                foreach (var x in r.All.Where(x => x.Aging != null)) for (var i = 0; i < 4; i++) sum[i] += x.Aging[i];
+                res["aging_total"] = AgingJson(sum);
+                res["aging_method"] = "fifo";
+            }
             var rest = r.All.Skip(r.Shown.Count).ToList();
             if (rest.Count > 0)
             {
@@ -517,6 +606,78 @@ namespace Bilem.Agent.Core.Mcp
             return list.OrderBy(x => x.Date).ThenBy(x => x.Recorder, StringComparer.Ordinal).ThenBy(x => x.Line).ToList();
         }
 
+        /// <summary>Номер и дата документа-регистратора — только у видов, включённых на «Доступе».</summary>
+        internal static void FillNumbers(ODataClient od, IEnumerable<Entry> list)
+        {
+            foreach (var g in list.Where(x => x != null).GroupBy(x => x.RecorderType))
+            {
+                if (g.Key == null || od.Deny?.Invoke(g.Key) != null) continue;
+                foreach (var chunk in Chunks(g.Select(x => x.Recorder).Distinct(), 25))
+                {
+                    JArray rows;
+                    try { rows = od.Rows(g.Key, new Dictionary<string, string> { ["$select"] = "Ref_Key,Number,Date", ["$filter"] = string.Join(" or ", chunk.Select(k => $"Ref_Key eq guid'{k}'")) }); }
+                    catch (AgentException) { continue; }
+                    foreach (var r in rows)
+                        foreach (var x in g.Where(x => x.Recorder == (string)r["Ref_Key"]))
+                        {
+                            x.Number = InvoiceSource.PrintNumber((string)r["Number"]);
+                            x.DocDate = Od.HasDate(r["Date"]) ? ((DateTime)r["Date"]).Date : (DateTime?)null;
+                        }
+                }
+            }
+        }
+
+        // ---------- Возраст сальдо (aging, #93) ----------
+
+        /// <summary>Корзины возраста: до 30, 31–90, 91–180, больше 180 дней.</summary>
+        internal static int Bucket(int days) => days <= 30 ? 0 : days <= 90 ? 1 : days <= 180 ? 2 : 3;
+
+        /// <summary>
+        /// FIFO по строкам ОСВ: для дебетового сальдо «выдачи» — суммы по дебету строки, кредит гасит самые старые; для кредитового — зеркально.
+        /// Остаток сальдо приходится на последние увеличения (от позднего к раннему, пока не покроют |сальдо|). Перенос внутри той же
+        /// строки (Дт и Кт — один счёт и те же субконто) новым долгом не считается. Возвращает false, если окна истории не хватило.
+        /// </summary>
+        internal static bool Age(List<Row> rows, IEnumerable<Entry> entries, Dictionary<string, Acc> accByKey, IList<string> by, Func<string, string> titleOf, ISet<string> hidden, DateTime asOf)
+        {
+            var inc = new Dictionary<string, Dictionary<string, Entry>>();
+            string KeyOf(string acc, string[] types, string[] values, string org) =>
+                acc != null && accByKey.TryGetValue(acc, out var a) ? RowKey(a.Code, org, KeysOf(types, values, by, titleOf, hidden)) : null;
+            var sign = rows.ToDictionary(r => RowKey(r.Account, r.Org, r.Keys), r => Math.Sign(r.Close));
+            foreach (var e in entries)
+            {
+                if (e.Amount <= 0) continue;   // сторно уменьшают сальдо — их учитывает остаток, не возраст
+                var dr = KeyOf(e.DrAccount, e.DrTypes, e.DrValues, e.Org);
+                var cr = KeyOf(e.CrAccount, e.CrTypes, e.CrValues, e.Org);
+                if (dr != null && dr == cr) continue;
+                foreach (var (k, s) in new[] { (dr, 1), (cr, -1) })
+                {
+                    if (k == null || !sign.TryGetValue(k, out var sg) || sg != s) continue;
+                    if (!inc.TryGetValue(k, out var docs)) inc[k] = docs = new Dictionary<string, Entry>();
+                    if (!docs.TryGetValue(e.Recorder ?? "", out var d))
+                        docs[e.Recorder ?? ""] = d = new Entry { Recorder = e.Recorder, RecorderType = e.RecorderType, Date = e.Date.Date };
+                    d.Amount += e.Amount;
+                }
+            }
+            var enough = true;
+            foreach (var r in rows)
+            {
+                r.Aging = new decimal[4]; r.Oldest = null; r.Older = 0;
+                var left = Math.Abs(r.Close);
+                if (left == 0) continue;
+                if (inc.TryGetValue(RowKey(r.Account, r.Org, r.Keys), out var docs))
+                    foreach (var d in docs.Values.OrderByDescending(x => x.Date).ThenByDescending(x => x.Recorder, StringComparer.Ordinal))
+                    {
+                        if (left <= 0) break;
+                        var part = Math.Min(d.Amount, left);
+                        r.Aging[Bucket(Math.Max(0, (int)(asOf.Date - d.Date).TotalDays))] += part;
+                        left -= part;
+                        r.Oldest = d;
+                    }
+                if (left > 0) { r.Older = left; r.Aging[3] += left; enough = false; }
+            }
+            return enough;
+        }
+
         public sealed class EntriesResult
         {
             public Acc Acc;
@@ -558,23 +719,7 @@ namespace Bilem.Agent.Core.Mcp
             // Не влезли — показываем последние: по ним чаще вопрос («что было в конце месяца»); раньше — одной строкой rest
             res.Shown = res.All.Skip(Math.Max(0, res.All.Count - Math.Max(1, q.Top))).ToList();
 
-            // Номера документов — только у видов, включённых на «Доступе»
-            foreach (var g in res.Shown.GroupBy(x => x.RecorderType))
-            {
-                if (g.Key == null || od.Deny?.Invoke(g.Key) != null) continue;
-                foreach (var chunk in Chunks(g.Select(x => x.Recorder).Distinct(), 25))
-                {
-                    JArray rows;
-                    try { rows = od.Rows(g.Key, new Dictionary<string, string> { ["$select"] = "Ref_Key,Number,Date", ["$filter"] = string.Join(" or ", chunk.Select(k => $"Ref_Key eq guid'{k}'")) }); }
-                    catch (AgentException) { continue; }
-                    foreach (var r in rows)
-                        foreach (var x in g.Where(x => x.Recorder == (string)r["Ref_Key"]))
-                        {
-                            x.Number = InvoiceSource.PrintNumber((string)r["Number"]);
-                            x.DocDate = Od.HasDate(r["Date"]) ? ((DateTime)r["Date"]).Date : (DateTime?)null;
-                        }
-                }
-            }
+            FillNumbers(od, res.Shown);
             IEnumerable<(string, string)> Vals(Entry e) =>
                 Enumerable.Range(0, 3).Select(i => (SetOf(e.DrTypes[i]), e.DrValues[i])).Concat(Enumerable.Range(0, 3).Select(i => (SetOf(e.CrTypes[i]), e.CrValues[i])))
                     .Where(v => v.Item1 != null && !Od.IsEmpty(v.Item2));

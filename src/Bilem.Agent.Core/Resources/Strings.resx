@@ -1174,4 +1174,27 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="LedgerEntriesNote" xml:space="preserve"><value>Проводки регистра бухгалтерии 1С; opening и closing — сальдо счёта с тем же отбором.</value></data>
   <data name="LedgerEntriesMore" xml:space="preserve"><value>Показаны последние проводки; ещё {0} более ранних (с {1} по {2}) — итогом в rest. Сузьте период, чтобы увидеть их.</value></data>
   <data name="LedgerDocUnknown" xml:space="preserve"><value>документ</value></data>
+  <data name="ToolTbParamAging" xml:space="preserve"><value>true — возраст сальдо каждой строки (FIFO): aging {d0_30, d31_90, d91_180, d181_plus} и oldest — самая старая непогашенная сумма и документ, которым она возникла; в корне aging_total. Для «как давно висят долги сотрудников по 1251» — by ["employee"], aging true.</value></data>
+  <data name="LedgerOlderThan" xml:space="preserve"><value>раньше {0}</value></data>
+  <data name="ToolOffTitle" xml:space="preserve"><value>Встречные сальдо: аванс и долг по одному контрагенту</value></data>
+  <data name="ToolOffDesc" xml:space="preserve"><value>Контрагенты, у которых на дату одновременно есть аванс и долг — суммы, которые можно зачесть. pair=suppliers (по умолчанию): аванс выданный Дт 1710 и долг поставщику Кт 3310; pair=buyers: аванс полученный Кт 3510 и долг покупателя Дт 1210. mode=counterparty (по умолчанию) — договоры не важны, same_contract=false значит аванс и долг на разных договорах; mode=contract — только совпадающий договор на обоих счетах, а контрагенты с авансом и долгом на разных договорах — отдельно в different_contracts. В строке: advance, debt, offset (к зачёту, меньшая из двух), advance_left, debt_left. На «все ли перекрыты» отвечай фразой say. Только данные 1С: перескажи as_of.say дословно.</value></data>
+  <data name="ToolOffParamPair" xml:space="preserve"><value>suppliers — 1710/3310 (поставщики, по умолчанию), buyers — 3510/1210 (покупатели).</value></data>
+  <data name="ToolOffParamMode" xml:space="preserve"><value>counterparty — по контрагентам, договоры не важны (по умолчанию); contract — только совпадающий договор.</value></data>
+  <data name="OffsetOpen" xml:space="preserve"><value>Не перекрыто на {2}: контрагентов — {0}, к зачёту {1} тенге.</value></data>
+  <data name="OffsetAllClear" xml:space="preserve"><value>Всё перекрыто на {0}: нет поставщиков, у которых одновременно аванс (1710) и долг (3310).</value></data>
+  <data name="OffsetAllClearBuyers" xml:space="preserve"><value>Всё перекрыто на {0}: нет покупателей, у которых одновременно аванс (3510) и долг (1210).</value></data>
+  <data name="OffsetDifferentContracts" xml:space="preserve"><value>Ещё у контрагентов ({0}) аванс и долг на разных договорах ({1} тенге): без переноса между договорами их не зачесть — список в different_contracts.</value></data>
+  <data name="OffsetNote" xml:space="preserve"><value>Аванс — дебетовое сальдо 1710, долг — кредитовое сальдо 3310 (с субсчетами) по контрагенту (и договору); offset — меньшая из двух сумм.</value></data>
+  <data name="OffsetNoteBuyers" xml:space="preserve"><value>Аванс — кредитовое сальдо 3510, долг — дебетовое сальдо 1210 (с субсчетами) по контрагенту (и договору); offset — меньшая из двух сумм.</value></data>
+  <data name="ToolCustomsTitle" xml:space="preserve"><value>Таможенные декларации на импорт</value></data>
+  <data name="ToolCustomsDesc" xml:space="preserve"><value>«ГТД по импорту» в 1С: по какую дату отражены (последняя проведённая декларация — номер, дата, сумма, пошлина, НДС), сколько проведено за период и на какую сумму, список за период, отдельно непроведённые и количество помеченных на удаление. На «по какой день отражены таможенные декларации» отвечай фразой say. available=false — документ в базе не ведут или он выключен на «Доступе»: перескажи say, это не ошибка. Только данные 1С.</value></data>
+  <data name="ToolCustomsParamFrom" xml:space="preserve"><value>Начало периода YYYY-MM-DD (по умолчанию — 1 января текущего года).</value></data>
+  <data name="ToolCustomsParamTo" xml:space="preserve"><value>Конец периода YYYY-MM-DD (по умолчанию — сегодня).</value></data>
+  <data name="ToolCustomsParamTop" xml:space="preserve"><value>Сколько деклараций показать в списках, по умолчанию 20.</value></data>
+  <data name="CustomsSay" xml:space="preserve"><value>Таможенные декларации отражены в 1С по {0}: последняя проведённая — № {1} от {0}. За период {2} проведено {3} на {4} тенге.</value></data>
+  <data name="CustomsNone" xml:space="preserve"><value>Проведённых таможенных деклараций (ГТД по импорту) в базе нет. За период {0} — ни одной.</value></data>
+  <data name="CustomsNotPostedSay" xml:space="preserve"><value>Не проведено за период: {0}.</value></data>
+  <data name="CustomsOff" xml:space="preserve"><value>Документ «ГТД по импорту» выключен на «Доступе» базы {0} — Bilem его не читает. Включите его там (раздел «Покупка») и обновите права Bilem.</value></data>
+  <data name="CustomsMissing" xml:space="preserve"><value>В базе {0} нет документа «ГТД по импорту» в составе OData: либо импорт в этой базе не ведут, либо после включения на «Доступе» не обновлены права Bilem.</value></data>
+  <data name="CustomsNote" xml:space="preserve"><value>Сумма, пошлина и НДС — из документа «ГТД по импорту» (табличная часть «Разделы»); counterparty — контрагент документа (обычно таможня).</value></data>
 </root>

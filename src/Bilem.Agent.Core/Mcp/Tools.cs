@@ -206,9 +206,36 @@ namespace Bilem.Agent.Core.Mcp
                         ["organization"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolActParamOrganization") },
                         ["top"] = new JObject { ["type"] = "integer", ["minimum"] = 1, ["maximum"] = 200, ["description"] = Txt.S("ToolTbParamTop") },
                         ["min_amount"] = new JObject { ["type"] = "number", ["minimum"] = 0, ["description"] = Txt.S("ToolTbParamMinAmount") },
+                        ["aging"] = new JObject { ["type"] = "boolean", ["description"] = Txt.S("ToolTbParamAging") },
                         ["base"] = baseProp,
                     }, "accounts"),
                     Handler = a => PerBase(bases(), (string)a["base"], b => TrialBalance(b, a), rows => MergeLedger(rows)),
+                },
+                new McpTool
+                {
+                    Name = "offset_balances", Title = Txt.S("ToolOffTitle"), Description = Txt.S("ToolOffDesc"),
+                    InputSchema = Schema(new JObject
+                    {
+                        ["pair"] = new JObject { ["type"] = "string", ["enum"] = new JArray("suppliers", "buyers"), ["description"] = Txt.S("ToolOffParamPair") },
+                        ["mode"] = new JObject { ["type"] = "string", ["enum"] = new JArray("counterparty", "contract"), ["description"] = Txt.S("ToolOffParamMode") },
+                        ["to"] = new JObject { ["type"] = "string", ["pattern"] = @"^\d{4}-\d{2}-\d{2}$", ["description"] = Txt.S("ToolTbParamTo") },
+                        ["organization"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolActParamOrganization") },
+                        ["top"] = new JObject { ["type"] = "integer", ["minimum"] = 1, ["maximum"] = 200, ["description"] = Txt.S("ToolTbParamTop") },
+                        ["base"] = baseProp,
+                    }),
+                    Handler = a => PerBase(bases(), (string)a["base"], b => Offsets.Load(b, a, Freshness.AsOf(b, Freshness.Kind.Debts)), rows => MergeLedger(rows)),
+                },
+                new McpTool
+                {
+                    Name = "customs_declarations", Title = Txt.S("ToolCustomsTitle"), Description = Txt.S("ToolCustomsDesc"),
+                    InputSchema = Schema(new JObject
+                    {
+                        ["from"] = new JObject { ["type"] = "string", ["pattern"] = @"^\d{4}-\d{2}-\d{2}$", ["description"] = Txt.S("ToolCustomsParamFrom") },
+                        ["to"] = new JObject { ["type"] = "string", ["pattern"] = @"^\d{4}-\d{2}-\d{2}$", ["description"] = Txt.S("ToolCustomsParamTo") },
+                        ["top"] = new JObject { ["type"] = "integer", ["minimum"] = 1, ["maximum"] = 200, ["description"] = Txt.S("ToolCustomsParamTop") },
+                        ["base"] = baseProp,
+                    }),
+                    Handler = a => PerBase(bases(), (string)a["base"], b => Customs.Load(b, a, Freshness.AsOf(b, Freshness.Kind.Debts)), rows => MergeLedger(rows)),
                 },
                 new McpTool
                 {
@@ -353,7 +380,7 @@ namespace Bilem.Agent.Core.Mcp
             };
         }
 
-        private static DateTime? ParseDate(JObject a, string name)
+        internal static DateTime? ParseDate(JObject a, string name)
         {
             var s = ((string)a[name] ?? "").Trim();
             if (s.Length == 0) return null;
@@ -411,6 +438,7 @@ namespace Bilem.Agent.Core.Mcp
                 Organization = (string)a["organization"],
                 Top = Math.Min(200, Math.Max(1, (int?)a["top"] ?? 20)),
                 MinAmount = Math.Max(0m, (decimal?)a["min_amount"] ?? 0m),
+                Aging = (bool?)a["aging"] ?? false,
             };
             var r = Ledger.TrialBalance(b, q);
             return Ledger.TbToJson(b, q, r, Freshness.AsOf(b, Freshness.Kind.Debts), Ledger.HiddenSets(b.OData));
