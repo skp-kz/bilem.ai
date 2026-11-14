@@ -88,6 +88,12 @@
       <Custom Action="RestoreCom" Before="RemoveFiles" Condition="REMOVE ~= &quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
     </InstallExecuteSequence>
 
+    <!-- Перед заменой файлов — закрыть окна и процессы bilem-agent.exe (все копии, во всех сеансах): beta.9 → beta.10 на машине Славы 14.11
+         старое окно и зависший процесс настроек оставались в памяти, пришлось taskkill /F. Сначала WM_CLOSE (окна, которые уходят в трей или заняты шагами, его не послушают —
+         их добьёт следующий шаг), через 5 с — принудительно, без вопроса о перезагрузке. Служба (bilem-agent-svc.exe) — своим ServiceControl. -->
+    <util:CloseApplication Id="CloseAgentWindows" Target="bilem-agent.exe" Description="Bilem Agent"
+                           CloseMessage="yes" ElevatedCloseMessage="yes" TerminateProcess="1" Timeout="5" RebootPrompt="no" />
+
     <!-- Часть I: служба BilemAgent — MCP работает сам после перезагрузки, без входа на сервер.
          Автоматически (отложенный запуск), LocalSystem, при сбое — перезапуск через минуту (три раза), сброс счётчика через сутки.
          При обновлении и удалении MSI останавливает службу до замены файлов — порт MCP освобождается. -->

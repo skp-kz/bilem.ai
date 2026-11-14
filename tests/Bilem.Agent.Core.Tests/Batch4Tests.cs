@@ -11,7 +11,7 @@ namespace Bilem.Agent.Core.Tests
         [Fact]
         public void Window_DefaultAndMinimumAreCompact()
         {
-            Assert.Equal(new Size(640, 440), WindowPlacement.DefaultSize);
+            Assert.Equal(new Size(860, 520), WindowPlacement.DefaultSize);
             Assert.Equal(new Size(560, 380), WindowPlacement.MinSize);
         }
 

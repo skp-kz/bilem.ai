@@ -56,7 +56,8 @@
   <data name="BaseFound" xml:space="preserve"><value>Файловая база: {0}; короткое имя: {1}; публикация: {2}; пул IIS: {3}</value></data>
   <data name="BspInfo" xml:space="preserve"><value>БСП (справочник «Пользователи»): {0}</value></data>
   <data name="BspLinked" xml:space="preserve"><value>Элемент справочника «Пользователи» связан с пользователем ИБ</value></data>
-  <data name="ChecksFailed" xml:space="preserve"><value>Проверки не прошли: {0}.</value></data>
+  <data name="ChecksFailedReason" xml:space="preserve"><value>Проверки не прошли ({0}): {1}</value></data>
+  <data name="CheckPending" xml:space="preserve"><value>настройка не завершена</value></data>
   <data name="CliAccessNeedsAdmin" xml:space="preserve"><value>Разделы из 1С загружаются под администратором 1С: --admin «логин» [--password «пароль»].</value></data>
   <data name="CliDropNeedsAdmin" xml:space="preserve"><value>Чтобы удалить пользователя bilem из базы, нужен логин администратора 1С: --admin «логин» [--password «пароль»].</value></data>
   <data name="CliHelp" xml:space="preserve"><value>Bilem Agent — локальный режим: ИИ-ассистент отвечает на вопросы из 1С (только чтение).
@@ -215,7 +216,10 @@
   <data name="HintRerunSetup" xml:space="preserve"><value>Подключите базу ещё раз (окно «Добавить…» с той же папкой или bilem-agent setup) — шаги идемпотентны, сделанное не сломается.</value></data>
   <data name="HintResetPassword" xml:space="preserve"><value>Запустите настройку базы ещё раз с флагом --reset-password.</value></data>
   <data name="HintRunAsAdmin" xml:space="preserve"><value>Запустите Bilem Agent от имени администратора.</value></data>
-  <data name="HintSeeFail" xml:space="preserve"><value>Смотрите строки FAIL выше.</value></data>
+  <data name="HintRunSetupAgain" xml:space="preserve"><value>Запустите настройку базы ещё раз: она восстановит права bilem, состав OData и публикацию. Если ошибка повторится, нажмите «Скопировать для поддержки».</value></data>
+  <data name="HintApplyAccess" xml:space="preserve"><value>Откройте вкладку «Доступ» и нажмите «Применить»: агент заново выставит состав OData.</value></data>
+  <data name="HintWriteAllowed" xml:space="preserve"><value>У пользователя bilem есть права на запись. Откройте вкладку «Доступ», нажмите «Применить» и запустите проверку ещё раз.</value></data>
+  <data name="HintCopySupport" xml:space="preserve"><value>Нажмите «Скопировать для поддержки» и пришлите текст в поддержку Bilem.</value></data>
   <data name="HintSendLog" xml:space="preserve"><value>Соберите отчёт для поддержки (вкладка «Журнал») и пришлите его нам.</value></data>
   <data name="HintSetupFirst" xml:space="preserve"><value>Сначала подключите базу: bilem-agent setup --base «папка» --admin «логин».</value></data>
   <data name="HintSlug" xml:space="preserve"><value>Короткое имя — латиница в нижнем регистре, цифры и «_», до 40 символов (параметр --slug).</value></data>
@@ -509,7 +513,7 @@ Bilem не меняет ваш бухгалтерский учёт: читает
   <data name="UiAddBaseTitle" xml:space="preserve"><value>Добавить базу 1С</value></data>
   <data name="UiAdminLogin" xml:space="preserve"><value>Логин администратора 1С:</value></data>
   <data name="UiAdminPassword" xml:space="preserve"><value>Пароль:</value></data>
-  <data name="UiBrowse" xml:space="preserve"><value>Указать папку вручную…</value></data>
+  <data name="UiBrowse" xml:space="preserve"><value>Обзор…</value></data>
   <data name="UiBrowseHint" xml:space="preserve"><value>Папка файловой базы 1С (в ней лежит файл 1Cv8.1CD)</value></data>
   <data name="UiCancel" xml:space="preserve"><value>Отмена</value></data>
   <data name="UiCheckUpdates" xml:space="preserve"><value>Проверить обновления</value></data>
@@ -561,12 +565,11 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiDiagNote" xml:space="preserve"><value>Быстрый самотест всего, что нужно Bilem Agent: Windows, .NET, 1С, IIS, MCP и каждая подключённая база. Ничего не меняет. Красное — без этого не работает, жёлтое — стоит поправить, серое — справочно.</value></data>
   <data name="UiDiagRunning" xml:space="preserve"><value>Проверяю…</value></data>
   <data name="UiDiagTitle" xml:space="preserve"><value>Диагностика компонентов</value></data>
-  <data name="UiEnableIis" xml:space="preserve"><value>Включить IIS и «Ограничения по IP», если их нет (компоненты Windows)</value></data>
+  <data name="UiEnableIis" xml:space="preserve"><value>Включить IIS и «Ограничения по IP», если их нет</value></data>
   <data name="UiFolder" xml:space="preserve"><value>Папка базы:</value></data>
-  <data name="UiFoundHint" xml:space="preserve"><value>Базы из списков 1С на этом компьютере. Выберите базу или укажите папку вручную. В этой версии — только файловые базы.</value></data>
+  <data name="UiFoundHint" xml:space="preserve"><value>Базы из списков 1С на этом компьютере. Выберите базу или укажите папку вручную.</value></data>
   <data name="UiFoundKind" xml:space="preserve"><value>Тип</value></data>
   <data name="UiFoundName" xml:space="preserve"><value>Название</value></data>
-  <data name="UiFoundWhere" xml:space="preserve"><value>Где</value></data>
   <data name="UiInstalledVersion" xml:space="preserve"><value>Установлена версия {0}</value></data>
   <data name="UiKindFile" xml:space="preserve"><value>файловая</value></data>
   <data name="UiKindFileMissing" xml:space="preserve"><value>файловая — папки нет</value></data>
@@ -701,13 +704,23 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiRotateConfirm" xml:space="preserve"><value>Сменить токен? Старый адрес MCP перестанет работать — ИИ-клиентов нужно будет подключить заново.</value></data>
   <data name="UiRotateDone" xml:space="preserve"><value>Токен сменён. Подключите ИИ-клиентов заново кнопками выше.</value></data>
   <data name="UiRotateToken" xml:space="preserve"><value>Сменить токен</value></data>
-  <data name="UiRunFail" xml:space="preserve"><value>Не получилось — что случилось и что делать, смотрите в журнале ниже.</value></data>
+  <data name="UiRunFail" xml:space="preserve"><value>Не получилось.</value></data>
+  <data name="UiRunStopped" xml:space="preserve"><value>Остановилось на шаге {0} «{1}»: {2}</value></data>
   <data name="UiRunOk" xml:space="preserve"><value>Готово — всё прошло.</value></data>
+  <data name="UiCopySupport" xml:space="preserve"><value>Скопировать для поддержки</value></data>
+  <data name="UiCopied" xml:space="preserve"><value>Скопировано</value></data>
+  <data name="UiSaveLog" xml:space="preserve"><value>Сохранить лог…</value></data>
+  <data name="UiLogSaved" xml:space="preserve"><value>Лог сохранён: {0}</value></data>
+  <data name="UiLogFilter" xml:space="preserve"><value>Журнал (*.log)|*.log|Текст (*.txt)|*.txt</value></data>
+  <data name="UiProgress" xml:space="preserve"><value>Шаг {0} из {1} · {2}%</value></data>
+  <data name="UiProgressDone" xml:space="preserve"><value>{0} из {1} · 100% · Готово — всё прошло</value></data>
+  <data name="UiProgressFail" xml:space="preserve"><value>Шаг {0} из {1} — ошибка</value></data>
   <data name="UiSelectBase" xml:space="preserve"><value>Выберите базу в списке.</value></data>
   <data name="UiServiceDiagNote" xml:space="preserve"><value>Проверить всё, что нужно Bilem Agent: Windows, .NET, 1С, IIS, MCP и каждую базу — что в порядке и что исправить.</value></data>
   <data name="UiServiceSupport" xml:space="preserve"><value>Проверка и поддержка</value></data>
   <data name="UiServiceUpdates" xml:space="preserve"><value>Обновления</value></data>
   <data name="UiSetupTitle" xml:space="preserve"><value>Настройка базы «{0}»</value></data>
+  <data name="UiTitleStep" xml:space="preserve"><value>шаг {0} из {1}</value></data>
   <data name="UiShowToken" xml:space="preserve"><value>Показать токен</value></data>
   <data name="UiSlug" xml:space="preserve"><value>Короткое имя:</value></data>
   <data name="UiSmtpAbout" xml:space="preserve"><value>Только отправка документов агента (счёт с печатью): письмо уходит сразу, когда пользователь попросит в чате; скрытая копия — на адрес ниже, каждое письмо — в журнале. Приём почты не делаем. Выключено — ИИ ничего не отправит.</value></data>
@@ -752,7 +765,9 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiStateStopped" xml:space="preserve"><value>MCP остановлен · порт {0} · баз: {1}</value></data>
   <data name="UiStateUpdating" xml:space="preserve"><value>Устанавливаю обновление {0} — агент закроется и запустится снова</value></data>
   <data name="UiStatusBases" xml:space="preserve"><value>баз: {0}</value></data>
-  <data name="UiStatusCheckFailed" xml:space="preserve"><value>✖ проверка {0:dd.MM.yyyy HH:mm} не прошла</value></data>
+  <data name="UiStatusCheckFailed" xml:space="preserve"><value>✖ проверка не прошла: {1} ({0:dd.MM.yyyy HH:mm})</value></data>
+  <data name="UiStatusOkWarn" xml:space="preserve"><value>✔ проверено {0:dd.MM.yyyy HH:mm}, есть предупреждение</value></data>
+  <data name="UiCheckNoReason" xml:space="preserve"><value>запустите проверку ещё раз</value></data>
   <data name="UiStatusChecked" xml:space="preserve"><value>проверено {0:dd.MM.yyyy HH:mm}</value></data>
   <data name="UiStatusColumn" xml:space="preserve"><value>Состояние</value></data>
   <data name="UiStatusNotChecked" xml:space="preserve"><value>ещё не проверялась</value></data>
@@ -785,11 +800,11 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiTextFilter" xml:space="preserve"><value>Текст (*.txt)|*.txt</value></data>
   <data name="UiTitle" xml:space="preserve"><value>Bilem Agent — локальный режим</value></data>
   <data name="UiTitleSettings" xml:space="preserve"><value>Bilem Agent — настройки</value></data>
+  <data name="UiSettingsBusy" xml:space="preserve"><value>Окно настроек уже запущено, но не отвечает или открыто в другом сеансе. Закройте его или завершите фоновый процесс bilem-agent в диспетчере задач и нажмите «Настройки…» ещё раз.</value></data>
+  <data name="UiSettingsCrashed" xml:space="preserve"><value>Ошибка в окне настроек: {0}</value></data>
   <data name="UiTitleTray" xml:space="preserve"><value>Bilem Agent</value></data>
   <data name="UiTokenDisclaimer" xml:space="preserve"><value>В адресе — секретный токен: с ним любая программа на этом компьютере может читать данные 1С через Bilem. Не пересылайте адрес и не публикуйте его. Если адрес мог попасть к чужим — нажмите «Сменить токен». Снаружи этот адрес недоступен: только с этой машины (127.0.0.1).</value></data>
-  <data name="UiTrayBaseError" xml:space="preserve"><value>ошибка: {0}</value></data>
-  <data name="UiTrayBaseOk" xml:space="preserve"><value>в порядке, проверено {0}</value></data>
-  <data name="UiTrayExit" xml:space="preserve"><value>Выход (остановить MCP)</value></data>
+  <data name="UiTrayBaseError" xml:space="preserve"><value>ошибка: {0}</value></data>  <data name="UiTrayExit" xml:space="preserve"><value>Выход (остановить MCP)</value></data>
   <data name="UiTrayExitTray" xml:space="preserve"><value>Убрать из трея (MCP продолжит работать)</value></data>
   <data name="UiTrayHint" xml:space="preserve"><value>Bilem Agent работает в трее — значок справа внизу (может быть под стрелкой ˄)</value></data>
   <data name="UiTrayJournal" xml:space="preserve"><value>Журнал службы</value></data>
@@ -875,6 +890,25 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="VerifyNoPasswordCode" xml:space="preserve"><value>  без пароля: HTTP {0}, ожидалось 401</value></data>
   <data name="VerifyOffHidden" xml:space="preserve"><value>Выключенные объекты ({0}) в составе OData не видны</value></data>
   <data name="VerifyOffVisible" xml:space="preserve"><value>Выключенные объекты всё ещё видны через OData: {0}</value></data>
+  <data name="VerifyForeignOData" xml:space="preserve"><value>В составе OData уже были объекты, добавленные не Bilem: {0}. Мы их не меняли.</value></data>
+  <data name="VerifyForeignShort" xml:space="preserve"><value>в составе OData есть объекты, добавленные не Bilem: {0}</value></data>
+  <data name="VerifyForeignDenied" xml:space="preserve"><value>Пользователю bilem эти объекты недоступны.</value></data>
+  <data name="VerifyForeignReadable" xml:space="preserve"><value>Пользователю bilem по OData доступно {0} из {1}; инструменты ИИ эти объекты не показывают.</value></data>
+  <data name="VerifyShort" xml:space="preserve"><value>прочитано {0} из {1}</value></data>
+  <data name="SupportEnv" xml:space="preserve"><value>Среда</value></data>
+  <data name="SupportAgent" xml:space="preserve"><value>Версия агента</value></data>
+  <data name="SupportScale" xml:space="preserve"><value>Масштаб экрана</value></data>
+  <data name="SupportBase" xml:space="preserve"><value>База</value></data>
+  <data name="SupportBaseName" xml:space="preserve"><value>Имя</value></data>
+  <data name="SupportBaseKind" xml:space="preserve"><value>Тип</value></data>
+  <data name="SupportConfig" xml:space="preserve"><value>Конфигурация</value></data>
+  <data name="SupportPlatform" xml:space="preserve"><value>Платформа 1С</value></data>
+  <data name="SupportSteps" xml:space="preserve"><value>Шаги</value></data>
+  <data name="SupportDuration" xml:space="preserve"><value>Длительность</value></data>
+  <data name="SupportStopped" xml:space="preserve"><value>Где остановилось</value></data>
+  <data name="SupportLog" xml:space="preserve"><value>Журнал запуска</value></data>
+  <data name="SupportBits" xml:space="preserve"><value>{0} бит</value></data>
+  <data name="SupportSeconds" xml:space="preserve"><value>{0} с</value></data>
   <data name="VerifyPatchAllowed" xml:space="preserve"><value>  PATCH {0}: HTTP {1} — ЗАПИСЬ РАЗРЕШЕНА</value></data>
   <data name="VerifyPatchDenied" xml:space="preserve"><value>  PATCH {0}: HTTP {1} — отказ 1С ({2}); версия данных не изменилась</value></data>
   <data name="VerifyPatchSkipped" xml:space="preserve"><value>  в {0} нет записей (HTTP {1}) — PATCH не проверен</value></data>
@@ -965,6 +999,10 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiCloudColOrg" xml:space="preserve"><value>Организация в облаке</value></data>
   <data name="UiCloudColState" xml:space="preserve"><value>Состояние</value></data>
   <data name="UiCloudConnect" xml:space="preserve"><value>Подключить…</value></data>
+  <data name="UiCloudSelectBase" xml:space="preserve"><value>Выберите базу в списке</value></data>
+  <data name="UiLocalCollapsed" xml:space="preserve"><value>Выключен — включён MCP в облаке</value></data>
+  <data name="UiShow" xml:space="preserve"><value>Показать</value></data>
+  <data name="UiHide" xml:space="preserve"><value>Скрыть</value></data>
   <data name="UiCloudReconnect" xml:space="preserve"><value>Подключить заново…</value></data>
   <data name="UiCloudDisconnect" xml:space="preserve"><value>Отключить</value></data>
   <data name="UiCloudOrgUrl" xml:space="preserve"><value>Адрес:</value></data>

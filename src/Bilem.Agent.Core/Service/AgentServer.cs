@@ -196,6 +196,7 @@ namespace Bilem.Agent.Core.Service
                     ["slug"] = b.Slug, ["name"] = b.DisplayName, ["configuration"] = b.Configuration, ["version"] = b.Version,
                     ["verified"] = b.VerifiedAt.HasValue ? (JToken)b.VerifiedAt.Value.ToString("yyyy-MM-dd HH:mm") : null,
                     ["last_check_ok"] = b.LastCheckOk,
+                    ["status"] = b.StatusText,
                     ["error"] = _baseErrors.TryGetValue(b.Slug, out var e) ? e : null,
                 }));
             JArray log;
