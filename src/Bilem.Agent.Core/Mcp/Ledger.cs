@@ -11,7 +11,7 @@ namespace Bilem.Agent.Core.Mcp
     /// <summary>
     /// ОСВ по любому счёту (trial_balance) и движения по счёту (account_entries) — по регистру бухгалтерии «Типовой» (#90).
     /// Сальдо считаем свёрнутым по каждой строке разреза (Дт − Кт), развёрнутое — из него: так же, как ОСВ 1С по субконто.
-    /// Сотрудники (персональные данные) — только если справочник открыт на «Доступе» (услуга «Зарплата»); иначе без имён. Только чтение.
+    /// Сотрудники — поимённо по умолчанию (#105, без услуги «Зарплата»); выключен показ имён в базе (BaseConfig.EmployeeNames) — без имён. Только чтение.
     /// </summary>
     public static class Ledger
     {
@@ -131,7 +131,7 @@ namespace Bilem.Agent.Core.Mcp
 
         /// <summary>
         /// Свёртка строк регистра в строки ответа: счёт (код), организация, значения выбранных разрезов. hidden — разрезы,
-        /// значения которых не показываем (сотрудники без услуги «Зарплата»): строки по ним сливаются.
+        /// значения которых не показываем (сотрудники, когда показ имён выключен): строки по ним сливаются.
         /// </summary>
         internal static List<Row> Aggregate(IEnumerable<Cell> cells, Dictionary<string, Acc> accByKey, IList<string> by, Func<string, string> titleOf, ISet<string> hidden)
         {
@@ -260,7 +260,7 @@ namespace Bilem.Agent.Core.Mcp
             return all;
         }
 
-        /// <summary>Отборы filter → наборы и допустимые ключи; сотрудник без услуги «Зарплата» — отказ с текстом «Доступа».</summary>
+        /// <summary>Отборы filter → наборы и допустимые ключи; сотрудник при выключенном показе имён — отказ.</summary>
         internal static List<(string[] Sets, HashSet<string> Keys)> Filters(ODataClient od, Filter f, List<string> warnings)
         {
             var res = new List<(string[], HashSet<string>)>();
@@ -311,7 +311,7 @@ namespace Bilem.Agent.Core.Mcp
             return (string)f["Ref_Key"];
         }
 
-        /// <summary>Сотрудники скрыты (справочник выключен на «Доступе» — услуги «Зарплата» нет)?</summary>
+        /// <summary>Сотрудники скрыты (показ имён выключен в базе и справочник не открыт на «Доступе»)?</summary>
         internal static HashSet<string> HiddenSets(ODataClient od) =>
             new HashSet<string>(Aliases["employee"].Where(s => od.Deny != null && od.Deny(s) != null));
 

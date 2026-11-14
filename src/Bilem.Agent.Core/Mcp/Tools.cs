@@ -24,7 +24,8 @@ namespace Bilem.Agent.Core.Mcp
             var allowed = new HashSet<string>(cfg.ReadEffective.Select(ODataClient.SetName));
             var cat = Access.CatalogOf(cfg);
             var titles = cat.Items.ToDictionary(i => ODataClient.SetName(i.FullName), i => i.Title);
-            OData.Deny = set => allowed.Contains(set) ? null
+            // Сотрудники — только имена в разрезе Ledger (#105): справочник под замком «Доступа», но показ имён включён в базе
+            OData.Deny = set => allowed.Contains(set) || (cfg.EmployeeNames && Ledger.IsEmployeeSet(set)) ? null
                 : Txt.F("ToolObjectOff", titles.TryGetValue(set, out var t) ? t : set, cfg.Slug);
         }
 

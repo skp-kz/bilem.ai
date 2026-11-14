@@ -227,5 +227,48 @@ namespace Bilem.Agent.Core.Tests
             Assert.Equal(150m, big.Older);
             Assert.Equal(250m, big.Aging[3]);
         }
+
+        // ---------- Имена сотрудников по умолчанию (#105) ----------
+
+        private static BaseRuntime Runtime(bool? names)
+        {
+            var cfg = new BaseConfig
+            {
+                Slug = "inv-demo", Configuration = "БухгалтерияДляКазахстана", OData = "http://127.0.0.1/x", Version = "3.0",
+                ODataObjects = new List<string> { "Справочник.Контрагенты", "Справочник.ФизическиеЛица", "РегистрБухгалтерии.Типовой" },
+            };
+            if (names.HasValue) cfg.EmployeeNames = names.Value;
+            return new BaseRuntime(cfg, "p");
+        }
+
+        [Fact]
+        public void EmployeeNames_OnByDefault_WithoutSalaryAccess()
+        {
+            var b = Runtime(null);
+            Assert.True(b.Config.EmployeeNames);
+            // «Физические лица» — служебный объект под замком «Доступа», а имена в разрезе всё равно видны
+            Assert.DoesNotContain("Справочник.ФизическиеЛица", b.Config.ReadEffective);
+            Assert.Empty(Ledger.HiddenSets(b.OData));
+            Assert.Null(b.OData.Deny("Catalog_ФизическиеЛица"));
+            Assert.Null(b.OData.Deny("Catalog_Сотрудники"));
+            // остальное под замком по-прежнему закрыто
+            Assert.NotNull(b.OData.Deny("Document_АвансовыйОтчет"));
+            Assert.NotNull(b.OData.Deny("Catalog_КонтактныеЛица"));
+        }
+
+        [Fact]
+        public void EmployeeNames_Off_HidesEmployees()
+        {
+            var b = Runtime(false);
+            Assert.Equal(new HashSet<string>(Ledger.Aliases["employee"]), Ledger.HiddenSets(b.OData));
+            Assert.NotNull(b.OData.Deny("Catalog_ФизическиеЛица"));
+        }
+
+        [Fact]
+        public void EmployeeNames_OldConfigWithoutField_DefaultsOn()
+        {
+            var cfg = Newtonsoft.Json.JsonConvert.DeserializeObject<BaseConfig>("{\"Slug\":\"old\"}");
+            Assert.True(cfg.EmployeeNames);
+        }
     }
 }

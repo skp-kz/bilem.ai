@@ -81,7 +81,7 @@
   cloud set-url --url «адрес» — адрес облака (для стенда — заглушка: cloud stub [--port 18790])
   remove --slug «имя» [--drop-user --admin «логин» [--password «пароль»]]
         убрать базу: публикация, пул, пароль bilem; с --drop-user — и пользователь bilem в базе
-  access --slug «имя» [--load] [--read-on|--read-off|--write-on|--write-off «Документ.X,Справочник.Y»] [--admin «логин» [--password «пароль»]]
+  access --slug «имя» [--load] [--read-on|--read-off|--write-on|--write-off «Документ.X,Справочник.Y»] [--employee-names on|off] [--admin «логин» [--password «пароль»]]
         доступ, как вкладка «Доступ»: дерево разделов; изменения — сразу для ИИ, с --admin — и в 1С (роли, состав OData, проверка)
   serve MCP-сервер без окна (Ctrl+C — остановить)
   connect claude-code|claude-desktop|cursor
@@ -1144,7 +1144,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiRightsUpdateRead" xml:space="preserve"><value>Включить чтение: {0}.</value></data>
   <data name="CliRightsDone" xml:space="preserve"><value>Права Bilem для «{0}» уже актуальны: {1}.</value></data>
   <data name="ToolTbTitle" xml:space="preserve"><value>Остатки и обороты по счёту (ОСВ)</value></data>
-  <data name="ToolTbDesc" xml:space="preserve"><value>Оборотно-сальдовая ведомость по любому счёту плана счетов (1251, 1710, 3310, 3350, 1330…), с субсчетами: сальдо на конец дня to; с from — ещё сальдо на начало и обороты Дт и Кт за период. Разрез by — по контрагентам, договорам, сотрудникам, номенклатуре или другому субконто счёта (до 3 уровней). Сальдо развёрнутое (closing.dt / closing.kt) и свёрнутое net (плюс — дебет, минус — кредит). Строки по убыванию сальдо; не поместились — rest и more («ещё M строк на сумму …»). Счёт голосом «17.10» = 1710. Сотрудники поимённо — только если в Bilem включена услуга «Зарплата», иначе — итог без имён и предупреждение в warnings. Не говори «нет инструмента для ОСВ» — вызывай этот. Только данные 1С: перескажи as_of.say дословно и предупреждения из warnings.</value></data>
+  <data name="ToolTbDesc" xml:space="preserve"><value>Оборотно-сальдовая ведомость по любому счёту плана счетов (1251, 1710, 3310, 3350, 1330…), с субсчетами: сальдо на конец дня to; с from — ещё сальдо на начало и обороты Дт и Кт за период. Разрез by — по контрагентам, договорам, сотрудникам, номенклатуре или другому субконто счёта (до 3 уровней). Сальдо развёрнутое (closing.dt / closing.kt) и свёрнутое net (плюс — дебет, минус — кредит). Строки по убыванию сальдо; не поместились — rest и more («ещё M строк на сумму …»). Счёт голосом «17.10» = 1710. Сотрудники — поимённо (ФИО), в том числе по 1251 и расчётам с персоналом; если показ имён в базе выключен — итог без имён и предупреждение в warnings. Не говори «нет инструмента для ОСВ» — вызывай этот. Только данные 1С: перескажи as_of.say дословно и предупреждения из warnings.</value></data>
   <data name="ToolTbParamAccounts" xml:space="preserve"><value>Счета (1–10), коды плана счетов: ["1251"], ["1710","3310"]. Субсчета включаются; «17» — вся группа 17xx.</value></data>
   <data name="ToolTbParamFrom" xml:space="preserve"><value>Начало периода YYYY-MM-DD: с ним — сальдо на начало и обороты за период from–to. Без него — только сальдо на to.</value></data>
   <data name="ToolTbParamTo" xml:space="preserve"><value>Дата YYYY-MM-DD: сальдо на конец этого дня (по умолчанию — сегодня).</value></data>
@@ -1167,8 +1167,10 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="LedgerBadPeriod" xml:space="preserve"><value>Начало периода позже конца.</value></data>
   <data name="LedgerNoContract" xml:space="preserve"><value>Не нашёл договор «{0}».</value></data>
   <data name="LedgerNoEmployee" xml:space="preserve"><value>Не нашёл сотрудника «{0}».</value></data>
-  <data name="LedgerEmployeeHidden" xml:space="preserve"><value>Сотрудники поимённо не показаны: в Bilem не включена услуга «Зарплата» (справочник сотрудников выключен на «Доступе»). Итоги по счёту — без имён.</value></data>
-  <data name="LedgerHiddenName" xml:space="preserve"><value>(без имён — нет услуги «Зарплата»)</value></data>
+  <data name="LedgerEmployeeHidden" xml:space="preserve"><value>Сотрудники поимённо не показаны: в настройках Bilem Agent для этой базы выключен показ имён сотрудников. Итоги по счёту — без имён.</value></data>
+  <data name="LedgerHiddenName" xml:space="preserve"><value>(без имён — показ имён сотрудников выключен)</value></data>
+  <data name="AccessEmployeeNamesLog" xml:space="preserve"><value>База {0}: показ имён сотрудников в разрезе — {2} (изменил {1}).</value></data>
+  <data name="AccessEmployeeNamesState" xml:space="preserve"><value>Имена сотрудников в разрезе trial_balance / account_entries: {0} (--employee-names on|off).</value></data>
   <data name="LedgerByUnknown" xml:space="preserve"><value>У выбранных счетов нет субконто «{0}» — разрез не применён.</value></data>
   <data name="LedgerGroup" xml:space="preserve"><value>Группа счетов {0}xx</value></data>
   <data name="LedgerTbNote" xml:space="preserve"><value>Как оборотно-сальдовая ведомость 1С по субконто: сальдо на начало, обороты Дт и Кт, сальдо на конец; net — свёрнутое сальдо (плюс — дебет, минус — кредит).</value></data>

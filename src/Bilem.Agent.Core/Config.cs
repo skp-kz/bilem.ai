@@ -61,6 +61,11 @@ namespace Bilem.Agent.Core
         public List<string> WriteInOneC { get; set; } = new List<string>();
         /// <summary>Чтение по умолчанию (Access.DefaultRead), которое уже попало в состав OData: выключит человек — снова не включаем.</summary>
         public List<string> ReadDefaults { get; set; } = new List<string>();
+        /// <summary>
+        /// Имена сотрудников в разрезе trial_balance / account_entries (Слава, 14.11, #105): по умолчанию показываем, без включения «Зарплаты».
+        /// Справочники сотрудников читаются только ради имён в субконто, инструментам ИИ сами не открываются. Выключатель — access --employee-names off.
+        /// </summary>
+        public bool EmployeeNames { get; set; } = true;
         /// <summary>Роли bilem сверх ролей профиля — добавлены «Доступом» (запись или чтение, которого не хватало).</summary>
         public List<string> ExtraRoles { get; set; } = new List<string>();
 

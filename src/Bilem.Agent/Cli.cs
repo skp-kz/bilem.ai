@@ -244,6 +244,18 @@ namespace Bilem.Agent
                 if (!new Onboarding().LoadCatalog(slug, admin, Password(a))) return 1;
                 cfg = AgentConfig.Load(); b = cfg.Find(slug);
             }
+            // --employee-names on|off — имена сотрудников в разрезе trial_balance / account_entries (#105; по умолчанию on)
+            var names = Get(a, "employee-names");
+            if (names != null)
+            {
+                var on = names.Trim().ToLowerInvariant() != "off";
+                if (b.EmployeeNames != on)
+                {
+                    b.EmployeeNames = on;
+                    cfg.Upsert(b); cfg.Save();
+                    Log.Info(Txt.F("AccessEmployeeNamesLog", b.Slug, Environment.UserName, on ? "on" : "off"));
+                }
+            }
             var cat = Access.CatalogOf(b);
             // «default» — запись по умолчанию (счёт, акт сверки, доверенность), а в --read-on ещё и чтение по умолчанию (ГТД по импорту):
             // «Обновить права Bilem» из командной строки (#99, #104)
@@ -282,6 +294,7 @@ namespace Bilem.Agent
                 foreach (var i in items)
                     Console.WriteLine("  {0} {1} {2}  ({3})", b.ReadEffective.Contains(i.FullName) ? "Ч" : "·", (b.Write ?? new List<string>()).Contains(i.FullName) ? "З" : "·", i.Title, i.FullName);
             }
+            Console.WriteLine(Txt.F("AccessEmployeeNamesState", b.EmployeeNames ? "on" : "off"));
             return 0;
         }
 
