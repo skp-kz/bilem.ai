@@ -342,7 +342,7 @@ namespace Bilem.Agent.Core.Mcp
                 Top = Math.Min(200, Math.Max(1, (int?)a["top"] ?? 20)),
             };
             var r = Debts.Load(b, q);
-            return Debts.ToJson(b, q, r, Freshness.AsOf(b));
+            return Debts.ToJson(b, q, r, Freshness.AsOf(b, Freshness.Kind.Debts));
         }
 
         private static JObject MergeDebt(List<JObject> rows, DebtKind kind)
@@ -690,7 +690,7 @@ namespace Bilem.Agent.Core.Mcp
                 ["currency"] = "KZT",
                 ["counterparty_half"] = (b.Config.Print?.ActMirror ?? false) ? "mirror" : "empty",
                 ["note"] = Txt.S("ToolActNote"),
-                ["as_of"] = Freshness.AsOf(b),
+                ["as_of"] = Freshness.AsOf(b, Freshness.Kind.Debts),
             }.Also(o =>
             {
                 if (o["contracts"]?.Type == JTokenType.Null) o.Remove("contracts");
@@ -838,8 +838,8 @@ namespace Bilem.Agent.Core.Mcp
                     ["cash"] = Money(s[0]), ["bank"] = Money(s[1]), ["other"] = Money(s[2]), ["total"] = Money(s[0] + s[1] + s[2]),
                 });
             }
-            // «Данные на …» — дата последней выписки по каждому счёту и последнего документа; модель обязана её назвать
-            return new JObject { ["base"] = b.Config.Slug, ["date"] = date, ["currency"] = "KZT", ["organizations"] = list, ["as_of"] = Freshness.AsOf(b) };
+            // «Остатки по данным 1С на …» — одна дата (выписки и касса) и отстающие счета; модель обязана её назвать
+            return new JObject { ["base"] = b.Config.Slug, ["date"] = date, ["currency"] = "KZT", ["organizations"] = list, ["as_of"] = Freshness.AsOf(b, Freshness.Kind.Money) };
         }
 
         private static JObject MergeCash(List<JObject> rows, string date)

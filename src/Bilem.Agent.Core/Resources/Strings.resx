@@ -43,8 +43,10 @@
   <data name="ApacheVcFailed" xml:space="preserve"><value>Visual C++ не установился (код {0}).</value></data>
   <data name="ApacheVcInstalled" xml:space="preserve"><value>Visual C++ 2015–2022 установлен</value></data>
   <data name="ApacheVcInstalling" xml:space="preserve"><value>Visual C++ 2015–2022 не найден — ставлю из комплекта Bilem Agent…</value></data>
-  <data name="AsOfSay" xml:space="preserve"><value>Данные 1С на {0:dd.MM.yyyy}</value></data>
-  <data name="AsOfSayBanks" xml:space="preserve"><value>(выписка {0})</value></data>
+  <data name="AsOfSayBankLag" xml:space="preserve"><value>По счёту {0} выписки загружены по {1:dd.MM.yyyy}.</value></data>
+  <data name="AsOfSayCashLag" xml:space="preserve"><value>Кассовые документы — по {0:dd.MM.yyyy}.</value></data>
+  <data name="AsOfSayDebts" xml:space="preserve"><value>Долги по данным 1С на {0:dd.MM.yyyy}.</value></data>
+  <data name="AsOfSayMoney" xml:space="preserve"><value>Остатки по данным 1С на {0:dd.MM.yyyy}.</value></data>
   <data name="AsOfSayUnknown" xml:space="preserve"><value>Дата данных 1С не определена</value></data>
   <data name="AuditLinePrint" xml:space="preserve"><value>{0} — напечатано, запросил {1}</value></data>
   <data name="AuditLineSend" xml:space="preserve"><value>{0} — отправлено на {1}, запросил {2}</value></data>
@@ -273,7 +275,7 @@
   <data name="MailTestSubject" xml:space="preserve"><value>Bilem Agent — проверка почты</value></data>
   <data name="McpBaseSkipped" xml:space="preserve"><value>MCP: база «{0}» пропущена — {1}</value></data>
   <data name="McpBases" xml:space="preserve"><value>MCP: баз подключено {0} ({1})</value></data>
-  <data name="McpInstructions" xml:space="preserve"><value>Bilem отвечает только по данным 1С, а учёт в 1С отстаёт от жизни: выписки разносят раз в несколько дней. Когда ответ инструмента содержит as_of, ОБЯЗАТЕЛЬНО назовите дату данных — например «Данные 1С на 15.10 (выписка Kaspi — 15.10, Halyk — 12.10)» (готовая фраза — в as_of.say). Не пишите «по данным банка» и ничего не досчитывайте. Почта (send_document) уходит сразу: перед отправкой предложите пользователю показать документ — вызовите print_* и покажите PDF; отправляйте, когда пользователь согласен или явно просит отправить сразу.</value></data>
+  <data name="McpInstructions" xml:space="preserve"><value>Bilem отвечает только по данным 1С, а учёт в 1С отстаёт от жизни: выписки разносят раз в несколько дней. Когда ответ инструмента содержит as_of, ОБЯЗАТЕЛЬНО назовите дату данных — перескажите as_of.say дословно: в нём одна дата (as_of.date) и отдельными строками счета, по которым выписки загружены раньше. Других дат из as_of не называйте и не сравнивайте. Не пишите «по данным банка» и ничего не досчитывайте. Почта (send_document) уходит сразу: перед отправкой предложите пользователю показать документ — вызовите print_* и покажите PDF; отправляйте, когда пользователь согласен или явно просит отправить сразу.</value></data>
   <data name="McpInternalError" xml:space="preserve"><value>MCP: внутренняя ошибка {0}: {1}</value></data>
   <data name="McpListChanged" xml:space="preserve"><value>Набор инструментов MCP изменился — уведомление клиентам (открытых потоков: {0})</value></data>
   <data name="McpPortBusy" xml:space="preserve"><value>Не удалось занять порт MCP {0}: {1}</value></data>
@@ -410,10 +412,10 @@
   <data name="ToolActTitle" xml:space="preserve"><value>Акт сверки (печать)</value></data>
   <data name="ToolCashBadDate" xml:space="preserve"><value>Дата — в формате ГГГГ-ММ-ДД.</value></data>
   <data name="ToolCashDesc" xml:space="preserve"><value>Остаток денежных средств на конец дня по каждой организации базы 1С, по бухгалтерскому учёту (план счетов «Типовой»): касса (1010), банк (1030, 1040, 1050), прочие (остальные счета 10xx: в пути, ограниченные, электронные и др.) и итого, в валюте регламентированного учёта (тенге). Вызывай на вопросы «сколько у нас денег», «что на счетах», «остаток в кассе». Без base — по всем базам сразу.</value></data>
-  <data name="ToolCashDescExtra" xml:space="preserve"><value> В ответе — as_of: дата последней проведённой банковской выписки по каждому счёту, последний проведённый документ и предупреждения о давности; дату данных обязательно назовите пользователю (as_of.say).</value></data>
+  <data name="ToolCashDescExtra" xml:space="preserve"><value> В ответе — as_of: одна дата данных (самая поздняя проведённая выписка или кассовый документ) и дата последней выписки по каждому счёту; перескажите пользователю as_of.say дословно.</value></data>
   <data name="ToolCashParamDate" xml:space="preserve"><value>Дата ГГГГ-ММ-ДД, остаток на конец этого дня. По умолчанию — сегодня.</value></data>
   <data name="ToolCashTitle" xml:space="preserve"><value>Остаток денег</value></data>
-  <data name="ToolDebtDescCommon" xml:space="preserve"><value> Возраст долга — FIFO: оплаты закрывают самые старые документы (aging_method). Итог (osv.balance) совпадает с оборотно-сальдовой ведомостью по счёту на ту же дату. Только данные 1С: назови дату из as_of.</value></data>
+  <data name="ToolDebtDescCommon" xml:space="preserve"><value> Возраст долга — FIFO: оплаты закрывают самые старые документы (aging_method). Итог (osv.balance) совпадает с оборотно-сальдовой ведомостью по счёту на ту же дату. Только данные 1С: перескажи as_of.say дословно.</value></data>
   <data name="ToolDebtParamAsOf" xml:space="preserve"><value>Дата долга, YYYY-MM-DD; по умолчанию — сегодня.</value></data>
   <data name="ToolDebtParamCounterparty" xml:space="preserve"><value>Один контрагент: БИН или часть названия.</value></data>
   <data name="ToolDebtParamIssuedBefore" xml:space="preserve"><value>Только долг по документам, выставленным раньше этой даты (YYYY-MM-DD). «Не оплатили с прошлого месяца» — первое число текущего месяца.</value></data>
