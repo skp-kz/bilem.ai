@@ -56,6 +56,18 @@ namespace Bilem.Agent.Core.Mcp
             ["base"] = b.Config.Slug, ["document"] = "ГТДИмпорт", ["available"] = false, ["say"] = say,
         };
 
+        /// <summary>Каталог «Доступа» загружен из самой конфигурации, и документа в нём нет — импорт в базе не ведут.</summary>
+        private static bool NotInConfig(BaseConfig c) => c.Catalog != null && c.Catalog.KnownAbsent(FullName);
+
+        /// <summary>
+        /// Почему инструмент документ не видит (#104): нет в конфигурации; базе чтение по умолчанию ещё не предлагали (состав OData
+        /// старый — нужно «Обновить права Bilem»); или было включено, а человек выключил на «Доступе».
+        /// </summary>
+        public static string WhyOff(BaseConfig c) =>
+            NotInConfig(c) ? Txt.F("CustomsMissing", c.Slug)
+            : (c.ReadDefaults ?? new List<string>()).Contains(FullName) ? Txt.F("CustomsOff", c.Slug)
+            : Txt.F("CustomsRefresh", c.Slug);
+
         public static JObject Load(BaseRuntime b, JObject a, JObject asOf)
         {
             var od = b.OData;
@@ -64,7 +76,7 @@ namespace Bilem.Agent.Core.Mcp
             var to = Tools.ParseDate(a, "to") ?? today;
             if (from > to) throw new AgentException(Txt.S("LedgerBadPeriod"));
             var top = Math.Min(200, Math.Max(1, (int?)a["top"] ?? 20));
-            if (od.Deny?.Invoke(Set) != null) return Unavailable(b, Txt.F("CustomsOff", b.Config.Slug));
+            if (od.Deny?.Invoke(Set) != null) return Unavailable(b, WhyOff(b.Config));
 
             JArray last;
             try
@@ -77,7 +89,7 @@ namespace Bilem.Agent.Core.Mcp
             catch (AgentException e) when (e.Message.Contains("404"))
             {
                 // Объекта нет в составе OData базы: либо его нет в конфигурации, либо состав не обновлён после включения на «Доступе»
-                return Unavailable(b, Txt.F("CustomsMissing", b.Config.Slug));
+                return Unavailable(b, NotInConfig(b.Config) ? Txt.F("CustomsMissing", b.Config.Slug) : Txt.F("CustomsRefresh", b.Config.Slug));
             }
             var end = to.Date.AddDays(1).AddSeconds(-1);
             var period = Rows(od, new Dictionary<string, string>

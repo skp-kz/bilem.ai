@@ -33,6 +33,11 @@ namespace Bilem.Agent.Core
         /// <summary>Разделы — из подсистем самой конфигурации (иначе — запасная раскладка профиля).</summary>
         public bool FromConfiguration { get; set; }
         public DateTime? LoadedAt { get; set; }
+        /// <summary>Какие объекты спрашивали у 1С при загрузке (есть они или нет). null — каталог загружен до beta.17: про новые объекты не знает.</summary>
+        public List<string> Asked { get; set; }
+
+        /// <summary>Объект у 1С спрашивали, и его в конфигурации нет.</summary>
+        public bool KnownAbsent(string fullName) => FromConfiguration && Asked != null && Asked.Contains(fullName) && Find(fullName) == null;
 
         public AccessItem Find(string fullName) => Items.FirstOrDefault(i => i.FullName == fullName);
         public string TitleOf(string fullName) => Find(fullName)?.Title ?? fullName;
@@ -81,6 +86,42 @@ namespace Bilem.Agent.Core
             "Документ.СчетНаОплатуПокупателю", "Документ.АктСверкиВзаиморасчетов", "Документ.Доверенность",
         };
 
+        /// <summary>
+        /// Чтение по умолчанию сверх состава профиля (Слава, 14.11, #104): объекты, которые нужны новым инструментам, — включены и при
+        /// настройке базы, и по «Обновить права Bilem». Правило: новый документ или регистр для чтения нового инструмента добавляется сюда.
+        /// Выключенными по умолчанию остаются только зарплата и кадры (закрыты намеренно) и запись сверх DefaultWrite.
+        /// Нет объекта в конфигурации — пропускаем молча. Выключил человек на «Доступе» — снова не включаем (BaseConfig.ReadDefaults).
+        /// </summary>
+        public static readonly IReadOnlyList<string> DefaultRead = new[]
+        {
+            "Документ.ГТДИмпорт",
+        };
+
+        /// <summary>
+        /// Чтение по умолчанию, которого у базы ещё нет в составе OData и которое базе ещё не предлагали. Каталог старый и про объект
+        /// не знает — тоже считаем (узнает «Обновить права Bilem»); известно, что в конфигурации его нет, — нет.
+        /// </summary>
+        public static List<string> MissingDefaultRead(BaseConfig b)
+        {
+            var cat = CatalogOf(b);
+            var have = new HashSet<string>(b.ODataObjects ?? new List<string>());
+            var seen = new HashSet<string>(b.ReadDefaults ?? new List<string>());
+            var profile = Profiles.For(b.Configuration);
+            return DefaultRead.Where(x => profile.CatalogObjects.Contains(x) && !cat.KnownAbsent(x) && !have.Contains(x) && !seen.Contains(x)).ToList();
+        }
+
+        /// <summary>Запись по умолчанию (счёт, акт сверки, доверенность), которой у базы ещё нет в 1С.</summary>
+        public static List<string> MissingDefaultWrite(BaseConfig b)
+        {
+            var cat = CatalogOf(b);
+            var have = new HashSet<string>(b.WriteInOneC ?? new List<string>());
+            return DefaultWrite.Where(x => cat.Find(x) != null && !have.Contains(x)).ToList();
+        }
+
+        /// <summary>Чтение по умолчанию, попавшее в состав OData, — запомнить как предложенное (дальше решает человек на «Доступе»).</summary>
+        public static void MarkReadDefaults(BaseConfig b) =>
+            b.ReadDefaults = (b.ReadDefaults ?? new List<string>()).Concat(DefaultRead.Where((b.ODataObjects ?? new List<string>()).Contains)).Distinct().ToList();
+
         public const string LockedKey = "ЗарплатаИКадры";
         public const string OtherKey = "Прочее";
 
@@ -95,7 +136,11 @@ namespace Bilem.Agent.Core
                 var i = Array.IndexOf(p.SectionOrder ?? new string[0], sub);
                 return i >= 0 ? i : 1000;
             }
-            var cat = new AccessCatalog { FromConfiguration = true, LoadedAt = DateTime.Now };
+            var cat = new AccessCatalog
+            {
+                FromConfiguration = true, LoadedAt = DateTime.Now,
+                Asked = ((JArray)meta["objects"]).OfType<JObject>().Select(o => (string)o["fullName"]).ToList(),
+            };
             foreach (var o in ((JArray)meta["objects"]).OfType<JObject>())
             {
                 if (o["exists"] == null || !(bool)o["exists"]) continue;

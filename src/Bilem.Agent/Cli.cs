@@ -245,9 +245,12 @@ namespace Bilem.Agent
                 cfg = AgentConfig.Load(); b = cfg.Find(slug);
             }
             var cat = Access.CatalogOf(b);
-            // «default» — запись по умолчанию (счёт, акт сверки, доверенность): «Обновить права Bilem» из командной строки (#99)
+            // «default» — запись по умолчанию (счёт, акт сверки, доверенность), а в --read-on ещё и чтение по умолчанию (ГТД по импорту):
+            // «Обновить права Bilem» из командной строки (#99, #104)
             List<string> L(string k) => (Get(a, k) ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim())
-                .SelectMany(x => x == "default" ? Access.DefaultWrite.Where(d => cat.Find(d) != null) : new[] { x }).ToList();
+                .SelectMany(x => x == "default"
+                    ? Access.DefaultWrite.Concat(k == "read-on" ? Access.DefaultRead : Enumerable.Empty<string>()).Where(d => cat.Find(d) != null)
+                    : new[] { x }).ToList();
             var read = new HashSet<string>(b.ReadEffective);
             var write = new HashSet<string>(b.Write ?? new List<string>());
             read.UnionWith(L("read-on")); write.UnionWith(L("write-on"));
@@ -265,10 +268,11 @@ namespace Bilem.Agent
                     string.Join(", ", c.ReadOn.Concat(c.ReadOff).Concat(c.WriteOn).Concat(c.WriteOff).Distinct().Select(cat.TitleOf))));
             }
             // --apply — применить к 1С и без изменений (после обновления агента: новые служебные объекты, роли)
-            if (a.ContainsKey("apply") || Access.NeedsOneC(b, n.Read, n.Write))
+            var addRead = (Get(a, "read-on") ?? "").Split(',').Any(x => x.Trim() == "default");
+            if (a.ContainsKey("apply") || Access.NeedsOneC(b, n.Read, n.Write) || (addRead && Access.MissingDefaultRead(b).Count > 0))
             {
                 if (admin == null) Log.Warn(Txt.S("UiAccessPending1C"));
-                else if (!new Onboarding().ApplyAccess(slug, admin, Password(a), n.Read, n.Write)) return 1;
+                else if (!new Onboarding().ApplyAccess(slug, admin, Password(a), n.Read, n.Write, addRead)) return 1;
                 cfg = AgentConfig.Load(); b = cfg.Find(slug); cat = Access.CatalogOf(b);
             }
             foreach (var s in cat.Sections)

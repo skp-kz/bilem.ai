@@ -421,16 +421,20 @@ namespace Bilem.Agent.Core
                     // Служебные объекты (e-mail контрагента, данные для доверенности) — роль чтения подбираем, если ролей профиля мало
                     // Запись по умолчанию (счёт, акт сверки, доверенность) — самой узкой ролью; роли нет — не расширяем, пишем в журнал
                     var writeWant = Access.DefaultWrite.Where(profile.CatalogObjects.Contains).Concat(b.Write ?? new List<string>()).Distinct().ToList();
-                    var serviceRoles = ServiceRoles(client, conn, profile, wantRoles, writeWant, out var writeOk);
+                    // Чтение по умолчанию для новых инструментов (ГТД по импорту, #104) — и при повторной настройке, если базе его ещё не предлагали
+                    var seenRead = b.ReadDefaults ?? new List<string>();
+                    var readWant = Access.DefaultRead.Where(x => profile.CatalogObjects.Contains(x) && !seenRead.Contains(x)).ToList();
+                    var serviceRoles = ServiceRoles(client, conn, profile, wantRoles, writeWant, readWant, out var writeOk, out var readOk);
                     wantRoles = wantRoles.Concat(serviceRoles).Distinct().ToList();
                     var reallyExtra = extraRoles.Except(serviceRoles).ToList();
                     if (reallyExtra.Count > 0) Log.Warn(Txt.F("UserRolesExtra", string.Join(", ", reallyExtra)));
                     b.ExtraRoles = (b.ExtraRoles ?? new List<string>()).Concat(serviceRoles).Distinct().ToList();
                     // Объекты записи — и в чтении ИИ (запись без чтения невозможна), состав OData проверим ниже
                     b.Write = writeOk;
-                    if (b.Read != null) b.Read = b.Read.Concat(writeOk).Distinct().ToList();
+                    if (b.Read != null) b.Read = b.Read.Concat(writeOk).Concat(readOk).Distinct().ToList();
                     if (writeOk.Count > 0) Log.Ok(Txt.F("WriteDefaultOn", string.Join(", ", writeOk)));
-                    var wantOData = (b.Read ?? profile.ODataObjects.ToList()).Concat(Profiles.ServiceODataObjects).Distinct().ToList();
+                    if (readOk.Count > 0) Log.Ok(Txt.F("ReadDefaultOn", string.Join(", ", readOk)));
+                    var wantOData = (b.Read ?? profile.ODataObjects.Concat(readOk).ToList()).Concat(Profiles.ServiceODataObjects).Distinct().ToList();
                     var r2 = client.Run(conn,
                         new ComOp { Op = "ensureUser", User = BilemUser, FullName = BilemFullName, Password = pwd, Roles = wantRoles },
                         b.Read != null ? new ComOp { Op = "setOData", Objects = wantOData } : new ComOp { Op = "ensureOData", Objects = wantOData },
@@ -455,7 +459,7 @@ namespace Bilem.Agent.Core
 
                     Begin("odata");
                     var od = r2[1];
-                    foreach (var m in (JArray)od["missing"]) Log.Info(Txt.F("ODataNotInConfig", (string)m));
+                    foreach (var m in ((JArray)od["missing"]).Select(x => (string)x).Where(x => !Access.DefaultRead.Contains(x))) Log.Info(Txt.F("ODataNotInConfig", m));
                     if (b.Read != null)
                     {
                         var keepRead = b.Read;
@@ -466,11 +470,12 @@ namespace Bilem.Agent.Core
                     else
                     {
                         var present = ((JArray)od["added"]).Concat((JArray)od["already"]).Select(x => (string)x).ToList();
-                        b.ODataObjects = profile.ODataObjects.Concat(Profiles.ServiceODataObjects).Where(present.Contains).ToList();
+                        b.ODataObjects = profile.ODataObjects.Concat(readOk).Concat(Profiles.ServiceODataObjects).Where(present.Contains).Distinct().ToList();
                         Log.Ok(Txt.F("ODataComposition", ((JArray)od["added"]).Count, ((JArray)od["already"]).Count, (int)od["total"]));
                     }
                     b.Write = (b.Write ?? new List<string>()).Where(b.ODataObjects.Contains).ToList();
                     b.WriteInOneC = b.Write.ToList();
+                    Access.MarkReadDefaults(b);
                     b.Catalog = Access.FromMeta(profile, r2[3]);
                     // Адрес поставщика для счёта — сразу при подключении: новая база печатается с адресом из 1С
                     b.Print = b.Print ?? new Print.PrintSettings();
@@ -661,7 +666,10 @@ namespace Bilem.Agent.Core
         /// «Доступ» → «Применить», слой 1С: разделы из подсистем, роли bilem (подбор по ПравоДоступа), состав OData — ровно выбранное
         /// чтение, затем автоматическая проверка. Слой MCP (Read/Write) уже сохранён окном. Проведения и удаления в коде нет.
         /// </summary>
-        public bool ApplyAccess(string slug, string adminUser, string adminPassword, ICollection<string> read, ICollection<string> write)
+        /// <param name="addDefaultRead">«Обновить права Bilem»: добавить чтение по умолчанию (Access.DefaultRead), которое базе ещё не
+        /// предлагали, — по свежему каталогу из 1С (старый каталог про новые объекты не знает); нет объекта в конфигурации — молча.</param>
+        public bool ApplyAccess(string slug, string adminUser, string adminPassword, ICollection<string> read, ICollection<string> write,
+            bool addDefaultRead = false)
         {
             try
             {
@@ -670,6 +678,10 @@ namespace Bilem.Agent.Core
                 var b = cfg.Find(slug);
                 if (b == null) return Fail(Txt.F("NoSuchBase", slug), Txt.S("HintList"));
                 var profile = Profiles.For(b.Configuration);
+                var seenRead = b.ReadDefaults ?? new List<string>();
+                var defaultRead = addDefaultRead
+                    ? Access.DefaultRead.Where(x => profile.CatalogObjects.Contains(x) && !seenRead.Contains(x) && !read.Contains(x) && !profile.ODataObjects.Contains(x)).ToList()
+                    : new List<string>();
 
                 Begin("access_connect");
                 var plat = Platform.Choose(Platform.Find(), b.PlatformVersion) ?? Platform.Choose(Platform.Find());
@@ -681,9 +693,17 @@ namespace Bilem.Agent.Core
                 var needService = Profiles.ServiceODataObjects.Where(x => !profile.ODataObjects.Contains(x) && !needRead.Contains(x)).ToList();
                 var r1 = client.Run(conn,
                     new ComOp { Op = "metaCatalog", Objects = profile.CatalogObjects.ToList() },
-                    new ComOp { Op = "rightsMap", Objects = needRead.Concat(needService).Concat(write).Distinct().ToList(), Scope = profile.CatalogObjects.ToList() },
+                    new ComOp { Op = "rightsMap", Objects = needRead.Concat(needService).Concat(defaultRead).Concat(write).Distinct().ToList(), Scope = profile.CatalogObjects.ToList() },
                     new ComOp { Op = "listRoles" });
                 b.Catalog = Access.FromMeta(profile, r1[0]);
+                // Чтение по умолчанию — только то, что есть в конфигурации; остальное пропускаем без строки в журнале
+                defaultRead = defaultRead.Where(x => b.Catalog.Find(x) != null).ToList();
+                if (defaultRead.Count > 0)
+                {
+                    read = read.Concat(defaultRead).Distinct().ToList();
+                    needRead.AddRange(defaultRead);
+                    Log.Ok(Txt.F("ReadDefaultOn", string.Join(", ", defaultRead.Select(b.Catalog.TitleOf))));
+                }
                 Log.Ok(Txt.F("AccessCatalogLoaded", b.Catalog.Sections.Count, b.Catalog.Items.Count));
                 End(StepStatus.Ok, Txt.F("AccessCatalogShort", b.Catalog.Sections.Count));
 
@@ -693,6 +713,8 @@ namespace Bilem.Agent.Core
                 var plan = Access.PlanRoles(profile, baseRoles, needRead.Concat(needService), write, r1[1]);
                 // Служебного объекта нет в конфигурации или роли на него нет — не ошибка «Доступа», агент без него обойдётся
                 foreach (var s in plan.NoRole.Where(needService.Contains).ToList()) { plan.NoRole.Remove(s); Log.Info(Txt.F("ServiceNoRole", s)); }
+                // Чтение по умолчанию без подходящей роли — не включаем и не валим «Обновить права»
+                foreach (var s in plan.NoRole.Where(defaultRead.Contains).ToList()) { plan.NoRole.Remove(s); read = read.Where(x => x != s).ToList(); Log.Info(Txt.F("ServiceNoRole", s)); }
                 if (plan.NoRole.Count > 0)
                 {
                     End(StepStatus.Fail);
@@ -721,6 +743,7 @@ namespace Bilem.Agent.Core
                 b.Read = set.Where(x => !Profiles.IsService(x) || read.Contains(x)).ToList();
                 b.Write = write.Where(set.Contains).ToList();
                 b.WriteInOneC = b.Write.ToList();
+                Access.MarkReadDefaults(b);
                 var flags = (JObject)r2[1]["flags"];
                 b.NonEmpty = flags.Properties().Where(p => p.Value.Type == JTokenType.Boolean && (bool)p.Value).Select(p => p.Name).ToList();
                 Log.Ok(Txt.F("AccessODataSet", set.Count, set.Except(wasOData).Count(), wasOData.Except(set).Count()));
@@ -794,21 +817,27 @@ namespace Bilem.Agent.Core
             catch (Exception e) { if (_cur?.Status == StepStatus.Running) End(StepStatus.Fail); return Fail(Txt.F("Unexpected", e.GetType().Name, e.Message), Txt.S("HintSendLog")); }
         }
 
-        /// <summary>Роли для чтения служебных объектов, которых не дают роли профиля (нет объекта или роли — пропускаем, в журнал).</summary>
+        /// <summary>
+        /// Роли для чтения служебных объектов и чтения по умолчанию (Access.DefaultRead), которых не дают роли профиля
+        /// (нет объекта или роли — пропускаем: служебные — в журнал, чтение по умолчанию — молча).
+        /// </summary>
         private static List<string> ServiceRoles(ComClient client, string conn, ConfigProfile profile, IEnumerable<string> have,
-            IList<string> needWrite, out List<string> writeOk)
+            IList<string> needWrite, IList<string> needDefaultRead, out List<string> writeOk, out List<string> readOk)
         {
             var need = Profiles.ServiceODataObjects.Where(x => !profile.ODataObjects.Contains(x)).ToList();
+            var needRead = needDefaultRead.Where(x => !profile.ODataObjects.Contains(x) && !need.Contains(x)).ToList();
             writeOk = new List<string>();
-            if (need.Count == 0 && needWrite.Count == 0) return new List<string>();
+            readOk = needDefaultRead.Where(profile.ODataObjects.Contains).ToList();
+            if (need.Count == 0 && needWrite.Count == 0 && needRead.Count == 0) return new List<string>();
             var r = client.Run(conn,
-                new ComOp { Op = "rightsMap", Objects = need.Concat(needWrite).Distinct().ToList(), Scope = profile.CatalogObjects.ToList() },
+                new ComOp { Op = "rightsMap", Objects = need.Concat(needRead).Concat(needWrite).Distinct().ToList(), Scope = profile.CatalogObjects.ToList() },
                 new ComOp { Op = "listRoles" });
             var all = new HashSet<string>(((JArray)r[1]["roles"]).Select(x => (string)x["name"]));
-            var plan = Access.PlanRoles(profile, have.Where(all.Contains), need, needWrite, r[0]);
+            var plan = Access.PlanRoles(profile, have.Where(all.Contains), need.Concat(needRead), needWrite, r[0]);
             foreach (var s in plan.NoRole.Where(needWrite.Contains)) Log.Warn(Txt.F("WriteNoRole", s));
             writeOk = needWrite.Where(x => !plan.NoRole.Contains(x)).ToList();
-            foreach (var s in plan.NoRole.Where(x => !needWrite.Contains(x))) Log.Info(Txt.F("ServiceNoRole", s));
+            readOk.AddRange(needRead.Where(x => !plan.NoRole.Contains(x)));
+            foreach (var s in plan.NoRole.Where(x => !needWrite.Contains(x) && !needRead.Contains(x))) Log.Info(Txt.F("ServiceNoRole", s));
             foreach (var kv in plan.Why) Log.Info(Txt.F("AccessRoleFor", kv.Value, kv.Key));
             return plan.Extra.Distinct().ToList();
         }

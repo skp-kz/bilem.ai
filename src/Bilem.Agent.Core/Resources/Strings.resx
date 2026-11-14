@@ -1108,6 +1108,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="AuditLineCreateFailed" xml:space="preserve"><value>Не создан в 1С: {0} — по запросу {1}: {2}</value></data>
   <data name="WriteNoRole" xml:space="preserve"><value>Для «{0}» в конфигурации нет узкой роли записи — запись не включаю (право не расширяю).</value></data>
   <data name="WriteDefaultOn" xml:space="preserve"><value>Запись для пользователя bilem: {0} — документы без проводок, остальное 1С отклоняет.</value></data>
+  <data name="ReadDefaultOn" xml:space="preserve"><value>Чтение по умолчанию для новых инструментов: {0}.</value></data>
   <data name="VerifyWriteAllowedOwn" xml:space="preserve"><value>Создавать можно только: {0}; всё остальное проверено на отказ.</value></data>
   <data name="ToolUpdateInvTitle" xml:space="preserve"><value>Исправить свой счёт</value></data>
   <data name="ToolUpdateInvDesc" xml:space="preserve"><value>Исправляет счёт, который создал сам Bilem (create_invoice) для этого же собеседника не раньше 24 часов назад; номер и дата остаются. Два вызова: 1) number + что меняем — lines (ПОЛНЫЙ новый набор строк, как в draft_invoice) и/или contract — НИЧЕГО не пишет, отвечает status=ready, draft_id, before и after («было → стало»), changes; покажи человеку и спроси «Исправить?»; 2) только после «да» — снова update_invoice только с draft_id: правит этот счёт в 1С. Потом print_invoice с number — новый PDF. Покупателя и фирму не меняет (это новый счёт), чужие счета и счета, которые меняли в 1С руками, не трогает. status=choose / not_found — как в draft_invoice.</value></data>
@@ -1138,7 +1139,9 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="AuditLineInvUpdate" xml:space="preserve"><value>Исправлен в 1С: {0} — по запросу {1}</value></data>
   <data name="AuditLineInvCancel" xml:space="preserve"><value>Помечен на удаление в 1С: {0} — по запросу {1}</value></data>
   <data name="UiRightsUpdate" xml:space="preserve"><value>Обновить права Bilem</value></data>
-  <data name="UiRightsUpdateTip" xml:space="preserve"><value>Включить создание: {0}. Нужен вход администратора 1С (не сохраняется); после — проверка, что всё остальное 1С отклоняет.</value></data>
+  <data name="UiRightsUpdateTip" xml:space="preserve"><value>{0} Нужен вход администратора 1С (не сохраняется); после — проверка, что всё остальное 1С отклоняет.</value></data>
+  <data name="UiRightsUpdateWrite" xml:space="preserve"><value>Включить создание: {0}.</value></data>
+  <data name="UiRightsUpdateRead" xml:space="preserve"><value>Включить чтение: {0}.</value></data>
   <data name="CliRightsDone" xml:space="preserve"><value>Права Bilem для «{0}» уже актуальны: {1}.</value></data>
   <data name="ToolTbTitle" xml:space="preserve"><value>Остатки и обороты по счёту (ОСВ)</value></data>
   <data name="ToolTbDesc" xml:space="preserve"><value>Оборотно-сальдовая ведомость по любому счёту плана счетов (1251, 1710, 3310, 3350, 1330…), с субсчетами: сальдо на конец дня to; с from — ещё сальдо на начало и обороты Дт и Кт за период. Разрез by — по контрагентам, договорам, сотрудникам, номенклатуре или другому субконто счёта (до 3 уровней). Сальдо развёрнутое (closing.dt / closing.kt) и свёрнутое net (плюс — дебет, минус — кредит). Строки по убыванию сальдо; не поместились — rest и more («ещё M строк на сумму …»). Счёт голосом «17.10» = 1710. Сотрудники поимённо — только если в Bilem включена услуга «Зарплата», иначе — итог без имён и предупреждение в warnings. Не говори «нет инструмента для ОСВ» — вызывай этот. Только данные 1С: перескажи as_of.say дословно и предупреждения из warnings.</value></data>
@@ -1194,7 +1197,8 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="CustomsSay" xml:space="preserve"><value>Таможенные декларации отражены в 1С по {0}: последняя проведённая — № {1} от {0}. За период {2} проведено {3} на {4} тенге.</value></data>
   <data name="CustomsNone" xml:space="preserve"><value>Проведённых таможенных деклараций (ГТД по импорту) в базе нет. За период {0} — ни одной.</value></data>
   <data name="CustomsNotPostedSay" xml:space="preserve"><value>Не проведено за период: {0}.</value></data>
-  <data name="CustomsOff" xml:space="preserve"><value>Документ «ГТД по импорту» выключен на «Доступе» базы {0} — Bilem его не читает. Включите его там (раздел «Покупка») и обновите права Bilem.</value></data>
-  <data name="CustomsMissing" xml:space="preserve"><value>В базе {0} нет документа «ГТД по импорту» в составе OData: либо импорт в этой базе не ведут, либо после включения на «Доступе» не обновлены права Bilem.</value></data>
+  <data name="CustomsOff" xml:space="preserve"><value>Документ «ГТД по импорту» выключен на «Доступе» базы {0} — Bilem его не читает. Включить: «Доступ» → раздел «Покупка» → «ГТД по импорту» → «Применить» (вход администратора 1С).</value></data>
+  <data name="CustomsMissing" xml:space="preserve"><value>В базе {0} нет документа «ГТД по импорту»: в этой конфигурации таможенные декларации на импорт не ведут.</value></data>
+  <data name="CustomsRefresh" xml:space="preserve"><value>В базе {0} «ГТД по импорту» ещё не подключён к Bilem: в этой базе нужно нажать «Доступ» → «Обновить права Bilem» (вход администратора 1С). После этого декларации будут видны.</value></data>
   <data name="CustomsNote" xml:space="preserve"><value>Сумма, пошлина и НДС — из документа «ГТД по импорту» (табличная часть «Разделы»); counterparty — контрагент документа (обычно таможня).</value></data>
 </root>

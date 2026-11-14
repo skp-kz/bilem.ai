@@ -1059,35 +1059,34 @@ namespace Bilem.Agent
             _accessWrite.ForeColor = !at.HasValue ? Color.DarkGoldenrod : writes.Count == 0 ? Color.DarkGreen : Color.DarkGoldenrod;
             _tips.SetToolTip(_accessWrite, Txt.F("UiRoles", b.User, string.Join(", ", b.Roles)));
             _accessTree.Load(Access.CatalogOf(b), b.ReadEffective, b.Write);
-            var missing = MissingDefaultWrite(b);
-            _accessRights.Visible = missing.Count > 0;
-            if (missing.Count > 0) _tips.SetToolTip(_accessRights, Txt.F("UiRightsUpdateTip", string.Join(", ", missing.Select(Access.CatalogOf(b).TitleOf))));
+            var missing = Access.MissingDefaultWrite(b);
+            var missingRead = Access.MissingDefaultRead(b);
+            _accessRights.Visible = missing.Count + missingRead.Count > 0;
+            var tip = new List<string>();
+            if (missing.Count > 0) tip.Add(Txt.F("UiRightsUpdateWrite", string.Join(", ", missing.Select(Access.CatalogOf(b).TitleOf))));
+            if (missingRead.Count > 0) tip.Add(Txt.F("UiRightsUpdateRead", string.Join(", ", missingRead.Select(Access.CatalogOf(b).TitleOf))));
+            if (tip.Count > 0) _tips.SetToolTip(_accessRights, Txt.F("UiRightsUpdateTip", string.Join(" ", tip)));
             UpdateAccessSummary();
         }
 
-        /// <summary>Запись по умолчанию (счёт, акт сверки, доверенность), которой у базы ещё нет в 1С.</summary>
-        private static List<string> MissingDefaultWrite(BaseConfig b)
-        {
-            var cat = Access.CatalogOf(b);
-            var have = new HashSet<string>(b.WriteInOneC ?? new List<string>());
-            return Access.DefaultWrite.Where(x => cat.Find(x) != null && !have.Contains(x)).ToList();
-        }
-
         /// <summary>
-        /// «Обновить права Bilem»: к выбранному на «Доступе» добавить запись трёх документов и применить в 1С — пароль администратора
-        /// (не сохраняется), подбор самых узких ролей, проверка «остальное 1С отклоняет». Девять шагов настройки заново не нужны.
+        /// «Обновить права Bilem»: к выбранному на «Доступе» добавить запись трёх документов и чтение по умолчанию для новых
+        /// инструментов (ГТД по импорту, #104) и применить в 1С — пароль администратора (не сохраняется), подбор самых узких ролей,
+        /// проверка «остальное 1С отклоняет». Девять шагов настройки заново не нужны.
         /// </summary>
         private void UpdateBilemRights()
         {
             var b = AgentConfig.Load().Find(_accessBase.SelectedItem as string ?? "");
             if (b == null) return;
-            var missing = MissingDefaultWrite(b);
-            if (missing.Count == 0) return;
-            _accessTree.Load(Access.CatalogOf(b), b.ReadEffective.Concat(missing).Distinct(), (b.Write ?? new List<string>()).Concat(missing).Distinct());
+            var missing = Access.MissingDefaultWrite(b);
+            var missingRead = Access.MissingDefaultRead(b);
+            if (missing.Count + missingRead.Count == 0) return;
+            _accessTree.Load(Access.CatalogOf(b), b.ReadEffective.Concat(missing).Concat(missingRead).Distinct(), (b.Write ?? new List<string>()).Concat(missing).Distinct());
             _skipWriteWarn = true;
             try { ApplyAccess(); } finally { _skipWriteWarn = false; }
         }
 
+        /// <summary>Идёт «Обновить права Bilem»: без предупреждения о записи и с чтением по умолчанию (#104).</summary>
         private bool _skipWriteWarn;
 
         /// <summary>Сводка «что изменится» до «Применить».</summary>
@@ -1142,7 +1141,7 @@ namespace Bilem.Agent
                     c.ReadOn.Count, c.ReadOff.Count, c.WriteOn.Count, c.WriteOff.Count,
                     string.Join(", ", c.ReadOn.Concat(c.ReadOff).Concat(c.WriteOn).Concat(c.WriteOff).Distinct().Select(cat.TitleOf))));
             }
-            if (Access.NeedsOneC(b, read, write))
+            if (Access.NeedsOneC(b, read, write) || (_skipWriteWarn && Access.MissingDefaultRead(b).Count > 0))
             {
                 string user, pwd;
                 using (var f = new CredForm(Txt.F("UiAccessCredTitle", b.Slug), Txt.S("UiAccessCredHint")))
@@ -1150,8 +1149,8 @@ namespace Bilem.Agent
                     if (f.ShowDialog(this) != DialogResult.OK) { Info(Txt.S("UiAccessMcpOnly")); AfterChange(); return; }
                     user = f.User; pwd = f.Password;
                 }
-                var r = read.ToList(); var w = write.ToList();
-                Busy(() => { using (var run = new RunForm(Txt.F("UiAccessRunTitle", b.Slug), ob => ob.ApplyAccess(b.Slug, user, pwd, r, w), "access", b.Slug)) run.ShowDialog(this); });
+                var r = read.ToList(); var w = write.ToList(); var addRead = _skipWriteWarn;
+                Busy(() => { using (var run = new RunForm(Txt.F("UiAccessRunTitle", b.Slug), ob => ob.ApplyAccess(b.Slug, user, pwd, r, w, addRead), "access", b.Slug)) run.ShowDialog(this); });
             }
             AfterChange();
         }

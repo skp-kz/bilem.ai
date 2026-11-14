@@ -59,6 +59,8 @@ namespace Bilem.Agent.Core
         public List<string> Write { get; set; } = new List<string>();
         /// <summary>Слой 1С: для каких объектов у bilem есть роль записи (применено «Применить» с паролем администратора).</summary>
         public List<string> WriteInOneC { get; set; } = new List<string>();
+        /// <summary>Чтение по умолчанию (Access.DefaultRead), которое уже попало в состав OData: выключит человек — снова не включаем.</summary>
+        public List<string> ReadDefaults { get; set; } = new List<string>();
         /// <summary>Роли bilem сверх ролей профиля — добавлены «Доступом» (запись или чтение, которого не хватало).</summary>
         public List<string> ExtraRoles { get; set; } = new List<string>();
 
