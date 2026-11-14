@@ -1140,4 +1140,38 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiRightsUpdate" xml:space="preserve"><value>Обновить права Bilem</value></data>
   <data name="UiRightsUpdateTip" xml:space="preserve"><value>Включить создание: {0}. Нужен вход администратора 1С (не сохраняется); после — проверка, что всё остальное 1С отклоняет.</value></data>
   <data name="CliRightsDone" xml:space="preserve"><value>Права Bilem для «{0}» уже актуальны: {1}.</value></data>
+  <data name="ToolTbTitle" xml:space="preserve"><value>Остатки и обороты по счёту (ОСВ)</value></data>
+  <data name="ToolTbDesc" xml:space="preserve"><value>Оборотно-сальдовая ведомость по любому счёту плана счетов (1251, 1710, 3310, 3350, 1330…), с субсчетами: сальдо на конец дня to; с from — ещё сальдо на начало и обороты Дт и Кт за период. Разрез by — по контрагентам, договорам, сотрудникам, номенклатуре или другому субконто счёта (до 3 уровней). Сальдо развёрнутое (closing.dt / closing.kt) и свёрнутое net (плюс — дебет, минус — кредит). Строки по убыванию сальдо; не поместились — rest и more («ещё M строк на сумму …»). Счёт голосом «17.10» = 1710. Сотрудники поимённо — только если в Bilem включена услуга «Зарплата», иначе — итог без имён и предупреждение в warnings. Не говори «нет инструмента для ОСВ» — вызывай этот. Только данные 1С: перескажи as_of.say дословно и предупреждения из warnings.</value></data>
+  <data name="ToolTbParamAccounts" xml:space="preserve"><value>Счета (1–10), коды плана счетов: ["1251"], ["1710","3310"]. Субсчета включаются; «17» — вся группа 17xx.</value></data>
+  <data name="ToolTbParamFrom" xml:space="preserve"><value>Начало периода YYYY-MM-DD: с ним — сальдо на начало и обороты за период from–to. Без него — только сальдо на to.</value></data>
+  <data name="ToolTbParamTo" xml:space="preserve"><value>Дата YYYY-MM-DD: сальдо на конец этого дня (по умолчанию — сегодня).</value></data>
+  <data name="ToolTbParamBy" xml:space="preserve"><value>Разрез (до 3, порядок — вложенность): counterparty, contract, employee, item или название вида субконто, как в 1С («Основные средства», «Склады»). Пусто — итог по счёту.</value></data>
+  <data name="ToolTbParamFilter" xml:space="preserve"><value>Отбор: counterparty (часть названия или БИН/ИИН), contract (часть названия договора), employee (часть ФИО).</value></data>
+  <data name="ToolTbParamTop" xml:space="preserve"><value>Сколько строк показать (по убыванию сальдо), по умолчанию 20, до 200.</value></data>
+  <data name="ToolTbParamMinAmount" xml:space="preserve"><value>Не показывать строки, где и сальдо, и обороты меньше этой суммы.</value></data>
+  <data name="ToolEntTitle" xml:space="preserve"><value>Движения по счёту</value></data>
+  <data name="ToolEntDesc" xml:space="preserve"><value>Проводки по счёту (с субсчетами) за период from–to: дата, документ (вид, номер, дата), Дт и Кт со счётом и субконто, сумма, содержание; сальдо на начало и конец с тем же отбором и обороты totals. side=dt — только дебет счёта, kt — только кредит. Не поместились — показаны последние top проводок, более ранние — одной строкой rest. Для «откуда долг», «кто брал под отчёт», «что прошло по 1710 с этим поставщиком». Только данные 1С: перескажи as_of.say дословно.</value></data>
+  <data name="ToolEntParamAccount" xml:space="preserve"><value>Счёт — код плана счетов (один): «1251», «3310». Субсчета включаются.</value></data>
+  <data name="ToolEntParamFrom" xml:space="preserve"><value>Начало периода YYYY-MM-DD (обязательно).</value></data>
+  <data name="ToolEntParamTo" xml:space="preserve"><value>Конец периода YYYY-MM-DD (обязательно), включительно.</value></data>
+  <data name="ToolEntParamSide" xml:space="preserve"><value>dt — только проводки по дебету счёта, kt — по кредиту, both (по умолчанию) — все.</value></data>
+  <data name="ToolEntParamTop" xml:space="preserve"><value>Сколько проводок показать, по умолчанию 50, до 500 (последние за период).</value></data>
+  <data name="LedgerBadAccount" xml:space="preserve"><value>Не понял счёт «{0}»: нужен код плана счетов, например 1251 или 3310.</value></data>
+  <data name="LedgerNoAccount" xml:space="preserve"><value>В плане счетов нет счёта «{0}».</value></data>
+  <data name="LedgerNeedAccount" xml:space="preserve"><value>Укажите счёт: код плана счетов, например 1251.</value></data>
+  <data name="LedgerTooManyAccounts" xml:space="preserve"><value>Счетов не больше {0} за один запрос.</value></data>
+  <data name="LedgerTooManyBy" xml:space="preserve"><value>Разрезов не больше {0}.</value></data>
+  <data name="LedgerBadPeriod" xml:space="preserve"><value>Начало периода позже конца.</value></data>
+  <data name="LedgerNoContract" xml:space="preserve"><value>Не нашёл договор «{0}».</value></data>
+  <data name="LedgerNoEmployee" xml:space="preserve"><value>Не нашёл сотрудника «{0}».</value></data>
+  <data name="LedgerEmployeeHidden" xml:space="preserve"><value>Сотрудники поимённо не показаны: в Bilem не включена услуга «Зарплата» (справочник сотрудников выключен на «Доступе»). Итоги по счёту — без имён.</value></data>
+  <data name="LedgerHiddenName" xml:space="preserve"><value>(без имён — нет услуги «Зарплата»)</value></data>
+  <data name="LedgerByUnknown" xml:space="preserve"><value>У выбранных счетов нет субконто «{0}» — разрез не применён.</value></data>
+  <data name="LedgerGroup" xml:space="preserve"><value>Группа счетов {0}xx</value></data>
+  <data name="LedgerTbNote" xml:space="preserve"><value>Как оборотно-сальдовая ведомость 1С по субконто: сальдо на начало, обороты Дт и Кт, сальдо на конец; net — свёрнутое сальдо (плюс — дебет, минус — кредит).</value></data>
+  <data name="LedgerTbNoteBalance" xml:space="preserve"><value>Сальдо на конец дня to по данным 1С; net — свёрнутое сальдо (плюс — дебет, минус — кредит). Обороты — с параметром from.</value></data>
+  <data name="LedgerMore" xml:space="preserve"><value>Ещё {0} строк на сумму {1} (по модулю сальдо) — в rest.</value></data>
+  <data name="LedgerEntriesNote" xml:space="preserve"><value>Проводки регистра бухгалтерии 1С; opening и closing — сальдо счёта с тем же отбором.</value></data>
+  <data name="LedgerEntriesMore" xml:space="preserve"><value>Показаны последние проводки; ещё {0} более ранних (с {1} по {2}) — итогом в rest. Сузьте период, чтобы увидеть их.</value></data>
+  <data name="LedgerDocUnknown" xml:space="preserve"><value>документ</value></data>
 </root>

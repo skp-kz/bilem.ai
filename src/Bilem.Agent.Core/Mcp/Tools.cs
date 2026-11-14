@@ -195,6 +195,39 @@ namespace Bilem.Agent.Core.Mcp
                 DebtTool("payables", DebtKind.Payables, bases, baseProp),
                 new McpTool
                 {
+                    Name = "trial_balance", Title = Txt.S("ToolTbTitle"), Description = Txt.S("ToolTbDesc"),
+                    InputSchema = Schema(new JObject
+                    {
+                        ["accounts"] = new JObject { ["type"] = "array", ["minItems"] = 1, ["maxItems"] = Ledger.MaxAccounts, ["items"] = new JObject { ["type"] = "string" }, ["description"] = Txt.S("ToolTbParamAccounts") },
+                        ["from"] = new JObject { ["type"] = "string", ["pattern"] = @"^\d{4}-\d{2}-\d{2}$", ["description"] = Txt.S("ToolTbParamFrom") },
+                        ["to"] = new JObject { ["type"] = "string", ["pattern"] = @"^\d{4}-\d{2}-\d{2}$", ["description"] = Txt.S("ToolTbParamTo") },
+                        ["by"] = new JObject { ["type"] = "array", ["maxItems"] = Ledger.MaxBy, ["items"] = new JObject { ["type"] = "string" }, ["description"] = Txt.S("ToolTbParamBy") },
+                        ["filter"] = FilterProp(),
+                        ["organization"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolActParamOrganization") },
+                        ["top"] = new JObject { ["type"] = "integer", ["minimum"] = 1, ["maximum"] = 200, ["description"] = Txt.S("ToolTbParamTop") },
+                        ["min_amount"] = new JObject { ["type"] = "number", ["minimum"] = 0, ["description"] = Txt.S("ToolTbParamMinAmount") },
+                        ["base"] = baseProp,
+                    }, "accounts"),
+                    Handler = a => PerBase(bases(), (string)a["base"], b => TrialBalance(b, a), rows => MergeLedger(rows)),
+                },
+                new McpTool
+                {
+                    Name = "account_entries", Title = Txt.S("ToolEntTitle"), Description = Txt.S("ToolEntDesc"),
+                    InputSchema = Schema(new JObject
+                    {
+                        ["account"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolEntParamAccount") },
+                        ["from"] = new JObject { ["type"] = "string", ["pattern"] = @"^\d{4}-\d{2}-\d{2}$", ["description"] = Txt.S("ToolEntParamFrom") },
+                        ["to"] = new JObject { ["type"] = "string", ["pattern"] = @"^\d{4}-\d{2}-\d{2}$", ["description"] = Txt.S("ToolEntParamTo") },
+                        ["filter"] = FilterProp(),
+                        ["side"] = new JObject { ["type"] = "string", ["enum"] = new JArray("dt", "kt", "both"), ["description"] = Txt.S("ToolEntParamSide") },
+                        ["organization"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolActParamOrganization") },
+                        ["top"] = new JObject { ["type"] = "integer", ["minimum"] = 1, ["maximum"] = 500, ["description"] = Txt.S("ToolEntParamTop") },
+                        ["base"] = baseProp,
+                    }, "account", "from", "to"),
+                    Handler = a => PerBase(bases(), (string)a["base"], b => AccountEntries(b, a), rows => MergeLedger(rows)),
+                },
+                new McpTool
+                {
                     Name = "send_document", Title = Txt.S("ToolSendTitle"), Description = Txt.S("ToolSendDesc"),
                     InputSchema = Schema(new JObject
                     {
@@ -343,6 +376,69 @@ namespace Bilem.Agent.Core.Mcp
             };
             var r = Debts.Load(b, q);
             return Debts.ToJson(b, q, r, Freshness.AsOf(b, Freshness.Kind.Debts));
+        }
+
+        // ---------- trial_balance / account_entries ----------
+
+        private static JObject FilterProp() => new JObject
+        {
+            ["type"] = "object", ["description"] = Txt.S("ToolTbParamFilter"),
+            ["properties"] = new JObject
+            {
+                ["counterparty"] = new JObject { ["type"] = "string" },
+                ["contract"] = new JObject { ["type"] = "string" },
+                ["employee"] = new JObject { ["type"] = "string" },
+            },
+        };
+
+        private static Ledger.Filter LedgerFilter(JObject a) => a["filter"] is JObject f
+            ? new Ledger.Filter { Counterparty = (string)f["counterparty"], Contract = (string)f["contract"], Employee = (string)f["employee"] }
+            : new Ledger.Filter();
+
+        private static List<string> Strings(JToken t) =>
+            t is JArray arr ? arr.Select(x => ((string)x ?? "").Trim()).Where(x => x.Length > 0).ToList()
+            : t != null && t.Type == JTokenType.String && ((string)t).Trim().Length > 0 ? new List<string> { ((string)t).Trim() } : new List<string>();
+
+        internal static JObject TrialBalance(BaseRuntime b, JObject a)
+        {
+            var q = new Ledger.TbRequest
+            {
+                Accounts = Strings(a["accounts"]),
+                From = ParseDate(a, "from"),
+                To = ParseDate(a, "to") ?? DateTime.Today,
+                By = Strings(a["by"]),
+                Filter = LedgerFilter(a),
+                Organization = (string)a["organization"],
+                Top = Math.Min(200, Math.Max(1, (int?)a["top"] ?? 20)),
+                MinAmount = Math.Max(0m, (decimal?)a["min_amount"] ?? 0m),
+            };
+            var r = Ledger.TrialBalance(b, q);
+            return Ledger.TbToJson(b, q, r, Freshness.AsOf(b, Freshness.Kind.Debts), Ledger.HiddenSets(b.OData));
+        }
+
+        internal static JObject AccountEntries(BaseRuntime b, JObject a)
+        {
+            var q = new Ledger.EntriesRequest
+            {
+                Account = (string)a["account"],
+                From = ParseDate(a, "from") ?? throw new AgentException(Txt.S("LedgerBadPeriod")),
+                To = ParseDate(a, "to") ?? throw new AgentException(Txt.S("LedgerBadPeriod")),
+                Filter = LedgerFilter(a),
+                Organization = (string)a["organization"],
+                Side = ((string)a["side"] ?? "both").Trim().ToLowerInvariant(),
+                Top = Math.Min(500, Math.Max(1, (int?)a["top"] ?? 50)),
+            };
+            var r = Ledger.Entries(b, q);
+            return Ledger.EntriesToJson(b, q, r, Freshness.AsOf(b, Freshness.Kind.Debts));
+        }
+
+        private static JObject MergeLedger(List<JObject> rows)
+        {
+            var ok = rows.Where(r => r["error"] == null).ToList();
+            var errors = new JArray(rows.Where(r => r["error"] != null));
+            var res = new JObject { ["currency"] = "KZT", ["bases"] = new JArray(ok) };
+            if (errors.Count > 0) res["errors"] = errors;
+            return res;
         }
 
         private static JObject MergeDebt(List<JObject> rows, DebtKind kind)
