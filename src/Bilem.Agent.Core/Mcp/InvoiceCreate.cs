@@ -193,10 +193,10 @@ namespace Bilem.Agent.Core.Mcp
             return exact.Count == 1 ? exact[0] : null;
         }
 
-        private static JObject Choose(string field, string query, IEnumerable<JObject> options) => new JObject
+        private static JObject Choose(string field, string query, IEnumerable<JObject> options, string note = null) => new JObject
         {
             ["status"] = "choose", ["field"] = field, ["query"] = query, ["options"] = new JArray(options),
-            ["note"] = Txt.S("InvChooseNote"),
+            ["note"] = note ?? Txt.S("InvChooseNote"),
         };
 
         private static JObject NotFound(string field, string query, IEnumerable<string> similar, string note) => new JObject
@@ -260,15 +260,13 @@ namespace Bilem.Agent.Core.Mcp
             else
             {
                 if (buyerQ.Length < 2) throw new AgentException(Txt.S("InvNeedBuyer"));
-                var rows = od.Rows("Catalog_Контрагенты", new Dictionary<string, string>
-                {
-                    ["$select"] = BuyerSelect, ["$filter"] = Tools.FindFilter(buyerQ), ["$orderby"] = "Description",
-                    ["$top"] = (OptionsTop + 1).ToString(CultureInfo.InvariantCulture),
-                });
-                buyer = Pick(rows, buyerQ);
+                var found = CounterpartySearch.Find(od, buyerQ, OptionsTop + 1);
+                var rows = new JArray(found.Rows);
+                // Нестрогое совпадение («Ай Си Лайн» ~ «IC Line») сами не берём — человек подтверждает выбором
+                buyer = found.Fuzzy ? null : Pick(rows, buyerQ);
                 if (buyer == null && rows.Count == 0)
-                    return NotFound("buyer", buyerQ, Similar(od, "Catalog_Контрагенты", buyerQ, "", BuyerSelect).OfType<JObject>().Select(r => (string)r["Description"]), Txt.S("InvBuyerNotFound"));
-                if (buyer == null) return Choose("buyer", buyerQ, rows.OfType<JObject>().Take(OptionsTop).Select(BuyerOption));
+                    return NotFound("buyer", buyerQ, found.Similar.Select(r => (string)r["Description"]), Txt.S("InvBuyerNotFound"));
+                if (buyer == null) return Choose("buyer", buyerQ, rows.OfType<JObject>().Take(OptionsTop).Select(BuyerOption), found.Fuzzy ? Txt.S("InvBuyerApproximate") : null);
             }
             var buyerKey = (string)buyer["Ref_Key"];
 

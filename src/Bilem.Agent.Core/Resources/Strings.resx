@@ -426,6 +426,9 @@
   <data name="ToolFindParamQuery" xml:space="preserve"><value>Часть наименования или БИН/ИИН (можно часть цифр).</value></data>
   <data name="ToolFindTitle" xml:space="preserve"><value>Найти контрагента</value></data>
   <data name="ToolFindTooShort" xml:space="preserve"><value>Запрос — не короче 2 символов.</value></data>
+  <data name="FindApproximate" xml:space="preserve"><value>Точного совпадения нет, найдено похожее по звучанию — спроси человека «это он?», прежде чем брать.</value></data>
+  <data name="InvBuyerApproximate" xml:space="preserve"><value>Точно такого покупателя нет, это похожие по звучанию. Спросите человека «это он?» и соберите черновик снова с buyer_id выбранного.</value></data>
+  <data name="FindSimilar" xml:space="preserve"><value>Такого контрагента не нашлось; в similar — ближайшие по названию. Спроси человека, не о ком-то из них речь.</value></data>
   <data name="ToolListBasesDesc" xml:space="preserve"><value>Список баз 1С, подключённых к Bilem Agent на этом компьютере: короткое имя (base), конфигурация, версия. Вызывай, если нужно перечислить базы или понять, какая из них какая.</value></data>
   <data name="ToolListBasesTitle" xml:space="preserve"><value>Подключённые базы 1С</value></data>
   <data name="ToolNoBases" xml:space="preserve"><value>Не подключено ни одной базы: добавьте базу в Bilem Agent.</value></data>

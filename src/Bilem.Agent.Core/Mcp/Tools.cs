@@ -740,24 +740,21 @@ namespace Bilem.Agent.Core.Mcp
         internal static JObject Find(BaseRuntime b, string query)
         {
             // Пробел внутри $filter — %20 (Uri.EscapeDataString): «+» 1С не декодирует и отвечает 400 (known-issues 14)
-            var (rows, total) = b.OData.RowsCounted("Catalog_Контрагенты", new Dictionary<string, string>
-            {
-                ["$select"] = "Description,НаименованиеПолное,ИдентификационныйКодЛичности",
-                ["$filter"] = FindFilter(query),
-                ["$orderby"] = "Description",
-                ["$top"] = FindTop.ToString(CultureInfo.InvariantCulture),
-            });
-            var items = new JArray();
-            foreach (var r in rows.Take(FindTop))
+            var res = CounterpartySearch.Find(b.OData, query, FindTop);
+            var total = res.Total;
+            JObject Item(JObject r)
             {
                 var it = new JObject { ["name"] = r["Description"] };
                 var full = (string)r["НаименованиеПолное"];
                 if (!string.IsNullOrEmpty(full)) it["fullName"] = full;
                 it["bin"] = NullIfEmpty((string)r["ИдентификационныйКодЛичности"]);
-                items.Add(it);
+                return it;
             }
+            var items = new JArray(res.Rows.Take(FindTop).Select(Item));
             var o = new JObject { ["base"] = b.Config.Slug, ["found"] = items.Count, ["more"] = total > items.Count, ["items"] = items };
             if (total > items.Count) o["note"] = Txt.F("ToolTruncated", items.Count, total);
+            if (res.Fuzzy) { o["approximate"] = true; o["note"] = Txt.S("FindApproximate"); }
+            if (items.Count == 0 && res.Similar.Count > 0) { o["similar"] = new JArray(res.Similar.Select(Item)); o["note"] = Txt.S("FindSimilar"); }
             o["_total"] = total; // служебное: для объединения по базам; Limit() убирает поля «_…» из ответа
             return o;
         }
@@ -769,7 +766,9 @@ namespace Bilem.Agent.Core.Mcp
         {
             var items = new JArray();
             var errors = new JArray();
+            var similar = new JArray();
             var more = false;
+            var approximate = false;
             var total = 0;
             foreach (var r in rows)
             {
@@ -782,9 +781,18 @@ namespace Bilem.Agent.Core.Mcp
                     foreach (var p in it.Properties()) x[p.Name] = p.Value;
                     items.Add(x);
                 }
+                approximate |= (bool?)r["approximate"] == true;
+                foreach (JObject it in (r["similar"] as JArray) ?? new JArray())
+                {
+                    var x = new JObject { ["base"] = r["base"] };
+                    foreach (var p in it.Properties()) x[p.Name] = p.Value;
+                    similar.Add(x);
+                }
             }
             var o = new JObject { ["found"] = items.Count, ["more"] = more, ["items"] = items };
             if (more) o["note"] = Txt.F("ToolTruncated", items.Count, total);
+            if (approximate) { o["approximate"] = true; o["note"] = Txt.S("FindApproximate"); }
+            if (items.Count == 0 && similar.Count > 0) { o["similar"] = similar; o["note"] = Txt.S("FindSimilar"); }
             if (errors.Count > 0) o["errors"] = errors;
             return o;
         }

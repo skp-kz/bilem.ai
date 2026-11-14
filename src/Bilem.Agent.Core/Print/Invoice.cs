@@ -114,12 +114,7 @@ namespace Bilem.Agent.Core.Print
         /// <summary>Ключи покупателей по БИН/ИИН или части названия (как find_counterparty), не больше 20.</summary>
         public static Dictionary<string, (string Name, string Bin)> Buyers(ODataClient od, string counterparty)
         {
-            var rows = od.Rows("Catalog_Контрагенты", new Dictionary<string, string>
-            {
-                ["$select"] = "Ref_Key,Description,ИдентификационныйКодЛичности",
-                ["$filter"] = Mcp.Tools.FindFilter(counterparty),
-                ["$top"] = "20",
-            });
+            var rows = Mcp.CounterpartySearch.Find(od, counterparty, 20).Rows;
             return rows.ToDictionary(r => (string)r["Ref_Key"], r => ((string)r["Description"], (string)r["ИдентификационныйКодЛичности"]));
         }
 
