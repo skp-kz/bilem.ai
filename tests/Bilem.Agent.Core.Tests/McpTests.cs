@@ -46,10 +46,12 @@ namespace Bilem.Agent.Core.Tests
                     var st = c.GetStream();
                     var req = System.Text.Encoding.ASCII.GetBytes("GET /mcp/tok HTTP/1.1\r\nHost: 127.0.0.1\r\nAccept: text/event-stream\r\n\r\n");
                     st.Write(req, 0, req.Length);
-                    for (var i = 0; i < 50 && srv.StreamCount == 0; i++) System.Threading.Thread.Sleep(50);
+                    // Подключение принимает Task.Run: при параллельных тестах пул потоков занят, 2,5 с не хватало.
+                    var sw = System.Diagnostics.Stopwatch.StartNew();
+                    while (srv.StreamCount == 0 && sw.ElapsedMilliseconds < 15000) System.Threading.Thread.Sleep(50);
                     Assert.Equal(1, srv.StreamCount);
                     srv.Notify(McpProtocol.ListChangedNotification);
-                    st.ReadTimeout = 3000;
+                    st.ReadTimeout = 15000;
                     var buf = new byte[4096]; var got = new System.Text.StringBuilder();
                     while (!got.ToString().Contains("list_changed")) { var n = st.Read(buf, 0, buf.Length); if (n <= 0) break; got.Append(System.Text.Encoding.UTF8.GetString(buf, 0, n)); }
                     Assert.Contains("text/event-stream", got.ToString());
