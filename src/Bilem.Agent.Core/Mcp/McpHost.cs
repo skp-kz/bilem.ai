@@ -36,7 +36,9 @@ namespace Bilem.Agent.Core.Mcp
             Reload(cfg);
             var proto = new McpProtocol(Tools.Create(Current, cfg.MaxRows), Version);
             // Почта — в списке инструментов, только когда SMTP-клиент включён (тумблер на вкладке «SMTP» / в трее)
-            proto.Visible = t => t.Name != "send_document" || _smtpOn;
+            // Счёт по черновику — только если в какой-то базе «Доступ» включил запись счёта (#99)
+            proto.Visible = t => (t.Name != "send_document" || _smtpOn)
+                && (!InvoiceCreate.IsTool(t.Name) || Current().Any(b => InvoiceCreate.Enabled(b.Config)));
             _proto = proto;
             if (withHttp)
             {

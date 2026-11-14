@@ -60,13 +60,13 @@
   <data name="CheckPending" xml:space="preserve"><value>настройка не завершена</value></data>
   <data name="CliAccessNeedsAdmin" xml:space="preserve"><value>Разделы из 1С загружаются под администратором 1С: --admin «логин» [--password «пароль»].</value></data>
   <data name="CliDropNeedsAdmin" xml:space="preserve"><value>Чтобы удалить пользователя bilem из базы, нужен логин администратора 1С: --admin «логин» [--password «пароль»].</value></data>
-  <data name="CliHelp" xml:space="preserve"><value>Bilem Agent — локальный режим: ИИ-ассистент отвечает на вопросы из 1С (только чтение).
+  <data name="CliHelp" xml:space="preserve"><value>Bilem Agent — локальный режим: ИИ-ассистент отвечает на вопросы из 1С. Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности.
 
 Без аргументов — окно. Команды:
   diag  --base «папка» [--admin «логин» [--password «пароль»]] [--slug «имя»]
         диагностика и план, ничего не меняет
   setup --base «папка» --admin «логин» [--password «пароль»] [--slug «имя»] [--enable-iis] [--allow-dc] [--allow-com-register] [--reset-password] [--web auto|iis|apache]
-        подключить базу: пользователь bilem (только чтение), состав OData, публикация только для этой машины, проверки
+        подключить базу: пользователь bilem (чтение; создаёт только счета на оплату, акты сверки и доверенности), состав OData, публикация только для этой машины, проверки
   verify [--slug «имя»] [--admin «логин» [--password «пароль»]]
         проверки: чтение, запрет записи, 401 без пароля, 403 по адресам машины (с --admin — и роли bilem)
   list  подключённые базы
@@ -181,8 +181,8 @@
   <data name="DiagWriteDenied" xml:space="preserve"><value>Запись запрещена</value></data>
   <data name="DiagWriteDeniedAt" xml:space="preserve"><value>проверено {0:dd.MM.yyyy HH:mm}</value></data>
   <data name="DismFailed" xml:space="preserve"><value>Установка компонентов Windows (dism) завершилась с кодом {0}: {1}</value></data>
-  <data name="Done" xml:space="preserve"><value>ГОТОВО. База «{0}» подключена: OData {1} (только с этой машины), пользователь bilem — только чтение.</value></data>
-  <data name="DoneWithWrite" xml:space="preserve"><value>ГОТОВО. База «{0}» подключена: OData {1} (только с этой машины), пользователь bilem — чтение и черновики для {2} объектов (вкладка «Доступ»); проведения и удаления нет.</value></data>
+  <data name="Done" xml:space="preserve"><value>ГОТОВО. База «{0}» подключена: OData {1} (только с этой машины), пользователь bilem — чтение. Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности.</value></data>
+  <data name="DoneWithWrite" xml:space="preserve"><value>ГОТОВО. База «{0}» подключена: OData {1} (только с этой машины), пользователь bilem — чтение и создание для {2} видов документов (вкладка «Доступ»). Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности; проведения и удаления нет.</value></data>
   <data name="FolderRights" xml:space="preserve"><value>Пулу IIS {1} выдано чтение и запись на папку базы {0} (снимается при удалении базы)</value></data>
   <data name="FolderRightsRevoked" xml:space="preserve"><value>Права пула {1} на папку базы {0} сняты</value></data>
   <data name="Hint401" xml:space="preserve"><value>Пользователь bilem не принят: запустите настройку базы ещё раз с флагом --reset-password.</value></data>
@@ -302,7 +302,7 @@
   <data name="PlanPublishWeb" xml:space="preserve"><value>Опубликую {0} на {1} (платформа {2}-бит), доступ только с 127.0.0.1</value></data>
   <data name="PlanReady" xml:space="preserve"><value>План готов. Чтобы применить — команда setup (в окне — «Подключить»).</value></data>
   <data name="PlanRegisterCom" xml:space="preserve"><value>COM-коннектор: {0} — зарегистрирую {1}</value></data>
-  <data name="PlanUserCreate" xml:space="preserve"><value>Создам пользователя {0} с ролями «только чтение»: {1}</value></data>
+  <data name="PlanUserCreate" xml:space="preserve"><value>Создам пользователя {0}: роли чтения {1} и узкие роли записи счёта, акта сверки и доверенности</value></data>
   <data name="PlanUserPassword" xml:space="preserve"><value>Новый случайный пароль bilem → DPAPI {0}</value></data>
   <data name="PlanUserUpdate" xml:space="preserve"><value>Обновлю пользователя {0}, роли: {1}</value></data>
   <data name="PlanWebServer" xml:space="preserve"><value>Веб-сервер: {0}</value></data>
@@ -377,7 +377,7 @@
   <data name="Step_publish" xml:space="preserve"><value>Публикация только для этой машины</value></data>
   <data name="Step_remove" xml:space="preserve"><value>Удаление базы</value></data>
   <data name="Step_roles" xml:space="preserve"><value>Роли пользователя bilem</value></data>
-  <data name="Step_user" xml:space="preserve"><value>Пользователь bilem (только чтение)</value></data>
+  <data name="Step_user" xml:space="preserve"><value>Пользователь bilem</value></data>
   <data name="Step_verify" xml:space="preserve"><value>Проверки: чтение, запрет записи, доступ</value></data>
   <data name="SvcCrashed" xml:space="preserve"><value>Необработанная ошибка в службе: {0}</value></data>
   <data name="SvcNeedAdmin" xml:space="preserve"><value>Команда службе — только от администратора (с повышенными правами).</value></data>
@@ -477,7 +477,7 @@
   <data name="UiAboutGitHub" xml:space="preserve"><value>Исходный код на GitHub</value></data>
   <data name="UiAboutText" xml:space="preserve"><value>Bilem Agent подключает базы 1С этого компьютера к ИИ-ассистентам (Claude Code, Claude Desktop, Cursor) через MCP; доступ к данным открыт только для этой машины.
 
-Bilem не меняет ваш бухгалтерский учёт: читает данные и готовит только счета, доверенности, акты сверки и карточки контрагентов — после вашего подтверждения, непроведёнными.</value></data>
+Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности — после вашего подтверждения, без проведения.</value></data>
   <data name="UiAccessApply" xml:space="preserve"><value>Применить</value></data>
   <data name="UiAccessBase" xml:space="preserve"><value>База:</value></data>
   <data name="UiAccessCancel" xml:space="preserve"><value>Отменить</value></data>
@@ -490,7 +490,7 @@ Bilem не меняет ваш бухгалтерский учёт: читает
   <data name="UiAccessLockedTip" xml:space="preserve"><value>Персональные данные — не отдаём ИИ. В облаке можно открыть отдельным людям.</value></data>
   <data name="UiAccessMcpOnly" xml:space="preserve"><value>Для ИИ изменения уже действуют. В 1С они не применены — нажмите «Применить» ещё раз, когда будет пароль администратора 1С.</value></data>
   <data name="UiAccessMore" xml:space="preserve"><value> и ещё {0}</value></data>
-  <data name="UiAccessNote" xml:space="preserve"><value>Только просмотр. У пользователя bilem — только чтение; запись запрещена самой 1С и проверяется при каждой настройке и проверке базы.</value></data>
+  <data name="UiAccessNote" xml:space="preserve"><value>Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности. Всё остальное 1С отклоняет — это проверяется при каждой настройке и проверке базы.</value></data>
   <data name="UiAccessNow" xml:space="preserve"><value>Чтение: {0} из {1} · запись: {2}. Галочка раздела — все объекты раздела.</value></data>
   <data name="UiAccessPending1C" xml:space="preserve"><value>Слой MCP применён, в 1С — ещё нет. «Применить» — с паролем администратора 1С.</value></data>
   <data name="UiAccessReadOff" xml:space="preserve"><value>чтение −{0} ({1})</value></data>
@@ -509,7 +509,7 @@ Bilem не меняет ваш бухгалтерский учёт: читает
 
 Проведение и удаление Bilem Agent не делает никогда.</value></data>
   <data name="UiAdd" xml:space="preserve"><value>Добавить…</value></data>
-  <data name="UiAddBaseNote" xml:space="preserve"><value>Bilem Agent создаст в базе пользователя bilem только с правами чтения, опубликует базу для этой машины (127.0.0.1) и проверит, что запись запрещена. Учёт не меняется. Пароль администратора нужен только на время настройки и нигде не сохраняется.</value></data>
+  <data name="UiAddBaseNote" xml:space="preserve"><value>Bilem Agent создаст в базе пользователя bilem, опубликует базу для этой машины (127.0.0.1) и проверит, что 1С отклоняет запись всего, кроме счетов на оплату, актов сверки и доверенностей. Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности. Пароль администратора нужен только на время настройки и нигде не сохраняется.</value></data>
   <data name="UiAddBaseTitle" xml:space="preserve"><value>Добавить базу 1С</value></data>
   <data name="UiAdminLogin" xml:space="preserve"><value>Логин администратора 1С:</value></data>
   <data name="UiAdminPassword" xml:space="preserve"><value>Пароль:</value></data>
@@ -688,7 +688,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiPrintTrialDoc" xml:space="preserve"><value>Пробный документ…</value></data>
   <data name="UiPrintTrialPoaTitle" xml:space="preserve"><value>Пробная доверенность — {0}</value></data>
   <data name="UiPrintTrialTitle" xml:space="preserve"><value>Пробный счёт — {0}</value></data>
-  <data name="UiPromise" xml:space="preserve"><value>Bilem не меняет ваш бухгалтерский учёт: читает данные и готовит только счета, доверенности, акты сверки и карточки контрагентов — после вашего подтверждения, непроведёнными.</value></data>
+  <data name="UiPromise" xml:space="preserve"><value>Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности — после вашего подтверждения, без проведения.</value></data>
   <data name="UiRemove" xml:space="preserve"><value>Удалить</value></data>
   <data name="UiRemoveConfirm" xml:space="preserve"><value>Убрать базу «{0}» ({1}) из Bilem Agent?
 
@@ -1048,4 +1048,91 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiLocalMit" xml:space="preserve"><value>Открытый код (MIT), без ограничений</value></data>
   <data name="UiCloudPaid" xml:space="preserve"><value>Платно, по подписке. Условия и оплата — в кабинете app.bilem.ai.</value></data>
   <data name="UiStateCloudPrefix" xml:space="preserve"><value>Bilem Cloud · коммерческая лицензия · </value></data>
+  <data name="ToolDraftInvTitle" xml:space="preserve"><value>Черновик счёта на оплату</value></data>
+  <data name="ToolDraftInvDesc" xml:space="preserve"><value>Собирает черновик нового счёта на оплату покупателю и НИЧЕГО не пишет в 1С. Вход: покупатель (название или БИН), строки (что продаём, количество, цена или сумма), при нескольких фирмах — фирма. Ответ status=ready: draft_id (действует 15 минут, один раз), фирма, покупатель с БИН, договор, строки, НДС, итог, warnings — покажи это человеку целиком и спроси «Создать счёт?». status=choose — найдено несколько (field, options): спроси, какой, и вызови снова с buyer_id / organization / contract / item. status=not_found — не нашла (similar — похожие): скажи прямо и предложи похожие; справочники Bilem не создаёт. Услуги нет в номенклатуре — можно взять похожую услугу и передать слова человека в content: в счёте будет этот текст. Сумма понимается как в последнем счёте этой фирмы (vat_included). Любое изменение — новый черновик.</value></data>
+  <data name="ToolDraftInvParamBuyer" xml:space="preserve"><value>Покупатель: название или его часть, либо БИН/ИИН (12 цифр).</value></data>
+  <data name="ToolDraftInvParamBuyerId" xml:space="preserve"><value>id покупателя из options прошлого ответа (status=choose, field=buyer).</value></data>
+  <data name="ToolDraftInvParamOrg" xml:space="preserve"><value>Фирма, от которой счёт (название, БИН или id из options). Нужна, только если в базе несколько организаций.</value></data>
+  <data name="ToolDraftInvParamContract" xml:space="preserve"><value>Договор с покупателем (название, номер или id из options). Без него — основной договор покупателя с этой фирмой.</value></data>
+  <data name="ToolDraftInvParamLines" xml:space="preserve"><value>Строки счёта, от 1 до 20.</value></data>
+  <data name="ToolDraftInvParamItem" xml:space="preserve"><value>Товар или услуга из номенклатуры 1С — как сказал человек (или name из options / similar).</value></data>
+  <data name="ToolDraftInvParamQty" xml:space="preserve"><value>Количество, по умолчанию 1.</value></data>
+  <data name="ToolDraftInvParamPrice" xml:space="preserve"><value>Цена за единицу. Нужна цена или сумма.</value></data>
+  <data name="ToolDraftInvParamSum" xml:space="preserve"><value>Сумма строки («500 тысяч» → 500000). Нужна цена или сумма.</value></data>
+  <data name="ToolDraftInvParamContent" xml:space="preserve"><value>Только для услуг: текст строки в счёте словами человека («Настройка сервера»), когда в item — похожая услуга из номенклатуры.</value></data>
+  <data name="ToolCreateInvTitle" xml:space="preserve"><value>Создать счёт в 1С</value></data>
+  <data name="ToolCreateInvDesc" xml:space="preserve"><value>Создаёт в 1С ровно один «Счёт на оплату покупателю» по черновику draft_invoice. Вызывай ТОЛЬКО после явного «да» человека на показанный черновик; черновик срабатывает один раз и живёт 15 минут. Ответ: номер и дата счёта. Сразу после — print_invoice с этим number, чтобы прислать PDF. Счёт не проводится и проводок не делает; изменить или удалить счёт Bilem не может.</value></data>
+  <data name="ToolCreateInvParamDraft" xml:space="preserve"><value>draft_id из ответа draft_invoice со status=ready.</value></data>
+  <data name="InvDraftUnknown" xml:space="preserve"><value>Такого черновика счёта нет (или агент перезапускался).</value></data>
+  <data name="InvDraftUsed" xml:space="preserve"><value>Этот черновик уже выполнен — повторно не делаю.</value></data>
+  <data name="InvDraftForeign" xml:space="preserve"><value>Этот черновик собран в другом разговоре — создать по нему счёт нельзя.</value></data>
+  <data name="InvDraftExpired" xml:space="preserve"><value>Черновик устарел: он действует {0} минут.</value></data>
+  <data name="InvHintNewDraft" xml:space="preserve"><value>Соберите черновик заново (draft_invoice) и подтвердите его.</value></data>
+  <data name="InvWriteOff" xml:space="preserve"><value>Создание счетов в базе «{0}» выключено.</value></data>
+  <data name="InvHintWriteOff" xml:space="preserve"><value>Включите запись «Счёт на оплату покупателю» в Bilem Agent: вкладка «Доступ» этой базы → «Применить» (нужен администратор 1С).</value></data>
+  <data name="InvBadQty" xml:space="preserve"><value>Количество должно быть больше нуля.</value></data>
+  <data name="InvNeedPrice" xml:space="preserve"><value>Для строки нужна цена или сумма.</value></data>
+  <data name="InvBadSum" xml:space="preserve"><value>Цена и сумма должны быть больше нуля.</value></data>
+  <data name="InvBadNumber" xml:space="preserve"><value>Не понимаю число «{0}».</value></data>
+  <data name="InvPriceSumMismatch" xml:space="preserve"><value>Цена {0} × количество {1} не равно сумме {2} — уточните, что верно.</value></data>
+  <data name="InvChooseNote" xml:space="preserve"><value>Нашлось несколько — спросите человека, какой, и соберите черновик снова с выбранным.</value></data>
+  <data name="InvBuyerIdBad" xml:space="preserve"><value>Покупатель с таким id не найден (или помечен на удаление).</value></data>
+  <data name="InvNeedBuyer" xml:space="preserve"><value>Укажите покупателя: название (от 2 букв) или БИН.</value></data>
+  <data name="InvBuyerNotFound" xml:space="preserve"><value>Такого покупателя в базе нет. Bilem контрагентов не создаёт — выберите из похожих или заведите его в 1С.</value></data>
+  <data name="InvOrgNotFound" xml:space="preserve"><value>Фирмы «{0}» в этой базе нет.</value></data>
+  <data name="InvNoOrg" xml:space="preserve"><value>В базе нет ни одной организации.</value></data>
+  <data name="InvContractNotFound" xml:space="preserve"><value>Такого договора с покупателем нет — в similar договоры этой фирмы с ним.</value></data>
+  <data name="InvNoContract" xml:space="preserve"><value>Договора с покупателем у этой фирмы нет — счёт будет без договора.</value></data>
+  <data name="InvNoCurrency" xml:space="preserve"><value>В базе не нашлась валюта тенге (код 398).</value></data>
+  <data name="InvForeignCurrency" xml:space="preserve"><value>Договор в валюте «{0}» — валютные счета Bilem пока не создаёт.</value></data>
+  <data name="InvNeedLines" xml:space="preserve"><value>Нужна хотя бы одна строка: что продаём и сумма.</value></data>
+  <data name="InvTooManyLines" xml:space="preserve"><value>Не больше {0} строк в одном счёте.</value></data>
+  <data name="InvNeedItem" xml:space="preserve"><value>В строке {0} не указан товар или услуга.</value></data>
+  <data name="InvItemNotFound" xml:space="preserve"><value>Такой позиции в номенклатуре нет. Bilem номенклатуру не создаёт — выберите из похожих или заведите её в 1С.</value></data>
+  <data name="InvItemNotFoundContent" xml:space="preserve"><value>Такой позиции в номенклатуре нет. Bilem номенклатуру не создаёт. Можно выбрать похожую услугу (item) и передать слова человека в content — в счёте будет этот текст; скажите человеку, какая услуга будет в 1С.</value></data>
+  <data name="InvContentOff" xml:space="preserve"><value>Строка {0}: свой текст для услуги выключен — в счёте будет наименование из номенклатуры.</value></data>
+  <data name="InvContentGoods" xml:space="preserve"><value>Строка {0}: это товар, у товара в счёте своего текста нет — будет наименование из номенклатуры.</value></data>
+  <data name="InvNoBankAccount" xml:space="preserve"><value>У фирмы не указан основной банковский счёт — в счёте не будет реквизитов для оплаты.</value></data>
+  <data name="InvNoTemplate" xml:space="preserve"><value>У этой фирмы ещё нет счетов — НДС, банковский счёт и КНП взяты из настроек организации, проверьте.</value></data>
+  <data name="InvComment" xml:space="preserve"><value>Создан Bilem по черновику {0}</value></data>
+  <data name="InvDraftNote" xml:space="preserve"><value>В 1С ничего не записано. Покажите черновик человеку и спросите «Создать счёт?»; только после «да» — create_invoice с draft_id.</value></data>
+  <data name="InvCreateFailed" xml:space="preserve"><value>1С не создала счёт (HTTP {0}): {1}</value></data>
+  <data name="InvCreatedNote" xml:space="preserve"><value>Счёт создан в 1С (не проведён — счета не проводятся). Сразу вызовите print_invoice с этим number и пришлите PDF.</value></data>
+  <data name="InvAuditDraft" xml:space="preserve"><value>Счёт по черновику {0}, база «{1}»</value></data>
+  <data name="AuditLineCreate" xml:space="preserve"><value>Создан в 1С: {0} — по запросу {1}</value></data>
+  <data name="AuditLineCreateFailed" xml:space="preserve"><value>Не создан в 1С: {0} — по запросу {1}: {2}</value></data>
+  <data name="WriteNoRole" xml:space="preserve"><value>Для «{0}» в конфигурации нет узкой роли записи — запись не включаю (право не расширяю).</value></data>
+  <data name="WriteDefaultOn" xml:space="preserve"><value>Запись для пользователя bilem: {0} — документы без проводок, остальное 1С отклоняет.</value></data>
+  <data name="VerifyWriteAllowedOwn" xml:space="preserve"><value>Создавать можно только: {0}; всё остальное проверено на отказ.</value></data>
+  <data name="ToolUpdateInvTitle" xml:space="preserve"><value>Исправить свой счёт</value></data>
+  <data name="ToolUpdateInvDesc" xml:space="preserve"><value>Исправляет счёт, который создал сам Bilem (create_invoice) для этого же собеседника не раньше 24 часов назад; номер и дата остаются. Два вызова: 1) number + что меняем — lines (ПОЛНЫЙ новый набор строк, как в draft_invoice) и/или contract — НИЧЕГО не пишет, отвечает status=ready, draft_id, before и after («было → стало»), changes; покажи человеку и спроси «Исправить?»; 2) только после «да» — снова update_invoice только с draft_id: правит этот счёт в 1С. Потом print_invoice с number — новый PDF. Покупателя и фирму не меняет (это новый счёт), чужие счета и счета, которые меняли в 1С руками, не трогает. status=choose / not_found — как в draft_invoice.</value></data>
+  <data name="ToolUpdateInvParamNumber" xml:space="preserve"><value>Номер счёта, который создал Bilem (как в ответе create_invoice).</value></data>
+  <data name="ToolUpdateInvParamLines" xml:space="preserve"><value>Полный новый набор строк счёта (заменяет все строки), от 1 до 20.</value></data>
+  <data name="ToolUpdateInvParamDraft" xml:space="preserve"><value>draft_id из первого ответа update_invoice — только после «да» человека.</value></data>
+  <data name="ToolCancelInvTitle" xml:space="preserve"><value>Пометить свой счёт на удаление</value></data>
+  <data name="ToolCancelInvDesc" xml:space="preserve"><value>Помечает на удаление счёт, который создал сам Bilem для этого же собеседника не раньше 24 часов назад. Два вызова: 1) number — НИЧЕГО не пишет, отвечает status=ready, draft_id и сам счёт (номер, дата, покупатель, сумма); спроси «Пометить на удаление?»; 2) только после «да» — cancel_invoice только с draft_id. Окончательно не удаляет (пометку снимает бухгалтер в 1С); чужие счета не трогает.</value></data>
+  <data name="ToolCancelInvParamDraft" xml:space="preserve"><value>draft_id из первого ответа cancel_invoice — только после «да» человека.</value></data>
+  <data name="InvDraftWrongKind" xml:space="preserve"><value>Этот черновик — для {0}, а не для этого инструмента.</value></data>
+  <data name="InvNotOwn" xml:space="preserve"><value>Счёт {0} создан не Bilem в этом разговоре — менять его Bilem не может.</value></data>
+  <data name="InvHintNotOwn" xml:space="preserve"><value>Исправлять и помечать можно только счета, которые Bilem создал по вашей просьбе за последние 24 часа; остальные — в 1С.</value></data>
+  <data name="InvOwnTooOld" xml:space="preserve"><value>Счёт {0} создан больше {1} часов назад — Bilem его уже не меняет.</value></data>
+  <data name="InvOwnGone" xml:space="preserve"><value>Счёта {0} в 1С больше нет.</value></data>
+  <data name="InvOwnMarked" xml:space="preserve"><value>Счёт {0} уже помечен на удаление.</value></data>
+  <data name="InvOwnChanged" xml:space="preserve"><value>Счёт {0} уже меняли в 1С после Bilem — не трогаю, чтобы не затереть правку.</value></data>
+  <data name="InvHintOwnChanged" xml:space="preserve"><value>Исправьте счёт в 1С или создайте новый.</value></data>
+  <data name="InvNeedNumber" xml:space="preserve"><value>Укажите номер счёта (number).</value></data>
+  <data name="InvNothingToChange" xml:space="preserve"><value>Что исправить? Передайте новые строки (lines) и/или договор (contract).</value></data>
+  <data name="InvChangeLines" xml:space="preserve"><value>строки и сумма</value></data>
+  <data name="InvChangeContract" xml:space="preserve"><value>договор: {0}</value></data>
+  <data name="InvUpdateDraftNote" xml:space="preserve"><value>В 1С ничего не записано. Покажите «было → стало» и спросите «Исправить?»; только после «да» — update_invoice с draft_id.</value></data>
+  <data name="InvCancelDraftNote" xml:space="preserve"><value>В 1С ничего не записано. Спросите «Пометить счёт на удаление?»; только после «да» — cancel_invoice с draft_id.</value></data>
+  <data name="InvUpdateFailed" xml:space="preserve"><value>1С не исправила счёт (HTTP {0}): {1}</value></data>
+  <data name="InvCancelFailed" xml:space="preserve"><value>1С не пометила счёт (HTTP {0}): {1}</value></data>
+  <data name="InvUpdatedNote" xml:space="preserve"><value>Счёт исправлен в 1С, номер и дата те же. Сразу вызовите print_invoice с этим number и пришлите новый PDF.</value></data>
+  <data name="InvCancelledNote" xml:space="preserve"><value>Счёт помечен на удаление в 1С (окончательно удаляет бухгалтер).</value></data>
+  <data name="AuditLineInvUpdate" xml:space="preserve"><value>Исправлен в 1С: {0} — по запросу {1}</value></data>
+  <data name="AuditLineInvCancel" xml:space="preserve"><value>Помечен на удаление в 1С: {0} — по запросу {1}</value></data>
+  <data name="UiRightsUpdate" xml:space="preserve"><value>Обновить права Bilem</value></data>
+  <data name="UiRightsUpdateTip" xml:space="preserve"><value>Включить создание: {0}. Нужен вход администратора 1С (не сохраняется); после — проверка, что всё остальное 1С отклоняет.</value></data>
+  <data name="CliRightsDone" xml:space="preserve"><value>Права Bilem для «{0}» уже актуальны: {1}.</value></data>
 </root>

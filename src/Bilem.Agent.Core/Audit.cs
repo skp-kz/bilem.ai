@@ -15,7 +15,8 @@ namespace Bilem.Agent.Core
     /// </summary>
     public static class Audit
     {
-        public const string Print = "print", Send = "send", SendFailed = "send_failed", Update = "update";
+        public const string Print = "print", Send = "send", SendFailed = "send_failed", Update = "update", Create = "create", CreateFailed = "create_failed",
+            InvoiceUpdate = "invoice_update", InvoiceCancel = "invoice_cancel";
         private static readonly object Sync = new object();
 
         public static string FileFor(DateTime t) => Path.Combine(Paths.LogsDir, $"audit-{t:yyyy-MM}.jsonl");
@@ -34,7 +35,7 @@ namespace Bilem.Agent.Core
 
         /// <summary>Записать событие (и строку в «Журнал»). Сбой записи аудита не роняет инструмент — предупреждение в журнал.</summary>
         public static JObject Write(string action, string baseSlug, string kind, string title, string pdfPath, byte[] pdf,
-            string to = null, string bcc = null, string smtp = null, McpCaller caller = null)
+            string to = null, string bcc = null, string smtp = null, McpCaller caller = null, JObject extra = null)
         {
             caller = caller ?? McpCaller.Current;
             var now = DateTime.Now;
@@ -54,6 +55,8 @@ namespace Bilem.Agent.Core
             if (caller == null) who["client"] = "bilem-agent";
             o["requested_by"] = who;
             if (to != null) o["mail"] = new JObject { ["to"] = to, ["bcc"] = bcc, ["smtp"] = smtp };
+            // Создание документа (#99): черновик, номер, сумма — журнал создания по спецификации хранит и сумму
+            if (extra != null) o["created"] = extra;
 
             lock (Sync)
             {
@@ -73,10 +76,14 @@ namespace Bilem.Agent.Core
             }
             var by = caller?.ToString() ?? "Bilem Agent";
             var line = action == Update ? Txt.F("AuditLineUpdate", title, by)
+                : action == Create ? Txt.F("AuditLineCreate", title, by)
+                : action == InvoiceUpdate ? Txt.F("AuditLineInvUpdate", title, by)
+                : action == InvoiceCancel ? Txt.F("AuditLineInvCancel", title, by)
+                : action == CreateFailed ? Txt.F("AuditLineCreateFailed", title, by, (string)extra?["error"])
                 : to == null ? Txt.F("AuditLinePrint", title, by)
                 : action == Send ? Txt.F("AuditLineSend", title, to, by)
                 : Txt.F("AuditLineSendFailed", title, to, by, smtp);
-            if (action == SendFailed) Log.Fail(line); else Log.Ok(line);
+            if (action == SendFailed || action == CreateFailed) Log.Fail(line); else Log.Ok(line);
             return o;
         }
     }

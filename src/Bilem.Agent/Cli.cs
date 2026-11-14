@@ -245,7 +245,9 @@ namespace Bilem.Agent
                 cfg = AgentConfig.Load(); b = cfg.Find(slug);
             }
             var cat = Access.CatalogOf(b);
-            List<string> L(string k) => (Get(a, k) ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToList();
+            // «default» — запись по умолчанию (счёт, акт сверки, доверенность): «Обновить права Bilem» из командной строки (#99)
+            List<string> L(string k) => (Get(a, k) ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim())
+                .SelectMany(x => x == "default" ? Access.DefaultWrite.Where(d => cat.Find(d) != null) : new[] { x }).ToList();
             var read = new HashSet<string>(b.ReadEffective);
             var write = new HashSet<string>(b.Write ?? new List<string>());
             read.UnionWith(L("read-on")); write.UnionWith(L("write-on"));

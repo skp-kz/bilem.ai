@@ -58,6 +58,8 @@ namespace Bilem.Agent
         private readonly AccessTree _accessTree = new AccessTree { Dock = DockStyle.Fill };
         private readonly Label _accessSummary = new Label { AutoSize = true, ForeColor = SystemColors.GrayText, Padding = new Padding(0, 4, 0, 2) };
         private readonly Button _accessApply = new Button { Text = Txt.S("UiAccessApply"), AutoSize = true, Enabled = false };
+        /// <summary>Базы, подключённые до beta.12: одна кнопка — запись счёта, акта сверки и доверенности (#99), пароль администратора, проверка.</summary>
+        private readonly Button _accessRights = new Button { Text = Txt.S("UiRightsUpdate"), AutoSize = true, Visible = false };
         private readonly Button _accessCancel = new Button { Text = Txt.S("UiAccessCancel"), AutoSize = true, Enabled = false };
         private readonly ToolTip _tips = new ToolTip();
         private PrintPanel _print;
@@ -361,6 +363,8 @@ namespace Bilem.Agent
             var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0) };
             _accessApply.Click += (s, e) => ApplyAccess();
             _accessCancel.Click += (s, e) => ShowAccess();
+            _accessRights.Click += (s, e) => UpdateBilemRights();
+            buttons.Controls.Add(_accessRights);
             buttons.Controls.Add(_accessApply);
             buttons.Controls.Add(_accessCancel);
             t.Controls.Add(buttons, 0, 4);
@@ -1055,8 +1059,36 @@ namespace Bilem.Agent
             _accessWrite.ForeColor = !at.HasValue ? Color.DarkGoldenrod : writes.Count == 0 ? Color.DarkGreen : Color.DarkGoldenrod;
             _tips.SetToolTip(_accessWrite, Txt.F("UiRoles", b.User, string.Join(", ", b.Roles)));
             _accessTree.Load(Access.CatalogOf(b), b.ReadEffective, b.Write);
+            var missing = MissingDefaultWrite(b);
+            _accessRights.Visible = missing.Count > 0;
+            if (missing.Count > 0) _tips.SetToolTip(_accessRights, Txt.F("UiRightsUpdateTip", string.Join(", ", missing.Select(Access.CatalogOf(b).TitleOf))));
             UpdateAccessSummary();
         }
+
+        /// <summary>Запись по умолчанию (счёт, акт сверки, доверенность), которой у базы ещё нет в 1С.</summary>
+        private static List<string> MissingDefaultWrite(BaseConfig b)
+        {
+            var cat = Access.CatalogOf(b);
+            var have = new HashSet<string>(b.WriteInOneC ?? new List<string>());
+            return Access.DefaultWrite.Where(x => cat.Find(x) != null && !have.Contains(x)).ToList();
+        }
+
+        /// <summary>
+        /// «Обновить права Bilem»: к выбранному на «Доступе» добавить запись трёх документов и применить в 1С — пароль администратора
+        /// (не сохраняется), подбор самых узких ролей, проверка «остальное 1С отклоняет». Девять шагов настройки заново не нужны.
+        /// </summary>
+        private void UpdateBilemRights()
+        {
+            var b = AgentConfig.Load().Find(_accessBase.SelectedItem as string ?? "");
+            if (b == null) return;
+            var missing = MissingDefaultWrite(b);
+            if (missing.Count == 0) return;
+            _accessTree.Load(Access.CatalogOf(b), b.ReadEffective.Concat(missing).Distinct(), (b.Write ?? new List<string>()).Concat(missing).Distinct());
+            _skipWriteWarn = true;
+            try { ApplyAccess(); } finally { _skipWriteWarn = false; }
+        }
+
+        private bool _skipWriteWarn;
 
         /// <summary>Сводка «что изменится» до «Применить».</summary>
         private void UpdateAccessSummary()
@@ -1096,7 +1128,7 @@ namespace Bilem.Agent
             var cat = Access.CatalogOf(b);
             var (read, write) = Access.Normalize(cat, _accessTree.Read, _accessTree.Write);
             var c = Access.Diff(b, read, write);
-            if (c.WriteOn.Count > 0 && (b.Write == null || b.Write.Count == 0)
+            if (c.WriteOn.Count > 0 && (b.Write == null || b.Write.Count == 0) && !_skipWriteWarn
                 && MessageBox.Show(this, Txt.S("UiAccessWriteWarn"), Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK) return;
 
             if (c.Any)

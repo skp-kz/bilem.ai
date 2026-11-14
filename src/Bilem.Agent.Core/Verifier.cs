@@ -123,6 +123,8 @@ namespace Bilem.Agent.Core
             }
             else Log.Warn(Txt.F("VerifyPatchSkipped", catSet, cat.Code));
             r.WriteDenied = writeFails == 0;
+            // Счёт, акт сверки, доверенность разрешены намеренно (#99) — проверка отказа шла на других документе и справочнике
+            if (writeFails == 0 && b.Write != null && b.Write.Count > 0) Log.Ok(Txt.F("VerifyWriteAllowedOwn", string.Join(", ", b.Write.Select(x => Access.CatalogOf(b).TitleOf(x)))));
             r.Failures += writeFails;
 
             // (3) Периметр

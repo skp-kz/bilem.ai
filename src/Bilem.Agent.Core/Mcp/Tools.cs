@@ -213,6 +213,85 @@ namespace Bilem.Agent.Core.Mcp
                     }, "document"),
                     Handler = a => SendDocument(bases(), a),
                 },
+                new McpTool
+                {
+                    Name = InvoiceCreate.DraftTool, Title = Txt.S("ToolDraftInvTitle"), Description = Txt.S("ToolDraftInvDesc"),
+                    InputSchema = Schema(new JObject
+                    {
+                        ["buyer"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamBuyer") },
+                        ["buyer_id"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamBuyerId") },
+                        ["organization"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamOrg") },
+                        ["contract"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamContract") },
+                        ["lines"] = new JObject
+                        {
+                            ["type"] = "array", ["minItems"] = 1, ["maxItems"] = InvoiceCreate.MaxLines, ["description"] = Txt.S("ToolDraftInvParamLines"),
+                            ["items"] = new JObject
+                            {
+                                ["type"] = "object",
+                                ["properties"] = new JObject
+                                {
+                                    ["item"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamItem") },
+                                    ["quantity"] = new JObject { ["type"] = "number", ["description"] = Txt.S("ToolDraftInvParamQty") },
+                                    ["price"] = new JObject { ["type"] = "number", ["description"] = Txt.S("ToolDraftInvParamPrice") },
+                                    ["sum"] = new JObject { ["type"] = "number", ["description"] = Txt.S("ToolDraftInvParamSum") },
+                                    ["content"] = new JObject { ["type"] = "string", ["maxLength"] = 1000, ["description"] = Txt.S("ToolDraftInvParamContent") },
+                                },
+                                ["required"] = new JArray("item"),
+                            },
+                        },
+                        ["base"] = baseProp,
+                    }, "lines"),
+                    Handler = a => InvoiceCreate.MakeDraft(bases(), a),
+                },
+                new McpTool
+                {
+                    Name = InvoiceCreate.CreateTool, Title = Txt.S("ToolCreateInvTitle"), Description = Txt.S("ToolCreateInvDesc"),
+                    InputSchema = Schema(new JObject
+                    {
+                        ["draft_id"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolCreateInvParamDraft") },
+                    }, "draft_id"),
+                    Handler = a => InvoiceCreate.Create(bases(), a),
+                },
+                new McpTool
+                {
+                    Name = InvoiceCreate.UpdateTool, Title = Txt.S("ToolUpdateInvTitle"), Description = Txt.S("ToolUpdateInvDesc"),
+                    InputSchema = Schema(new JObject
+                    {
+                        ["number"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolUpdateInvParamNumber") },
+                        ["lines"] = new JObject
+                        {
+                            ["type"] = "array", ["minItems"] = 1, ["maxItems"] = InvoiceCreate.MaxLines, ["description"] = Txt.S("ToolUpdateInvParamLines"),
+                            ["items"] = new JObject
+                            {
+                                ["type"] = "object",
+                                ["properties"] = new JObject
+                                {
+                                    ["item"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamItem") },
+                                    ["quantity"] = new JObject { ["type"] = "number", ["description"] = Txt.S("ToolDraftInvParamQty") },
+                                    ["price"] = new JObject { ["type"] = "number", ["description"] = Txt.S("ToolDraftInvParamPrice") },
+                                    ["sum"] = new JObject { ["type"] = "number", ["description"] = Txt.S("ToolDraftInvParamSum") },
+                                    ["content"] = new JObject { ["type"] = "string", ["maxLength"] = 1000, ["description"] = Txt.S("ToolDraftInvParamContent") },
+                                },
+                                ["required"] = new JArray("item"),
+                            },
+                        },
+                        ["contract"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamContract") },
+                        ["draft_id"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolUpdateInvParamDraft") },
+                        ["base"] = baseProp,
+                    }),
+                    Handler = a => InvoiceCreate.Update(bases(), a),
+                },
+                new McpTool
+                {
+                    Name = InvoiceCreate.CancelTool, Title = Txt.S("ToolCancelInvTitle"), Description = Txt.S("ToolCancelInvDesc"),
+                    InputSchema = Schema(new JObject
+                    {
+                        ["number"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolUpdateInvParamNumber") },
+                        ["draft_id"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolCancelInvParamDraft") },
+                        ["base"] = baseProp,
+                    }),
+                    Handler = a => InvoiceCreate.Cancel(bases(), a),
+                },
             };
         }
 
