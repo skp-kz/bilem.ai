@@ -62,13 +62,13 @@
   <data name="CheckPending" xml:space="preserve"><value>настройка не завершена</value></data>
   <data name="CliAccessNeedsAdmin" xml:space="preserve"><value>Разделы из 1С загружаются под администратором 1С: --admin «логин» [--password «пароль»].</value></data>
   <data name="CliDropNeedsAdmin" xml:space="preserve"><value>Чтобы удалить пользователя bilem из базы, нужен логин администратора 1С: --admin «логин» [--password «пароль»].</value></data>
-  <data name="CliHelp" xml:space="preserve"><value>Bilem Agent — локальный режим: ИИ-ассистент отвечает на вопросы из 1С. Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности.
+  <data name="CliHelp" xml:space="preserve"><value>Bilem Agent — локальный режим: ИИ-ассистент отвечает на вопросы из 1С. Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки, доверенности и новых контрагентов.
 
 Без аргументов — окно. Команды:
   diag  --base «папка» [--admin «логин» [--password «пароль»]] [--slug «имя»]
         диагностика и план, ничего не меняет
   setup --base «папка» --admin «логин» [--password «пароль»] [--slug «имя»] [--enable-iis] [--allow-dc] [--allow-com-register] [--reset-password] [--web auto|iis|apache]
-        подключить базу: пользователь bilem (чтение; создаёт только счета на оплату, акты сверки и доверенности), состав OData, публикация только для этой машины, проверки
+        подключить базу: пользователь bilem (чтение; создаёт только счета на оплату, акты сверки, доверенности и новых контрагентов), состав OData, публикация только для этой машины, проверки
   verify [--slug «имя»] [--admin «логин» [--password «пароль»]]
         проверки: чтение, запрет записи, 401 без пароля, 403 по адресам машины (с --admin — и роли bilem)
   list  подключённые базы
@@ -183,8 +183,8 @@
   <data name="DiagWriteDenied" xml:space="preserve"><value>Запись запрещена</value></data>
   <data name="DiagWriteDeniedAt" xml:space="preserve"><value>проверено {0:dd.MM.yyyy HH:mm}</value></data>
   <data name="DismFailed" xml:space="preserve"><value>Установка компонентов Windows (dism) завершилась с кодом {0}: {1}</value></data>
-  <data name="Done" xml:space="preserve"><value>ГОТОВО. База «{0}» подключена: OData {1} (только с этой машины), пользователь bilem — чтение. Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности.</value></data>
-  <data name="DoneWithWrite" xml:space="preserve"><value>ГОТОВО. База «{0}» подключена: OData {1} (только с этой машины), пользователь bilem — чтение и создание для {2} видов документов (вкладка «Доступ»). Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности; проведения и удаления нет.</value></data>
+  <data name="Done" xml:space="preserve"><value>ГОТОВО. База «{0}» подключена: OData {1} (только с этой машины), пользователь bilem — чтение. Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки, доверенности и новых контрагентов.</value></data>
+  <data name="DoneWithWrite" xml:space="preserve"><value>ГОТОВО. База «{0}» подключена: OData {1} (только с этой машины), пользователь bilem — чтение и создание для {2} видов документов и справочников (вкладка «Доступ»). Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки, доверенности и новых контрагентов; проведения и удаления нет.</value></data>
   <data name="FolderRights" xml:space="preserve"><value>Пулу IIS {1} выдано чтение и запись на папку базы {0} (снимается при удалении базы)</value></data>
   <data name="FolderRightsRevoked" xml:space="preserve"><value>Права пула {1} на папку базы {0} сняты</value></data>
   <data name="Hint401" xml:space="preserve"><value>Пользователь bilem не принят: запустите настройку базы ещё раз с флагом --reset-password.</value></data>
@@ -482,7 +482,7 @@
   <data name="UiAboutGitHub" xml:space="preserve"><value>Исходный код на GitHub</value></data>
   <data name="UiAboutText" xml:space="preserve"><value>Bilem Agent подключает базы 1С этого компьютера к ИИ-ассистентам (Claude Code, Claude Desktop, Cursor) через MCP; доступ к данным открыт только для этой машины.
 
-Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности — после вашего подтверждения, без проведения.</value></data>
+Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки, доверенности и новых контрагентов — после вашего подтверждения, без проведения.</value></data>
   <data name="UiAccessApply" xml:space="preserve"><value>Применить</value></data>
   <data name="UiAccessBase" xml:space="preserve"><value>База:</value></data>
   <data name="UiAccessCancel" xml:space="preserve"><value>Отменить</value></data>
@@ -495,7 +495,7 @@ Bilem не меняет бухгалтерский учёт: создаёт то
   <data name="UiAccessLockedTip" xml:space="preserve"><value>Персональные данные — не отдаём ИИ. В облаке можно открыть отдельным людям.</value></data>
   <data name="UiAccessMcpOnly" xml:space="preserve"><value>Для ИИ изменения уже действуют. В 1С они не применены — нажмите «Применить» ещё раз, когда будет пароль администратора 1С.</value></data>
   <data name="UiAccessMore" xml:space="preserve"><value> и ещё {0}</value></data>
-  <data name="UiAccessNote" xml:space="preserve"><value>Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности. Всё остальное 1С отклоняет — это проверяется при каждой настройке и проверке базы.</value></data>
+  <data name="UiAccessNote" xml:space="preserve"><value>Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки, доверенности и новых контрагентов. Всё остальное 1С отклоняет — это проверяется при каждой настройке и проверке базы.</value></data>
   <data name="UiAccessNow" xml:space="preserve"><value>Чтение: {0} из {1} · запись: {2}. Галочка раздела — все объекты раздела.</value></data>
   <data name="UiAccessPending1C" xml:space="preserve"><value>Слой MCP применён, в 1С — ещё нет. «Применить» — с паролем администратора 1С.</value></data>
   <data name="UiAccessReadOff" xml:space="preserve"><value>чтение −{0} ({1})</value></data>
@@ -514,7 +514,7 @@ Bilem не меняет бухгалтерский учёт: создаёт то
 
 Проведение и удаление Bilem Agent не делает никогда.</value></data>
   <data name="UiAdd" xml:space="preserve"><value>Добавить…</value></data>
-  <data name="UiAddBaseNote" xml:space="preserve"><value>Bilem Agent создаст в базе пользователя bilem, опубликует базу для этой машины (127.0.0.1) и проверит, что 1С отклоняет запись всего, кроме счетов на оплату, актов сверки и доверенностей. Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности. Пароль администратора нужен только на время настройки и нигде не сохраняется.</value></data>
+  <data name="UiAddBaseNote" xml:space="preserve"><value>Bilem Agent создаст в базе пользователя bilem, опубликует базу для этой машины (127.0.0.1) и проверит, что 1С отклоняет запись всего, кроме счетов на оплату, актов сверки и доверенностей. Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки, доверенности и новых контрагентов. Пароль администратора нужен только на время настройки и нигде не сохраняется.</value></data>
   <data name="UiAddBaseTitle" xml:space="preserve"><value>Добавить базу 1С</value></data>
   <data name="UiAdminLogin" xml:space="preserve"><value>Логин администратора 1С:</value></data>
   <data name="UiAdminPassword" xml:space="preserve"><value>Пароль:</value></data>
@@ -693,7 +693,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiPrintTrialDoc" xml:space="preserve"><value>Пробный документ…</value></data>
   <data name="UiPrintTrialPoaTitle" xml:space="preserve"><value>Пробная доверенность — {0}</value></data>
   <data name="UiPrintTrialTitle" xml:space="preserve"><value>Пробный счёт — {0}</value></data>
-  <data name="UiPromise" xml:space="preserve"><value>Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки и доверенности — после вашего подтверждения, без проведения.</value></data>
+  <data name="UiPromise" xml:space="preserve"><value>Bilem не меняет бухгалтерский учёт: создаёт только счета на оплату, акты сверки, доверенности и новых контрагентов — после вашего подтверждения, без проведения.</value></data>
   <data name="UiRemove" xml:space="preserve"><value>Удалить</value></data>
   <data name="UiRemoveConfirm" xml:space="preserve"><value>Убрать базу «{0}» ({1}) из Bilem Agent?
 
@@ -1054,7 +1054,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="UiCloudPaid" xml:space="preserve"><value>Платно, по подписке. Условия и оплата — в кабинете app.bilem.ai.</value></data>
   <data name="UiStateCloudPrefix" xml:space="preserve"><value>Bilem Cloud · коммерческая лицензия · </value></data>
   <data name="ToolDraftInvTitle" xml:space="preserve"><value>Черновик счёта на оплату</value></data>
-  <data name="ToolDraftInvDesc" xml:space="preserve"><value>Собирает черновик нового счёта на оплату покупателю и НИЧЕГО не пишет в 1С. Вход: покупатель (название или БИН), строки (что продаём, количество, цена или сумма), при нескольких фирмах — фирма. «Повтори счёт N» — copy_number=N, строки по названиям не пересобирай. Ответ status=ready: draft_id (действует 15 минут, один раз), фирма, покупатель с БИН, договор, строки, НДС, итог, warnings — покажи это человеку целиком и спроси «Создать счёт?». status=choose — найдено несколько (field, options): спроси, какой, и вызови снова с buyer_id / organization / contract, для строки — с item_id из options (не с названием). status=not_found — не нашла (similar — похожие): скажи прямо и предложи похожие; справочники Bilem не создаёт. Услуги нет в номенклатуре — можно взять похожую услугу и передать слова человека в content: в счёте будет этот текст. Сумма понимается как в последнем счёте этой фирмы (vat_included). Любое изменение — новый черновик.</value></data>
+  <data name="ToolDraftInvDesc" xml:space="preserve"><value>Собирает черновик нового счёта на оплату покупателю и НИЧЕГО не пишет в 1С. Вход: покупатель (название или БИН), строки (что продаём, количество, цена или сумма), при нескольких фирмах — фирма. «Повтори счёт N» — copy_number=N, строки по названиям не пересобирай. Ответ status=ready: draft_id (действует 15 минут, один раз), фирма, покупатель с БИН, договор, строки, НДС, итог, warnings — покажи это человеку целиком и спроси «Создать счёт?». status=choose — найдено несколько (field, options): спроси, какой, и вызови снова с buyer_id / organization / contract, для строки — с item_id из options (не с названием). status=not_found — не нашла (similar — похожие): скажи прямо и предложи похожие; новый покупатель — draft_counterparty, номенклатуру и договоры Bilem не создаёт. Услуги нет в номенклатуре — можно взять похожую услугу и передать слова человека в content: в счёте будет этот текст. Сумма понимается как в последнем счёте этой фирмы (vat_included). Любое изменение — новый черновик.</value></data>
   <data name="ToolDraftInvParamBuyer" xml:space="preserve"><value>Покупатель: название или его часть, либо БИН/ИИН (12 цифр).</value></data>
   <data name="ToolDraftInvParamBuyerId" xml:space="preserve"><value>id покупателя из options прошлого ответа (status=choose, field=buyer).</value></data>
   <data name="ToolDraftInvParamOrg" xml:space="preserve"><value>Фирма, от которой счёт (название, БИН или id из options). Нужна, только если в базе несколько организаций.</value></data>
@@ -1085,7 +1085,7 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="InvChooseNote" xml:space="preserve"><value>Нашлось несколько — спросите человека, какой, и соберите черновик снова с выбранным.</value></data>
   <data name="InvBuyerIdBad" xml:space="preserve"><value>Покупатель с таким id не найден (или помечен на удаление).</value></data>
   <data name="InvNeedBuyer" xml:space="preserve"><value>Укажите покупателя: название (от 2 букв) или БИН.</value></data>
-  <data name="InvBuyerNotFound" xml:space="preserve"><value>Такого покупателя в базе нет. Bilem контрагентов не создаёт — выберите из похожих или заведите его в 1С.</value></data>
+  <data name="InvBuyerNotFound" xml:space="preserve"><value>Такого покупателя в базе нет. Предложите выбрать из похожих; если это новая фирма — предложите завести: draft_counterparty (название и БИН), после «да» — create_counterparty, затем draft_invoice с buyer_id.</value></data>
   <data name="InvOrgNotFound" xml:space="preserve"><value>Фирмы «{0}» в этой базе нет.</value></data>
   <data name="InvNoOrg" xml:space="preserve"><value>В базе нет ни одной организации.</value></data>
   <data name="InvContractNotFound" xml:space="preserve"><value>Такого договора с покупателем нет — в similar договоры этой фирмы с ним.</value></data>
@@ -1210,4 +1210,32 @@ Bilem Agent нужен {1}. Перерегистрация может повли
   <data name="CustomsMissing" xml:space="preserve"><value>В базе {0} нет документа «ГТД по импорту»: в этой конфигурации таможенные декларации на импорт не ведут.</value></data>
   <data name="CustomsRefresh" xml:space="preserve"><value>В базе {0} «ГТД по импорту» ещё не подключён к Bilem: в этой базе нужно нажать «Доступ» → «Обновить права Bilem» (вход администратора 1С). После этого декларации будут видны.</value></data>
   <data name="CustomsNote" xml:space="preserve"><value>Сумма, пошлина и НДС — из документа «ГТД по импорту» (табличная часть «Разделы»); counterparty — контрагент документа (обычно таможня).</value></data>
+  <data name="ToolDraftCpTitle" xml:space="preserve"><value>Черновик нового контрагента</value></data>
+  <data name="ToolDraftCpDesc" xml:space="preserve"><value>Собирает черновик нового контрагента (покупателя или поставщика) по названию и БИН и НИЧЕГО не пишет в 1С. Сначала ищет такого же: по БИН, затем по названию. status=exists — такой уже есть (counterparty с id): новый не нужен, для счёта — draft_invoice с buyer_id. status=ready — draft_id (действует 15 минут, один раз), counterparty (name, full_name, bin, kind), similar — похожие, warnings: покажи это человеку и спроси «Завести контрагента?». Если среди similar тот же — спроси «это он?», новый не заводи. Адрес, банковский счёт и договор Bilem не заполняет. Изменить или удалить контрагента Bilem не может.</value></data>
+  <data name="ToolDraftCpParamName" xml:space="preserve"><value>Краткое наименование, как в списке контрагентов 1С («Ай-Си Групп ТОО»).</value></data>
+  <data name="ToolDraftCpParamFullName" xml:space="preserve"><value>Полное наименование (для документов), если отличается от краткого. Без него — то же, что name.</value></data>
+  <data name="ToolDraftCpParamBin" xml:space="preserve"><value>БИН или ИИН — 12 цифр. Можно не передавать, тогда в warnings «БИН не указан».</value></data>
+  <data name="ToolDraftCpParamKind" xml:space="preserve"><value>ЮрЛицо или ФизЛицо. Без него: ИП (словом в названии) — ФизЛицо, остальные — ЮрЛицо.</value></data>
+  <data name="ToolCreateCpTitle" xml:space="preserve"><value>Завести контрагента в 1С</value></data>
+  <data name="ToolCreateCpDesc" xml:space="preserve"><value>Создаёт в 1С ровно одного контрагента по черновику draft_counterparty. Вызывай ТОЛЬКО после явного «да» человека на показанный черновик; черновик срабатывает один раз и живёт 15 минут. Ответ: id, name, code, bin. Для счёта этому покупателю — draft_invoice с buyer_id = id. Справочник проводок не делает; изменить или удалить контрагента Bilem не может.</value></data>
+  <data name="ToolCreateCpParamDraft" xml:space="preserve"><value>draft_id из ответа draft_counterparty со status=ready.</value></data>
+  <data name="CpBadBin" xml:space="preserve"><value>БИН/ИИН — это 12 цифр, а «{0}» не подходит. Уточните у человека.</value></data>
+  <data name="CpBadKind" xml:space="preserve"><value>kind «{0}» не понимаю: ЮрЛицо или ФизЛицо.</value></data>
+  <data name="CpNeedName" xml:space="preserve"><value>Укажите название контрагента (от 2 букв).</value></data>
+  <data name="CpNameTooLong" xml:space="preserve"><value>Краткое наименование длиннее 100 знаков — сократите, полное передайте в full_name.</value></data>
+  <data name="CpWriteOff" xml:space="preserve"><value>Создание контрагентов в базе «{0}» выключено.</value></data>
+  <data name="CpHintWriteOff" xml:space="preserve"><value>В Bilem Agent нажмите «Доступ» → «Обновить права Bilem» этой базы (нужен администратор 1С).</value></data>
+  <data name="CpExistsNote" xml:space="preserve"><value>Такой контрагент в базе уже есть — новый не создаю. Скажите человеку, что он уже заведён; для счёта — draft_invoice с buyer_id = counterparty.id.</value></data>
+  <data name="CpNoBin" xml:space="preserve"><value>БИН не указан — проверить, нет ли такого же, можно только по названию. Лучше спросить БИН у человека.</value></data>
+  <data name="CpNoDetails" xml:space="preserve"><value>Адрес, банковский счёт и договор Bilem не заполняет — добавит бухгалтер в 1С; счёт такому покупателю будет без договора.</value></data>
+  <data name="CpComment" xml:space="preserve"><value>Создан Bilem по черновику {0}</value></data>
+  <data name="CpDraftNote" xml:space="preserve"><value>В 1С ничего не записано. Покажите человеку название, БИН и вид (юрлицо или физлицо), похожих из similar, и спросите «Завести контрагента?»; только после «да» — create_counterparty с draft_id.</value></data>
+  <data name="CpDraftUnknown" xml:space="preserve"><value>Такого черновика контрагента нет (или агент перезапускался).</value></data>
+  <data name="CpDraftForeign" xml:space="preserve"><value>Этот черновик собран в другом разговоре — завести по нему контрагента нельзя.</value></data>
+  <data name="CpHintNewDraft" xml:space="preserve"><value>Соберите черновик заново (draft_counterparty) и подтвердите его.</value></data>
+  <data name="CpDraftOtherBase" xml:space="preserve"><value>Черновик собран для базы «{0}», а не для этой — соберите черновик заново в нужной базе.</value></data>
+  <data name="CpAppeared" xml:space="preserve"><value>Пока черновик ждал «да», в 1С появился такой же контрагент: «{0}» (id {1}). Второго не создаю — для счёта возьмите его id.</value></data>
+  <data name="CpCreateFailed" xml:space="preserve"><value>1С не создала контрагента (HTTP {0}): {1}</value></data>
+  <data name="CpAuditTitle" xml:space="preserve"><value>Контрагент «{0}», база «{1}»</value></data>
+  <data name="CpCreatedHint" xml:space="preserve"><value>Контрагент заведён в 1С. Для счёта — draft_invoice с buyer_id = {0}.</value></data>
 </root>

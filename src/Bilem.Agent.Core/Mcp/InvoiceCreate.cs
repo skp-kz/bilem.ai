@@ -31,7 +31,8 @@ namespace Bilem.Agent.Core.Mcp
 
         public static bool IsTool(string name) => name == DraftTool || name == CreateTool || name == UpdateTool || name == CancelTool;
 
-        private static string ToolOf(string kind) => kind == KindUpdate ? UpdateTool : kind == KindCancel ? CancelTool : CreateTool;
+        private static string ToolOf(string kind) => kind == KindUpdate ? UpdateTool : kind == KindCancel ? CancelTool
+            : kind == KindCounterparty ? CounterpartyCreate.CreateTool : CreateTool;
 
         /// <summary>Запись счёта включена «Доступом» (слой MCP) — иначе инструментов нет в списке.</summary>
         public static bool Enabled(BaseConfig b) => b?.Write != null && b.Write.Contains(DocFullName);
@@ -51,7 +52,7 @@ namespace Bilem.Agent.Core.Mcp
             public string Kind = KindCreate, Ref, Version, Number;
         }
 
-        internal const string KindCreate = "create", KindUpdate = "update", KindCancel = "cancel";
+        internal const string KindCreate = "create", KindUpdate = "update", KindCancel = "cancel", KindCounterparty = "counterparty";
 
         private static readonly Dictionary<string, Draft> Drafts = new Dictionary<string, Draft>();
         internal static Func<DateTime> UtcNow = () => DateTime.UtcNow;
@@ -64,16 +65,16 @@ namespace Bilem.Agent.Core.Mcp
             return "local:" + (c.TailscaleLogin ?? c.Client ?? "");
         }
 
-        internal static string NewId()
+        internal static string NewId(string prefix = "inv-")
         {
             var b = new byte[6];
             using (var r = RandomNumberGenerator.Create()) r.GetBytes(b);
-            return "inv-" + string.Concat(b.Select(x => x.ToString("x2")));
+            return prefix + string.Concat(b.Select(x => x.ToString("x2")));
         }
 
-        internal static Draft Save(string slug, string owner, JObject body, string buyerName, decimal total)
+        internal static Draft Save(string slug, string owner, JObject body, string buyerName, decimal total, string prefix = "inv-")
         {
-            var d = new Draft { Id = NewId(), Slug = slug, Owner = owner, CreatedUtc = UtcNow(), Body = body, BuyerName = buyerName, Total = total };
+            var d = new Draft { Id = NewId(prefix), Slug = slug, Owner = owner, CreatedUtc = UtcNow(), Body = body, BuyerName = buyerName, Total = total };
             lock (Drafts)
             {
                 foreach (var k in Drafts.Where(kv => UtcNow() - kv.Value.CreatedUtc > DraftTtl + DraftTtl).Select(kv => kv.Key).ToList()) Drafts.Remove(k);
@@ -85,13 +86,14 @@ namespace Bilem.Agent.Core.Mcp
         /// <summary>Забрать черновик для создания: тот же собеседник, не просрочен, не использован. Помечается использованным сразу.</summary>
         internal static Draft Take(string id, string owner, string kind = KindCreate)
         {
+            var hint = Txt.S(kind == KindCounterparty ? "CpHintNewDraft" : "InvHintNewDraft");
             lock (Drafts)
             {
-                if (string.IsNullOrWhiteSpace(id) || !Drafts.TryGetValue(id.Trim(), out var d)) throw new AgentException(Txt.S("InvDraftUnknown"), Txt.S("InvHintNewDraft"));
-                if (d.Kind != kind) throw new AgentException(Txt.F("InvDraftWrongKind", ToolOf(d.Kind)), Txt.S("InvHintNewDraft"));
-                if (d.Used) throw new AgentException(Txt.S("InvDraftUsed"), Txt.S("InvHintNewDraft"));
-                if (d.Owner != owner) throw new AgentException(Txt.S("InvDraftForeign"), Txt.S("InvHintNewDraft"));
-                if (UtcNow() - d.CreatedUtc > DraftTtl) throw new AgentException(Txt.F("InvDraftExpired", (int)DraftTtl.TotalMinutes), Txt.S("InvHintNewDraft"));
+                if (string.IsNullOrWhiteSpace(id) || !Drafts.TryGetValue(id.Trim(), out var d)) throw new AgentException(Txt.S(kind == KindCounterparty ? "CpDraftUnknown" : "InvDraftUnknown"), hint);
+                if (d.Kind != kind) throw new AgentException(Txt.F("InvDraftWrongKind", ToolOf(d.Kind)), hint);
+                if (d.Used) throw new AgentException(Txt.S("InvDraftUsed"), hint);
+                if (d.Owner != owner) throw new AgentException(Txt.S(kind == KindCounterparty ? "CpDraftForeign" : "InvDraftForeign"), hint);
+                if (UtcNow() - d.CreatedUtc > DraftTtl) throw new AgentException(Txt.F("InvDraftExpired", (int)DraftTtl.TotalMinutes), hint);
                 d.Used = true;
                 return d;
             }

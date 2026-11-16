@@ -54,6 +54,9 @@ namespace Bilem.Agent.Core.Mcp
             public string[] Compact, Skeleton;
         }
 
+        /// <summary>Забыть справочник базы — после create_counterparty новый контрагент находится по названию сразу.</summary>
+        internal static void Forget(ODataClient od) => Cache.TryRemove(od.BaseUrl, out _);
+
         private static List<Entry> Catalog(ODataClient od)
         {
             if (Cache.TryGetValue(od.BaseUrl, out var c) && DateTime.UtcNow - c.At < CacheTtl) return c.Entries;

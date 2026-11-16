@@ -323,7 +323,18 @@ namespace Bilem.Agent.Com
                     if (Right(c, "Чтение", mo, r)) { read.Add(rn); candidates.Add(rn); }
                     if (Right(c, "Добавление", mo, r) && Right(c, "Изменение", mo, r)) { write.Add(rn); candidates.Add(rn); }
                 }
-                res[fn] = new JObject { ["read"] = read, ["write"] = write };
+                res[fn] = new JObject { ["read"] = read, ["write"] = write, ["exchangePlans"] = new JArray(ExchangePlansOf(md, mo)) };
+            }
+            // Запись объекта из состава плана обмена регистрирует изменение — 1С читает узлы плана (#100: контрагент в
+            // «УдалитьОбменУправлениеТорговлейБухгалтерия», БП КЗ 3.0): роли с чтением этих планов, как у обычных объектов
+            foreach (var plan in res.Properties().SelectMany(p => ((JArray)p.Value["exchangePlans"]).Select(x => (string)x)).Distinct().ToList())
+            {
+                if (res[plan] != null) continue;
+                dynamic mo = md.FindByFullName(plan);
+                var read = new JArray();
+                foreach (var r in roles)
+                    if (Right(c, "Чтение", mo, r)) { read.Add((string)r.Name); candidates.Add((string)r.Name); }
+                res[plan] = new JObject { ["read"] = read, ["write"] = new JArray(), ["exchangePlans"] = new JArray() };
             }
             // Широта ролей-кандидатов: на сколько объектов области они дают запись
             var breadth = new JObject();
@@ -340,6 +351,19 @@ namespace Bilem.Agent.Com
                 breadth[rn] = n;
             }
             return new JObject { ["op"] = "rightsMap", ["objects"] = res, ["breadth"] = breadth };
+        }
+
+        /// <summary>Планы обмена, в состав которых входит объект (ПланОбмена.Имя).</summary>
+        private static List<string> ExchangePlansOf(dynamic md, dynamic mo)
+        {
+            var res = new List<string>();
+            foreach (var p in Items(md.ExchangePlans))
+            {
+                bool inPlan;
+                try { inPlan = (bool)p.Content.Contains(mo); } catch { inPlan = false; }
+                if (inPlan) res.Add((string)p.FullName());
+            }
+            return res;
         }
 
         private static bool Right(dynamic c, string right, dynamic mo, dynamic role)

@@ -124,7 +124,7 @@ namespace Bilem.Agent.Core.Tests
         public void RealToolsHaveRussianDescriptionsAndSchemas()
         {
             var tools = Tools.Create(() => new List<BaseRuntime>());
-            Assert.Equal(new[] { "list_bases", "whoami", "find_counterparty", "cash_balance", "print_invoice", "print_power_of_attorney", "print_reconciliation", "receivables", "payables", "trial_balance", "offset_balances", "customs_declarations", "account_entries", "send_document", "draft_invoice", "create_invoice", "update_invoice", "cancel_invoice" }, tools.ConvertAll(t => t.Name));
+            Assert.Equal(new[] { "list_bases", "whoami", "find_counterparty", "cash_balance", "print_invoice", "print_power_of_attorney", "print_reconciliation", "receivables", "payables", "trial_balance", "offset_balances", "customs_declarations", "account_entries", "send_document", "draft_invoice", "create_invoice", "update_invoice", "cancel_invoice", "draft_counterparty", "create_counterparty" }, tools.ConvertAll(t => t.Name));
             foreach (var t in tools)
             {
                 Assert.False(string.IsNullOrEmpty(t.Description));

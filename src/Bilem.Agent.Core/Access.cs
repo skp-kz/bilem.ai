@@ -79,11 +79,13 @@ namespace Bilem.Agent.Core
 
         /// <summary>
         /// Запись, которую bilem получает сразу при настройке базы (Слава, 14.11, #99): документы без проводок, у каждого в БП КЗ
-        /// своя узкая роль. Контрагенты, банковские счета и договоры — только галочкой на «Доступе».
+        /// своя узкая роль. Контрагенты (#100, 16.11) — тоже: справочник проводок не делает, draft_counterparty / create_counterparty
+        /// только добавляют карточку; уже подключённые базы получают роль по «Обновить права Bilem». Банковские счета и договоры —
+        /// только галочкой на «Доступе».
         /// </summary>
         public static readonly IReadOnlyList<string> DefaultWrite = new[]
         {
-            "Документ.СчетНаОплатуПокупателю", "Документ.АктСверкиВзаиморасчетов", "Документ.Доверенность",
+            "Документ.СчетНаОплатуПокупателю", "Документ.АктСверкиВзаиморасчетов", "Документ.Доверенность", "Справочник.Контрагенты",
         };
 
         /// <summary>
@@ -110,7 +112,7 @@ namespace Bilem.Agent.Core
             return DefaultRead.Where(x => profile.CatalogObjects.Contains(x) && !cat.KnownAbsent(x) && !have.Contains(x) && !seen.Contains(x)).ToList();
         }
 
-        /// <summary>Запись по умолчанию (счёт, акт сверки, доверенность), которой у базы ещё нет в 1С.</summary>
+        /// <summary>Запись по умолчанию (счёт, акт сверки, доверенность, контрагенты), которой у базы ещё нет в 1С.</summary>
         public static List<string> MissingDefaultWrite(BaseConfig b)
         {
             var cat = CatalogOf(b);
@@ -237,23 +239,33 @@ namespace Bilem.Agent.Core
             var breadth = (JObject)rights["breadth"] ?? new JObject();
             int Breadth(string role) => (int?)breadth[role] ?? 1000;
 
-            void Ensure(string fn, string kind, string preferPrefix)
+            // soft — чтение плана обмена: узкой роли нет (только полные права) — пропускаем, запись объекта не запрещаем
+            bool Ensure(string fn, string kind, string preferPrefix, bool soft = false)
             {
                 var have = ((JArray)objs[fn]?[kind] ?? new JArray()).Select(x => (string)x).ToList();
-                if (have.Any(plan.Roles.Contains)) return;
-                var pick = have.Where(r => !Forbidden(r))
+                if (have.Any(plan.Roles.Contains)) return true;
+                // Для плана обмена — только роли «Чтение…»: «ДобавлениеИзменениеПлановОбмена» читает их тоже, но и пишет
+                var pick = have.Where(r => !Forbidden(r) && (!soft || r.StartsWith("Чтение", StringComparison.Ordinal)))
                     .OrderBy(Breadth)
                     .ThenBy(r => r.StartsWith(preferPrefix, StringComparison.Ordinal) ? 0 : 1)
                     .ThenBy(r => r.Length)
                     .FirstOrDefault();
-                if (pick == null) { plan.NoRole.Add(fn); return; }
+                if (pick == null) { if (!soft) plan.NoRole.Add(fn); return false; }
                 plan.Roles.Add(pick);
                 plan.Extra.Add(pick);
                 plan.Why[fn] = pick;
+                return true;
             }
 
             foreach (var fn in needRead ?? Enumerable.Empty<string>()) Ensure(fn, "read", "Чтение");
-            foreach (var fn in needWrite ?? Enumerable.Empty<string>()) Ensure(fn, "write", "ДобавлениеИзменение");
+            foreach (var fn in needWrite ?? Enumerable.Empty<string>())
+            {
+                if (!Ensure(fn, "write", "ДобавлениеИзменение")) continue;
+                // Запись объекта из состава плана обмена регистрирует изменение: 1С читает узлы плана (#100, контрагенты в БП КЗ).
+                // Планы, которые читают только полные права (АвтономнаяРабота, МиграцияПриложений), счёту не мешали — их пропускаем
+                foreach (var xp in ((JArray)objs[fn]?["exchangePlans"] ?? new JArray()).Select(x => (string)x))
+                    Ensure(xp, "read", "Чтение", soft: true);
+            }
             return plan;
         }
     }

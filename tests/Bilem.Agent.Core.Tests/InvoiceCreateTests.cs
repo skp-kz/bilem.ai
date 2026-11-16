@@ -223,7 +223,7 @@ namespace Bilem.Agent.Core.Tests
             Assert.Same(d, InvoiceCreate.Take(d.Id, "local", InvoiceCreate.KindCancel));
         }
 
-        /// <summary>Запись в 1С во всём ядре — только в InvoiceCreate: POST нового счёта и PATCH своего; DELETE/MERGE/PUT нет.</summary>
+        /// <summary>Запись в 1С во всём ядре — только POST нового счёта и PATCH своего (InvoiceCreate), POST нового контрагента (CounterpartyCreate, #100); DELETE/MERGE/PUT нет.</summary>
         [Fact]
         public void OnlyInvoicePostInCode()
         {
@@ -238,7 +238,7 @@ namespace Bilem.Agent.Core.Tests
                 foreach (Match m in Regex.Matches(File.ReadAllText(f), "Send\\(\"(POST|PATCH|PUT|DELETE|MERGE)\""))
                     writes.Add(name + ":" + m.Groups[1].Value);
             }
-            Assert.Equal(new[] { "InvoiceCreate.cs:POST", "InvoiceCreate.cs:PATCH" }, writes);
+            Assert.Equal(new[] { "CounterpartyCreate.cs:POST", "InvoiceCreate.cs:PATCH", "InvoiceCreate.cs:POST" }, writes.OrderBy(x => x, StringComparer.Ordinal));
         }
     }
 }

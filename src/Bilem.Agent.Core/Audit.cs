@@ -16,7 +16,9 @@ namespace Bilem.Agent.Core
     public static class Audit
     {
         public const string Print = "print", Send = "send", SendFailed = "send_failed", Update = "update", Create = "create", CreateFailed = "create_failed",
-            InvoiceUpdate = "invoice_update", InvoiceCancel = "invoice_cancel";
+            InvoiceUpdate = "invoice_update", InvoiceCancel = "invoice_cancel", CounterpartyCreate = "counterparty_create";
+        /// <summary>Вид записи журнала для нового контрагента (#100) — рядом с invoice / reconciliation / power_of_attorney.</summary>
+        public const string KindCounterparty = "counterparty";
         private static readonly object Sync = new object();
 
         public static string FileFor(DateTime t) => Path.Combine(Paths.LogsDir, $"audit-{t:yyyy-MM}.jsonl");
@@ -76,7 +78,7 @@ namespace Bilem.Agent.Core
             }
             var by = caller?.ToString() ?? "Bilem Agent";
             var line = action == Update ? Txt.F("AuditLineUpdate", title, by)
-                : action == Create ? Txt.F("AuditLineCreate", title, by)
+                : action == Create || action == CounterpartyCreate ? Txt.F("AuditLineCreate", title, by)
                 : action == InvoiceUpdate ? Txt.F("AuditLineInvUpdate", title, by)
                 : action == InvoiceCancel ? Txt.F("AuditLineInvCancel", title, by)
                 : action == CreateFailed ? Txt.F("AuditLineCreateFailed", title, by, (string)extra?["error"])

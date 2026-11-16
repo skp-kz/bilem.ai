@@ -257,7 +257,7 @@ namespace Bilem.Agent
                 }
             }
             var cat = Access.CatalogOf(b);
-            // «default» — запись по умолчанию (счёт, акт сверки, доверенность), а в --read-on ещё и чтение по умолчанию (ГТД по импорту):
+            // «default» — запись по умолчанию (счёт, акт сверки, доверенность, контрагенты), а в --read-on ещё и чтение по умолчанию (ГТД по импорту):
             // «Обновить права Bilem» из командной строки (#99, #104)
             List<string> L(string k) => (Get(a, k) ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim())
                 .SelectMany(x => x == "default"

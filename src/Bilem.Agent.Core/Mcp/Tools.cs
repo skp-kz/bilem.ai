@@ -354,6 +354,29 @@ namespace Bilem.Agent.Core.Mcp
                     }),
                     Handler = a => InvoiceCreate.Cancel(bases(), a),
                 },
+                new McpTool
+                {
+                    Name = CounterpartyCreate.DraftTool, Title = Txt.S("ToolDraftCpTitle"), Description = Txt.S("ToolDraftCpDesc"),
+                    InputSchema = Schema(new JObject
+                    {
+                        ["name"] = new JObject { ["type"] = "string", ["maxLength"] = 100, ["description"] = Txt.S("ToolDraftCpParamName") },
+                        ["full_name"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftCpParamFullName") },
+                        ["bin"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftCpParamBin") },
+                        ["kind"] = new JObject { ["type"] = "string", ["enum"] = new JArray(CounterpartyCreate.KindLegal, CounterpartyCreate.KindPerson), ["description"] = Txt.S("ToolDraftCpParamKind") },
+                        ["base"] = baseProp,
+                    }, "name"),
+                    Handler = a => CounterpartyCreate.MakeDraft(bases(), a),
+                },
+                new McpTool
+                {
+                    Name = CounterpartyCreate.CreateTool, Title = Txt.S("ToolCreateCpTitle"), Description = Txt.S("ToolCreateCpDesc"),
+                    InputSchema = Schema(new JObject
+                    {
+                        ["draft_id"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolCreateCpParamDraft") },
+                        ["base"] = baseProp,
+                    }, "draft_id"),
+                    Handler = a => CounterpartyCreate.Create(bases(), a),
+                },
             };
         }
 
