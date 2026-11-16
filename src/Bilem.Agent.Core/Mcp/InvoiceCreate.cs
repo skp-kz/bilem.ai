@@ -193,6 +193,77 @@ namespace Bilem.Agent.Core.Mcp
             return exact.Count == 1 ? exact[0] : null;
         }
 
+        /// <summary>Название для сравнения дублей: без регистра, ё = е, пробелы по краям и двойные внутри не считаются.</summary>
+        internal static string NameKey(string s) => string.Join(" ", Norm(s).Split(new[] { ' ', '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries));
+
+        private static string CodeKey(JObject r) { var c = ((string)r["Code"] ?? "").Trim(); return c.Length.ToString("D3", CultureInfo.InvariantCulture) + c; }
+
+        /// <summary>
+        /// Позиция номенклатуры по названию (#106): единственная → точное написание (без trim) → точное после нормализации →
+        /// единственная из уже стоящих в счетах фирмы → настоящие дубли (названия совпадают после нормализации): уже использованная,
+        /// иначе с меньшим кодом, Dup=true. null — позиции разные, спросить человека.
+        /// </summary>
+        internal static (JObject Item, bool Dup) PickItem(JArray rows, string rawQuery, Func<ISet<string>> used)
+        {
+            var all = rows.OfType<JObject>().ToList();
+            if (all.Count == 0) return (null, false);
+            if (all.Count == 1) return (all[0], false);
+            var exact = all.Where(r => (string)r["Description"] == rawQuery).ToList();
+            if (exact.Count == 1) return (exact[0], false);
+            var same = all.Where(r => NameKey((string)r["Description"]) == NameKey(rawQuery)).ToList();
+            if (same.Count == 1) return (same[0], false);
+            var pool = same.Count > 0 ? same : all;
+            var dup = pool.Select(r => NameKey((string)r["Description"])).Distinct().Count() == 1;
+            var u = used();
+            var inUse = pool.Where(r => u.Contains((string)r["Ref_Key"])).OrderBy(CodeKey, StringComparer.Ordinal).ToList();
+            if (inUse.Count == 1 || dup && inUse.Count > 1) return (inUse[0], dup);
+            if (dup) return (pool.OrderBy(CodeKey, StringComparer.Ordinal).First(), true);
+            return (null, false);
+        }
+
+        /// <summary>Номенклатура, которая уже стоит в последних счетах фирмы.</summary>
+        private static ISet<string> UsedItems(ODataClient od, string orgKey)
+        {
+            var res = new HashSet<string>();
+            if (IsEmpty(orgKey)) return res;
+            foreach (JObject d in od.Rows(DocSet, new Dictionary<string, string>
+            {
+                ["$filter"] = $"Организация_Key eq {Guid(orgKey)} and DeletionMark eq false",
+                ["$orderby"] = "Date desc", ["$top"] = "100", ["$select"] = "Товары,Услуги",
+            }))
+                foreach (var r in ((JArray)d["Товары"] ?? new JArray()).Concat((JArray)d["Услуги"] ?? new JArray()))
+                    if (!IsEmpty((string)r["Номенклатура_Key"])) res.Add((string)r["Номенклатура_Key"]);
+            return res;
+        }
+
+        /// <summary>Счёт-образец по номеру («повтори счёт 480», #106): самый свежий с таким номером.</summary>
+        private static JObject CopySource(ODataClient od, string number)
+        {
+            var n = number.Trim().TrimStart('№', ' ');
+            var digits = Print.InvoiceSource.PrintNumber(n);
+            var hit = od.Rows(DocSet, new Dictionary<string, string>
+            {
+                ["$filter"] = $"substringof({ODataClient.Lit(digits)}, Number) and DeletionMark eq false",
+                ["$orderby"] = "Date desc", ["$top"] = "200",
+                ["$select"] = "Ref_Key,Number,Date,Организация_Key,Контрагент_Key,ДоговорКонтрагента_Key,Товары,Услуги",
+            }).OfType<JObject>().FirstOrDefault(r => string.Equals((string)r["Number"], n, StringComparison.OrdinalIgnoreCase) || Print.InvoiceSource.PrintNumber((string)r["Number"]) == digits);
+            return hit ?? throw new AgentException(Txt.F("InvCopyNotFound", n));
+        }
+
+        /// <summary>Строки образца — как вход draft_invoice: те же ссылки на номенклатуру (item_id), количество, сумма, содержание.</summary>
+        internal static JArray CopyLines(JObject src)
+        {
+            var res = new JArray();
+            foreach (var (part, service) in new[] { ("Товары", false), ("Услуги", true) })
+                foreach (JObject r in (JArray)src[part] ?? new JArray())
+                {
+                    var l = new JObject { ["item_id"] = r["Номенклатура_Key"], ["quantity"] = r["Количество"], ["sum"] = r["Сумма"] };
+                    if (service && !string.IsNullOrWhiteSpace((string)r["Содержание"])) l["content"] = ((string)r["Содержание"]).Trim();
+                    res.Add(l);
+                }
+            return res;
+        }
+
         private static JObject Choose(string field, string query, IEnumerable<JObject> options, string note = null) => new JObject
         {
             ["status"] = "choose", ["field"] = field, ["query"] = query, ["options"] = new JArray(options),
@@ -248,9 +319,21 @@ namespace Bilem.Agent.Core.Mcp
             var od = b.OData;
             od.Check(DocSet);
 
+            // Образец «повтори счёт N» (#106): что человек назвал сам, важнее образца
+            var copyQ = ((string)a["copy_number"] ?? "").Trim();
+            var src = copyQ.Length > 0 ? CopySource(od, copyQ) : null;
+            var srcNumber = src == null ? null : Print.InvoiceSource.PrintNumber((string)src["Number"]);
+            var inLines = a["lines"] as JArray;
+            if (src != null && (inLines == null || inLines.Count == 0))
+            {
+                inLines = CopyLines(src);
+                if (inLines.Count == 0) throw new AgentException(Txt.F("InvCopyEmpty", srcNumber));
+            }
+
             // Покупатель
             var buyerQ = ((string)a["buyer"] ?? "").Trim();
             var buyerId = ((string)a["buyer_id"] ?? "").Trim();
+            if (src != null && buyerQ.Length == 0 && buyerId.Length == 0) buyerId = (string)src["Контрагент_Key"];
             JObject buyer;
             if (buyerId.Length > 0)
             {
@@ -272,6 +355,7 @@ namespace Bilem.Agent.Core.Mcp
 
             // Фирма
             var orgQ = ((string)a["organization"] ?? "").Trim();
+            if (src != null && orgQ.Length == 0 && !IsEmpty((string)src["Организация_Key"])) orgQ = (string)src["Организация_Key"];
             var orgs = od.Rows("Catalog_Организации", new Dictionary<string, string>
             {
                 ["$select"] = "Ref_Key,Description,ИдентификационныйНомер,ОсновнойБанковскийСчет_Key,НомерСвидетельстваПоНДС",
@@ -301,6 +385,10 @@ namespace Bilem.Agent.Core.Mcp
                 ["$filter"] = $"Owner_Key eq {Guid(buyerKey)} and Организация_Key eq {Guid(orgKey)} and IsFolder eq false and DeletionMark eq false",
                 ["$orderby"] = "Description",
             }).OfType<JObject>().Where(c => (string)c["ВидДоговора"] == "СПокупателем").ToList();
+            // Договор образца — только при тех же покупателе и фирме и если он ещё действует; у нового покупателя — по обычным правилам
+            if (src != null && contractQ.Length == 0 && (string)src["Контрагент_Key"] == buyerKey && (string)src["Организация_Key"] == orgKey
+                && contracts.Any(c => (string)c["Ref_Key"] == (string)src["ДоговорКонтрагента_Key"]))
+                contractQ = (string)src["ДоговорКонтрагента_Key"];
             var warnings = new JArray();
             JObject contract = null;
             if (contractQ.Length > 0)
@@ -331,7 +419,7 @@ namespace Bilem.Agent.Core.Mcp
             var tplRate = ((JArray)tpl?["Услуги"] ?? new JArray()).Concat((JArray)tpl?["Товары"] ?? new JArray()).Select(r => (string)r["СтавкаНДС_Key"]).FirstOrDefault(k => !IsEmpty(k));
 
             // Строки
-            var (lines, stop) = ResolveLines(od, a["lines"] as JArray, vatOn, included, tplRate, warnings);
+            var (lines, stop) = ResolveLines(od, inLines, vatOn, included, tplRate, warnings, orgKey);
             if (stop != null) return stop;
 
             // Шапка (без даты — она ставится при создании)
@@ -376,11 +464,11 @@ namespace Bilem.Agent.Core.Mcp
                 ["currency"] = "KZT",
                 ["warnings"] = warnings,
                 ["note"] = Txt.S("InvDraftNote"),
-            };
+            }.Also(o => { if (srcNumber != null) o["copied_from"] = srcNumber; });
         }
 
         /// <summary>Строки счёта по словам человека: номенклатура, количество, цена/сумма, НДС. Не нашли или несколько — ответ choose/not_found.</summary>
-        private static (List<Line> Lines, JObject Stop) ResolveLines(ODataClient od, JArray input, bool vatOn, bool included, string tplRate, JArray warnings)
+        private static (List<Line> Lines, JObject Stop) ResolveLines(ODataClient od, JArray input, bool vatOn, bool included, string tplRate, JArray warnings, string orgKey)
         {
             // Строки (вход — как в draft_invoice)
             var inLines = input?.OfType<JObject>().ToList() ?? new List<JObject>();
@@ -400,27 +488,44 @@ namespace Bilem.Agent.Core.Mcp
                 if (!units.TryGetValue(k, out var u)) units[k] = u = (string)One(od, "Catalog_КлассификаторЕдиницИзмерения", k, "Description")?["Description"] ?? "";
                 return u;
             }
-            const string itemSelect = "Ref_Key,Description,Услуга,СтавкаНДС_Key,БазоваяЕдиницаИзмерения_Key";
+            const string itemSelect = "Ref_Key,Code,Description,Услуга,СтавкаНДС_Key,БазоваяЕдиницаИзмерения_Key";
+            ISet<string> used = null;
+            ISet<string> Used() => used ?? (used = UsedItems(od, orgKey));
             var lines = new List<Line>();
             for (var i = 0; i < inLines.Count; i++)
             {
                 var li = inLines[i];
-                var itemQ = ((string)li["item"] ?? "").Trim();
-                if (itemQ.Length < 2) throw new AgentException(Txt.F("InvNeedItem", i + 1));
-                var found = od.Rows("Catalog_Номенклатура", new Dictionary<string, string>
-                {
-                    ["$select"] = itemSelect,
-                    ["$filter"] = $"substringof({ODataClient.Lit(itemQ)}, Description) and IsFolder eq false and DeletionMark eq false",
-                    ["$orderby"] = "Description", ["$top"] = (OptionsTop + 1).ToString(CultureInfo.InvariantCulture),
-                });
-                var item = Pick(found, itemQ);
                 var field = $"lines[{i}]";
-                if (item == null && found.Count == 0)
+                var itemId = ((string)li["item_id"] ?? "").Trim();
+                var rawQ = (string)li["item"] ?? "";
+                var itemQ = rawQ.Trim();
+                JObject item;
+                if (itemId.Length > 0)
                 {
-                    var sim = Similar(od, "Catalog_Номенклатура", itemQ, "", itemSelect, "Услуга desc,Description").OfType<JObject>().Select(r => (string)r["Description"]);
-                    return (null, NotFound(field, itemQ, sim, AllowContent ? Txt.S("InvItemNotFoundContent") : Txt.S("InvItemNotFound")));
+                    // Позиция выбрана по id из options или взята из образца — по названию не ищем
+                    item = One(od, "Catalog_Номенклатура", itemId, itemSelect + ",IsFolder,DeletionMark");
+                    if (item == null || (bool?)item["IsFolder"] == true || (bool?)item["DeletionMark"] == true) throw new AgentException(Txt.F("InvItemIdBad", i + 1));
                 }
-                if (item == null) return (null, Choose(field, itemQ, found.OfType<JObject>().Take(OptionsTop).Select(r => new JObject { ["id"] = r["Ref_Key"], ["name"] = r["Description"], ["service"] = r["Услуга"] })));
+                else
+                {
+                    if (itemQ.Length < 2) throw new AgentException(Txt.F("InvNeedItem", i + 1));
+                    var found = od.Rows("Catalog_Номенклатура", new Dictionary<string, string>
+                    {
+                        ["$select"] = itemSelect,
+                        ["$filter"] = $"substringof({ODataClient.Lit(itemQ)}, Description) and IsFolder eq false and DeletionMark eq false",
+                        ["$orderby"] = "Description", ["$top"] = (OptionsTop + 1).ToString(CultureInfo.InvariantCulture),
+                    });
+                    if (found.Count == 0)
+                    {
+                        var sim = Similar(od, "Catalog_Номенклатура", itemQ, "", itemSelect, "Услуга desc,Description").OfType<JObject>().Select(r => (string)r["Description"]);
+                        return (null, NotFound(field, itemQ, sim, AllowContent ? Txt.S("InvItemNotFoundContent") : Txt.S("InvItemNotFound")));
+                    }
+                    var (pick, dup) = PickItem(found, rawQ, Used);
+                    if (pick == null) return (null, Choose(field, itemQ, found.OfType<JObject>().Take(OptionsTop).Select(r => new JObject
+                        { ["id"] = r["Ref_Key"], ["code"] = NullIfEmpty((string)r["Code"]), ["name"] = r["Description"], ["service"] = r["Услуга"] }), Txt.S("InvChooseItemNote")));
+                    item = pick;
+                    if (dup) warnings.Add(Txt.F("InvItemDuplicates", ((string)item["Description"] ?? "").Trim(), ((string)item["Code"] ?? "").Trim()));
+                }
                 var (q, p, s) = Amounts(Dec(li["quantity"]), Dec(li["price"]), Dec(li["sum"]));
                 var service = (bool?)item["Услуга"] == true;
                 var content = ((string)li["content"] ?? "").Trim();
@@ -614,7 +719,7 @@ namespace Bilem.Agent.Core.Mcp
             if (a["lines"] != null)
             {
                 var docRate = ((JArray)doc["Услуги"] ?? new JArray()).Concat((JArray)doc["Товары"] ?? new JArray()).Select(r => (string)r["СтавкаНДС_Key"]).FirstOrDefault(k => !IsEmpty(k));
-                var (lines, stop) = ResolveLines(od, a["lines"] as JArray, vatOn, included, docRate, warnings);
+                var (lines, stop) = ResolveLines(od, a["lines"] as JArray, vatOn, included, docRate, warnings, (string)doc["Организация_Key"]);
                 if (stop != null) return stop;
                 var body = Body(new JObject(), lines, vatOn, included);
                 patch["Товары"] = body["Товары"]; patch["Услуги"] = body["Услуги"]; patch["СуммаДокумента"] = body["СуммаДокумента"];

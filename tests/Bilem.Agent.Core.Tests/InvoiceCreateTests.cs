@@ -124,6 +124,56 @@ namespace Bilem.Agent.Core.Tests
             Assert.NotNull(InvoiceCreate.Pick(new JArray(new JObject { ["Description"] = "x" }), "y"));
         }
 
+        private static JObject Nom(string id, string code, string name) => new JObject { ["Ref_Key"] = id, ["Code"] = code, ["Description"] = name };
+        private static Func<ISet<string>> UsedOf(params string[] ids) => () => new HashSet<string>(ids);
+        private const string Water = "Вода очищенная питьевая расфасованная в емкости 18,9 л";
+
+        [Fact]
+        public void PickItemTakesDuplicateWithoutAsking()
+        {
+            // #106, Дарья: две позиции с одним названием, у второй пробел в конце
+            var rows = new JArray(Nom("b", "00000012", Water + " "), Nom("a", "00000007", Water));
+            // Точное написание — та, что без пробела
+            var (item, dup) = InvoiceCreate.PickItem(rows, Water, UsedOf());
+            Assert.Equal("a", (string)item["Ref_Key"]); Assert.False(dup);
+            // Написание не совпало ни с одной: уже стоит в счетах фирмы — она, иначе меньший код; это дубли
+            (item, dup) = InvoiceCreate.PickItem(rows, "вода очищенная питьевая расфасованная в емкости 18,9  л", UsedOf("b"));
+            Assert.Equal("b", (string)item["Ref_Key"]); Assert.True(dup);
+            (item, dup) = InvoiceCreate.PickItem(rows, "вода", UsedOf());
+            Assert.Equal("a", (string)item["Ref_Key"]); Assert.True(dup);
+            // Код сравнивается как число: 7 < 12, даже без ведущих нулей
+            (item, _) = InvoiceCreate.PickItem(new JArray(Nom("x", "12", Water), Nom("y", "7", Water + " ")), "вода", UsedOf());
+            Assert.Equal("y", (string)item["Ref_Key"]);
+        }
+
+        [Fact]
+        public void PickItemAsksWhenItemsDiffer()
+        {
+            var rows = new JArray(Nom("a", "1", "Вода 18,9 л"), Nom("b", "2", "Вода 5 л"));
+            Assert.Null(InvoiceCreate.PickItem(rows, "вода", UsedOf()).Item);
+            Assert.Null(InvoiceCreate.PickItem(rows, "вода", UsedOf("a", "b")).Item);
+            // Разные позиции, но одна уже в счетах фирмы — её, без предупреждения о дублях
+            var (item, dup) = InvoiceCreate.PickItem(rows, "вода", UsedOf("b"));
+            Assert.Equal("b", (string)item["Ref_Key"]); Assert.False(dup);
+            Assert.Equal("a", (string)InvoiceCreate.PickItem(rows, " вода 18,9 л", UsedOf()).Item["Ref_Key"]);
+        }
+
+        [Fact]
+        public void CopyLinesKeepItemRefs()
+        {
+            var src = new JObject
+            {
+                ["Товары"] = new JArray(new JObject { ["Номенклатура_Key"] = "g1", ["Количество"] = 10, ["Сумма"] = 15000, ["Содержание"] = "не для товаров" }),
+                ["Услуги"] = new JArray(new JObject { ["Номенклатура_Key"] = "s1", ["Количество"] = 1, ["Сумма"] = 5000, ["Содержание"] = " Доставка " }),
+            };
+            var l = InvoiceCreate.CopyLines(src);
+            Assert.Equal(2, l.Count);
+            Assert.Equal("g1", (string)l[0]["item_id"]); Assert.Equal(10, (int)l[0]["quantity"]); Assert.Equal(15000, (int)l[0]["sum"]);
+            Assert.Null(l[0]["content"]); Assert.Null(l[0]["item"]);
+            Assert.Equal("s1", (string)l[1]["item_id"]); Assert.Equal("Доставка", (string)l[1]["content"]);
+            Assert.Empty(InvoiceCreate.CopyLines(new JObject()));
+        }
+
         [Fact]
         public void WordsForSimilar()
         {

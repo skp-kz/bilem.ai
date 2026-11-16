@@ -283,6 +283,7 @@ namespace Bilem.Agent.Core.Mcp
                         ["buyer_id"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamBuyerId") },
                         ["organization"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamOrg") },
                         ["contract"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamContract") },
+                        ["copy_number"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamCopy") },
                         ["lines"] = new JObject
                         {
                             ["type"] = "array", ["minItems"] = 1, ["maxItems"] = InvoiceCreate.MaxLines, ["description"] = Txt.S("ToolDraftInvParamLines"),
@@ -292,16 +293,16 @@ namespace Bilem.Agent.Core.Mcp
                                 ["properties"] = new JObject
                                 {
                                     ["item"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamItem") },
+                                    ["item_id"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamItemId") },
                                     ["quantity"] = new JObject { ["type"] = "number", ["description"] = Txt.S("ToolDraftInvParamQty") },
                                     ["price"] = new JObject { ["type"] = "number", ["description"] = Txt.S("ToolDraftInvParamPrice") },
                                     ["sum"] = new JObject { ["type"] = "number", ["description"] = Txt.S("ToolDraftInvParamSum") },
                                     ["content"] = new JObject { ["type"] = "string", ["maxLength"] = 1000, ["description"] = Txt.S("ToolDraftInvParamContent") },
                                 },
-                                ["required"] = new JArray("item"),
                             },
                         },
                         ["base"] = baseProp,
-                    }, "lines"),
+                    }),
                     Handler = a => InvoiceCreate.MakeDraft(bases(), a),
                 },
                 new McpTool
@@ -328,12 +329,12 @@ namespace Bilem.Agent.Core.Mcp
                                 ["properties"] = new JObject
                                 {
                                     ["item"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamItem") },
+                                    ["item_id"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamItemId") },
                                     ["quantity"] = new JObject { ["type"] = "number", ["description"] = Txt.S("ToolDraftInvParamQty") },
                                     ["price"] = new JObject { ["type"] = "number", ["description"] = Txt.S("ToolDraftInvParamPrice") },
                                     ["sum"] = new JObject { ["type"] = "number", ["description"] = Txt.S("ToolDraftInvParamSum") },
                                     ["content"] = new JObject { ["type"] = "string", ["maxLength"] = 1000, ["description"] = Txt.S("ToolDraftInvParamContent") },
                                 },
-                                ["required"] = new JArray("item"),
                             },
                         },
                         ["contract"] = new JObject { ["type"] = "string", ["description"] = Txt.S("ToolDraftInvParamContract") },
